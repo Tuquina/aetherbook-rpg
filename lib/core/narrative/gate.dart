@@ -28,6 +28,11 @@ abstract class Gate {
           json['key'] as String,
           (json['min'] as num).toInt(),
         );
+      case 'meter':
+        return MinMeterGate(
+          json['key'] as String,
+          (json['min'] as num).toInt(),
+        );
       case 'all':
         return AllOfGate([
           for (final g in json['gates'] as List)
@@ -95,6 +100,21 @@ class MinResourceGate extends Gate {
   @override
   bool isSatisfiedBy(Character character) =>
       character.resource(key) >= minValue;
+}
+
+/// Requires a named meter (karma, celestial_pressure, evidence_count…) to be
+/// at least [minValue]. Reads `character.meter(key)` directly — for a
+/// *derived* meter (e.g. `evidence_count`) this relies on
+/// `ApplyStateDeltas` keeping the derived value synced onto the character
+/// each turn (see its doc comment), so this stays a pure, `World`-free check.
+class MinMeterGate extends Gate {
+  const MinMeterGate(this.key, this.minValue);
+
+  final String key;
+  final int minValue;
+
+  @override
+  bool isSatisfiedBy(Character character) => character.meter(key) >= minValue;
 }
 
 /// Composite: satisfied only if every sub-[gates] is satisfied.
