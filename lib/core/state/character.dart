@@ -10,6 +10,10 @@ class Character {
     required this.resources,
     this.flags = const {},
     this.meters = const {},
+    this.originId,
+    this.originTagId,
+    this.vowId,
+    this.personalItem,
   });
 
   final String name;
@@ -32,6 +36,21 @@ class Character {
   /// `core/world/meter_definition.dart` for bounds and derived meters.
   final Map<String, int> meters;
 
+  /// The chargen origin chosen at creation (campaign-bible §5.3), or `null`
+  /// for worlds that don't use structured character creation.
+  final String? originId;
+
+  /// Denormalized from the origin at creation time: the single tag it
+  /// grants, used by `core/engine/tag_bonus.dart` for a conditional +2.
+  final String? originTagId;
+
+  /// The vow/juramento chosen at creation (campaign-bible §5.4), or `null`.
+  final String? vowId;
+
+  /// Free-text description of the personal object the character carries
+  /// (campaign-bible §5.1). Confers no automatic bonus.
+  final String? personalItem;
+
   int attribute(String key) => attributes[key] ?? 0;
   int resource(String key) => resources[key] ?? 0;
   bool flag(String key) => flags[key] ?? false;
@@ -45,6 +64,10 @@ class Character {
     Map<String, int>? resources,
     Map<String, bool>? flags,
     Map<String, int>? meters,
+    String? originId,
+    String? originTagId,
+    String? vowId,
+    String? personalItem,
   }) {
     return Character(
       name: name ?? this.name,
@@ -54,6 +77,10 @@ class Character {
       resources: resources ?? this.resources,
       flags: flags ?? this.flags,
       meters: meters ?? this.meters,
+      originId: originId ?? this.originId,
+      originTagId: originTagId ?? this.originTagId,
+      vowId: vowId ?? this.vowId,
+      personalItem: personalItem ?? this.personalItem,
     );
   }
 

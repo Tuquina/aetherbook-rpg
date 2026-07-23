@@ -1,7 +1,9 @@
 import '../state/character.dart';
+import 'character_origin.dart';
 import 'meter_definition.dart';
 import 'progression.dart';
 import 'resource_formula.dart';
+import 'vow.dart';
 
 /// A declarative world package (CLAUDE.md §8, GDD §4.6). Everything that gives
 /// a world its identity — rules, tone, the narrator's system prompt, starting
@@ -22,6 +24,9 @@ class World {
     this.progression = const Progression(),
     this.resourceFormulas = const {},
     this.meterDefinitions = const {},
+    this.attributeKeys = const [],
+    this.origins = const [],
+    this.vows = const [],
     required this.startingCharacter,
     required this.seedNarration,
     required this.seedChoices,
@@ -67,11 +72,36 @@ class World {
   /// flags. See [MeterDefinition].
   final Map<String, MeterDefinition> meterDefinitions;
 
+  /// Every attribute this world/campaign defines, e.g. `['cuerpo', 'agudeza',
+  /// 'espiritu', 'presencia']`. Used by [CreateCharacter] to seed every
+  /// attribute at `1` before an origin's overrides apply (campaign-bible
+  /// §5.3: "todos los atributos comienzan en 1"). Simple worlds that build
+  /// their starting character directly from JSON (Fase 0 style) can leave
+  /// this empty.
+  final List<String> attributeKeys;
+
+  /// Chargen origins available for structured character creation (§5.3).
+  /// Empty for worlds that don't use this chargen flow.
+  final List<CharacterOrigin> origins;
+
+  /// Chargen vows available for structured character creation (§5.4).
+  final List<Vow> vows;
+
   final Character startingCharacter;
 
   /// Opening narration and choices shown before the first action.
   final String seedNarration;
   final List<String> seedChoices;
+
+  CharacterOrigin originById(String id) => origins.firstWhere(
+        (o) => o.id == id,
+        orElse: () => throw ArgumentError('unknown origin: $id'),
+      );
+
+  Vow vowById(String id) => vows.firstWhere(
+        (v) => v.id == id,
+        orElse: () => throw ArgumentError('unknown vow: $id'),
+      );
 
   /// The declared maximum for [resourceKey] given [character]'s current
   /// attributes, or `null` if this world declares no formula for it (a
@@ -113,6 +143,9 @@ class World {
       ),
       resourceFormulas: resourceFormulas,
       meterDefinitions: meterDefinitions,
+      attributeKeys: _stringList(json['attributes']),
+      origins: _originsFromJson(json['origins']),
+      vows: _vowsFromJson(json['vows']),
       startingCharacter: _characterFromJson(
         (json['starting_character'] as Map).cast<String, dynamic>(),
         resourceFormulas: resourceFormulas,
@@ -197,5 +230,25 @@ class World {
       );
     }
     return const {};
+  }
+
+  static List<CharacterOrigin> _originsFromJson(Object? value) {
+    if (value is List) {
+      return [
+        for (final item in value)
+          CharacterOrigin.fromJson((item as Map).cast<String, dynamic>()),
+      ];
+    }
+    return const [];
+  }
+
+  static List<Vow> _vowsFromJson(Object? value) {
+    if (value is List) {
+      return [
+        for (final item in value)
+          Vow.fromJson((item as Map).cast<String, dynamic>()),
+      ];
+    }
+    return const [];
   }
 }
