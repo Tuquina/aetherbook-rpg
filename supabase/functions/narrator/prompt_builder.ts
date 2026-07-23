@@ -49,13 +49,14 @@ export function buildUserPrompt(request: NarratorRequest): string {
   } else {
     const r = request.resolution;
     parts.push(
-      `El jugador intentó: "${request.playerAction}". ` +
+      `El jugador intentó: "${request.playerAction}" (chequeo de ` +
+        `${r.attributeKey}). ` +
         `Resultado mecánico YA CALCULADO (no lo recalcules): ${r.outcome}, ` +
         `tirada d20 ${r.roll}, total ${r.total} vs dificultad ${r.difficulty}` +
         (r.isNatural20 ? " (20 natural)" : "") +
         (r.isNatural1 ? " (1 natural)" : "") +
-        `. Narrá este resultado con estilo; no decidas si tuvo éxito, eso ya ` +
-        `está decidido.`,
+        `. Narrá este resultado con estilo, reflejando que fue un chequeo de ` +
+        `${r.attributeKey}; no decidas si tuvo éxito, eso ya está decidido.`,
     );
   }
 

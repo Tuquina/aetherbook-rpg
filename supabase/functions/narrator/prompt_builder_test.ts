@@ -39,6 +39,7 @@ Deno.test("user prompt includes the resolved mechanics, not a request to resolve
     playerAction: "forzar la puerta",
     resolution: {
       outcome: "success",
+      attributeKey: "espiritu",
       attribute: 2,
       modifiers: 0,
       roll: 10,
@@ -53,6 +54,7 @@ Deno.test("user prompt includes the resolved mechanics, not a request to resolve
   assertStringIncludes(prompt, "success");
   assertStringIncludes(prompt, "total 12 vs dificultad 12");
   assertStringIncludes(prompt, "no decidas si tuvo éxito");
+  assertStringIncludes(prompt, "chequeo de espiritu");
 });
 
 Deno.test("user prompt includes recent turns when present", () => {

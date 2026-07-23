@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import '../core/engine/action_resolution.dart';
 import '../core/engine/apply_state_deltas.dart';
 import '../core/engine/dice.dart';
+import '../core/engine/infer_action_attribute.dart';
 import '../core/engine/resolve_player_action.dart';
 import '../core/state/character.dart';
 import '../core/state/game_session.dart';
@@ -47,7 +48,8 @@ class GameController extends ChangeNotifier {
         _memoryDigest = memoryDigest,
         _digestEveryNTurns = digestEveryNTurns,
         _resolve = ResolvePlayerAction(dice ?? RandomDice()),
-        _applyDeltas = const ApplyStateDeltas();
+        _applyDeltas = const ApplyStateDeltas(),
+        _inferAttribute = const InferActionAttribute();
 
   final WorldRepositoryPort _worldRepository;
   final NarratorPort _narrator;
@@ -56,6 +58,7 @@ class GameController extends ChangeNotifier {
   final int _digestEveryNTurns;
   final ResolvePlayerAction _resolve;
   final ApplyStateDeltas _applyDeltas;
+  final InferActionAttribute _inferAttribute;
   String? _memoryDigestText;
 
   World? _world;
@@ -146,8 +149,18 @@ class GameController extends ChangeNotifier {
     notifyListeners();
 
     // 1. Resolve mechanics deterministically — the engine decides, not the AI.
+    // Which attribute a check uses is also decided in code, via keyword
+    // matching declared per world (CLAUDE.md §2.2, GDD §4.1) — the AI never
+    // picks the attribute, whether the action was typed freely or tapped
+    // from a suggested choice.
+    final attributeKey = _inferAttribute(
+      action: action,
+      attributeKeywords: world.attributeKeywords,
+      fallback: world.primaryAttribute,
+    );
     final resolution = _resolve(
-      attribute: session.character.attribute(world.primaryAttribute),
+      attributeKey: attributeKey,
+      attribute: session.character.attribute(attributeKey),
       difficulty: world.defaultDifficulty,
       criticalMargin: world.criticalMargin,
     );

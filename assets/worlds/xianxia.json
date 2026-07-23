@@ -8,7 +8,12 @@
   "resolution": {
     "default_difficulty": 12,
     "critical_margin": 5,
-    "primary_attribute": "espiritu"
+    "primary_attribute": "espiritu",
+    "attribute_keywords": {
+      "cuerpo": ["forzar", "pelear", "escalar", "cargar", "empujar", "correr", "explorar", "trepar", "saltar", "esquivar"],
+      "mente": ["leer", "recordar", "descifrar", "estudiar", "planificar", "analizar", "manuscrito", "calcular", "observar"],
+      "espiritu": ["meditar", "sentir", "invocar", "rezar", "percibir", "flujo", "qi", "cultivar", "canalizar"]
+    }
   },
   "starting_character": {
     "name": "Discípulo Errante",

@@ -65,6 +65,7 @@ Map<String, Object?>? resolutionToJson(ActionResolution? resolution) {
   if (resolution == null) return null;
   return {
     'outcome': resolution.outcome.name,
+    'attributeKey': resolution.attributeKey,
     'attribute': resolution.attribute,
     'modifiers': resolution.modifiers,
     'roll': resolution.roll,

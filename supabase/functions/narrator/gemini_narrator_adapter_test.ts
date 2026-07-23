@@ -21,6 +21,7 @@ const request: NarratorRequest = {
   playerAction: "meditar",
   resolution: {
     outcome: "success",
+    attributeKey: "espiritu",
     attribute: 2,
     modifiers: 0,
     roll: 10,

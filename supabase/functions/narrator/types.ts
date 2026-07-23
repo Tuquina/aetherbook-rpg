@@ -7,6 +7,8 @@ export type ActionOutcome = "failure" | "success" | "criticalSuccess";
 
 export interface ActionResolution {
   outcome: ActionOutcome;
+  /** Which attribute this check used (e.g. `"cuerpo"`), decided in code. */
+  attributeKey: string;
   attribute: number;
   modifiers: number;
   roll: number;

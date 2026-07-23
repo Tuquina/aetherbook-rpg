@@ -18,6 +18,7 @@ class ResolvePlayerAction {
   final Dice _dice;
 
   ActionResolution call({
+    required String attributeKey,
     required int attribute,
     required int difficulty,
     int modifiers = 0,
@@ -48,6 +49,7 @@ class ResolvePlayerAction {
 
     return ActionResolution(
       outcome: outcome,
+      attributeKey: attributeKey,
       attribute: attribute,
       modifiers: modifiers,
       roll: roll,

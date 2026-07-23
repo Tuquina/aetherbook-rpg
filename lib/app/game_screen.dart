@@ -204,8 +204,8 @@ class _OutcomeChip extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
-        '$label  ·  d20 ${resolution.roll} → ${resolution.total} vs '
-        '${resolution.difficulty}',
+        '$label (${resolution.attributeKey})  ·  d20 ${resolution.roll} → '
+        '${resolution.total} vs ${resolution.difficulty}',
         style: TextStyle(color: color, fontSize: 12.5),
       ),
     );
