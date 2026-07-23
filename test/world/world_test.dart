@@ -132,6 +132,32 @@ void main() {
     });
   });
 
+  group('World free-action classifier config', () {
+    test('parses intent_keywords, risk_keywords and self_grant_patterns', () {
+      final json = baseWorldJson()
+        ..['resolution'] = {
+          'intent_keywords': {
+            'force': ['forzar', 'romper'],
+          },
+          'risk_keywords': {
+            'high': ['a ciegas'],
+          },
+          'self_grant_patterns': ['me otorgo'],
+        };
+      final world = World.fromJson(json);
+      expect(world.intentKeywords['force'], ['forzar', 'romper']);
+      expect(world.riskKeywords['high'], ['a ciegas']);
+      expect(world.selfGrantPatterns, ['me otorgo']);
+    });
+
+    test('defaults to empty when undeclared', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(world.intentKeywords, isEmpty);
+      expect(world.riskKeywords, isEmpty);
+      expect(world.selfGrantPatterns, isEmpty);
+    });
+  });
+
   group('World opponents', () {
     test('parses opponents and finds them by id', () {
       final json = baseWorldJson()

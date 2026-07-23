@@ -191,6 +191,68 @@ void main() {
     });
   });
 
+  group('ApplyStateDeltas — relationship (campaign-bible §8.2/§19.3)', () {
+    test('increments a relationship from zero', () {
+      final result = apply(base(), [
+        const StateDelta(
+          type: StateDeltaType.relationship,
+          key: 'lian_suyin',
+          value: 1,
+        ),
+      ]);
+      expect(result.character.relationship('lian_suyin'), 1);
+      expect(result.applied, hasLength(1));
+    });
+
+    test('rejects a delta whose magnitude is greater than 1', () {
+      final result = apply(base(), [
+        const StateDelta(
+          type: StateDeltaType.relationship,
+          key: 'lian_suyin',
+          value: 2,
+        ),
+      ]);
+      expect(result.rejected, hasLength(1));
+      expect(result.character.relationship('lian_suyin'), 0);
+    });
+
+    test('clamps the stored value to [-2, 3]', () {
+      var character = base();
+      for (var i = 0; i < 5; i++) {
+        character = apply(character, [
+          const StateDelta(
+            type: StateDeltaType.relationship,
+            key: 'qiao_wen',
+            value: 1,
+          ),
+        ]).character;
+      }
+      expect(character.relationship('qiao_wen'), 3);
+
+      for (var i = 0; i < 5; i++) {
+        character = apply(character, [
+          const StateDelta(
+            type: StateDeltaType.relationship,
+            key: 'qiao_wen',
+            value: -1,
+          ),
+        ]).character;
+      }
+      expect(character.relationship('qiao_wen'), -2);
+    });
+
+    test('rejects a non-numeric relationship value', () {
+      final result = apply(base(), [
+        const StateDelta(
+          type: StateDeltaType.relationship,
+          key: 'lian_suyin',
+          value: 'mucho',
+        ),
+      ]);
+      expect(result.rejected, hasLength(1));
+    });
+  });
+
   group('ApplyStateDeltas — rankProgression (milestone-gated ranks)', () {
     const ranks = [
       RankDefinition(id: 'aliento_velado', level: 1, expRequired: 0),

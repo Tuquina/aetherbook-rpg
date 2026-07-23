@@ -1,6 +1,6 @@
 /// The kinds of state change the narrator may propose. Anything the parser
 /// does not recognise maps to [unknown] and is rejected by the engine.
-enum StateDeltaType { flag, exp, resource, meter, unknown }
+enum StateDeltaType { flag, exp, resource, meter, relationship, unknown }
 
 /// A single proposed change to game state, as suggested by the narrator
 /// (CLAUDE.md §5). These are **proposals**: the engine validates them before
@@ -26,6 +26,8 @@ class StateDelta {
         return StateDeltaType.resource;
       case 'meter':
         return StateDeltaType.meter;
+      case 'relationship':
+        return StateDeltaType.relationship;
       default:
         return StateDeltaType.unknown;
     }
@@ -33,4 +35,38 @@ class StateDelta {
 
   @override
   String toString() => 'StateDelta($type, $key, $value)';
+}
+
+/// A state delta as it arrives on the narrator's wire (campaign-bible
+/// §18.5/§19.3): unlike [StateDelta], it carries `operation`/`reason` for
+/// validation and observability before the engine ever applies it.
+class ProposedStateDelta {
+  const ProposedStateDelta({
+    required this.type,
+    required this.key,
+    required this.value,
+    this.operation,
+    this.reason,
+  });
+
+  final StateDeltaType type;
+  final String key;
+  final Object? value;
+
+  /// How the narrator says this delta should apply, e.g. `"increment"`. The
+  /// engine only supports increments today — no campaign-bible example needs
+  /// anything else — so [toStateDelta] rejects any other declared operation
+  /// rather than silently reinterpreting it.
+  final String? operation;
+
+  /// Why the narrator proposed this change, kept for observability/audit
+  /// (campaign-bible §19.3 "registrar rechazos"). Never affects validation.
+  final String? reason;
+
+  /// The delta as `ApplyStateDeltas` applies it, or `null` if [operation] is
+  /// declared as something the engine doesn't support.
+  StateDelta? toStateDelta() {
+    if (operation != null && operation != 'increment') return null;
+    return StateDelta(type: type, key: key, value: value);
+  }
 }

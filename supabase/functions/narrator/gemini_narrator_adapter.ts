@@ -14,23 +14,57 @@ const RESPONSE_SCHEMA = {
   type: "OBJECT",
   properties: {
     narration: { type: "STRING" },
-    suggested_choices: { type: "ARRAY", items: { type: "STRING" } },
-    state_deltas: {
+    suggested_choices: {
       type: "ARRAY",
       items: {
         type: "OBJECT",
         properties: {
-          type: { type: "STRING", enum: ["flag", "exp", "resource"] },
+          id: { type: "STRING" },
+          label: { type: "STRING" },
+          intent: { type: "STRING" },
+          expected_check: {
+            type: "OBJECT",
+            properties: {
+              attribute: { type: "STRING" },
+              difficulty_id: { type: "STRING" },
+            },
+            required: ["attribute"],
+          },
+        },
+        required: ["id", "label"],
+      },
+    },
+    proposed_state_deltas: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          type: {
+            type: "STRING",
+            enum: ["flag", "exp", "resource", "meter", "relationship"],
+          },
           key: { type: "STRING" },
           value: { anyOf: [{ type: "BOOLEAN" }, { type: "NUMBER" }] },
+          operation: { type: "STRING", enum: ["increment"] },
+          reason: { type: "STRING" },
         },
-        required: ["type", "key", "value"],
+        required: ["type", "key", "value", "operation", "reason"],
       },
     },
     image_prompt: { type: "STRING" },
     tone: { type: "STRING" },
+    memory_facts: { type: "ARRAY", items: { type: "STRING" } },
+    node_status: { type: "STRING", enum: ["active", "ready_to_exit"] },
   },
-  required: ["narration", "suggested_choices", "state_deltas", "image_prompt", "tone"],
+  required: [
+    "narration",
+    "suggested_choices",
+    "proposed_state_deltas",
+    "image_prompt",
+    "tone",
+    "memory_facts",
+    "node_status",
+  ],
 };
 
 export interface GeminiNarratorAdapterOptions {

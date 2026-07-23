@@ -10,6 +10,7 @@ class Character {
     required this.resources,
     this.flags = const {},
     this.meters = const {},
+    this.relationships = const {},
     this.originId,
     this.originTagId,
     this.vowId,
@@ -36,6 +37,10 @@ class Character {
   /// `core/world/meter_definition.dart` for bounds and derived meters.
   final Map<String, int> meters;
 
+  /// Per-NPC relationship scores (campaign-bible §8.2), range `[-2, 3]`.
+  /// Changed only in `±1` steps by `ApplyStateDeltas`, never set directly.
+  final Map<String, int> relationships;
+
   /// The chargen origin chosen at creation (campaign-bible §5.3), or `null`
   /// for worlds that don't use structured character creation.
   final String? originId;
@@ -55,6 +60,7 @@ class Character {
   int resource(String key) => resources[key] ?? 0;
   bool flag(String key) => flags[key] ?? false;
   int meter(String key) => meters[key] ?? 0;
+  int relationship(String key) => relationships[key] ?? 0;
 
   Character copyWith({
     String? name,
@@ -64,6 +70,7 @@ class Character {
     Map<String, int>? resources,
     Map<String, bool>? flags,
     Map<String, int>? meters,
+    Map<String, int>? relationships,
     String? originId,
     String? originTagId,
     String? vowId,
@@ -77,6 +84,7 @@ class Character {
       resources: resources ?? this.resources,
       flags: flags ?? this.flags,
       meters: meters ?? this.meters,
+      relationships: relationships ?? this.relationships,
       originId: originId ?? this.originId,
       originTagId: originTagId ?? this.originTagId,
       vowId: vowId ?? this.vowId,

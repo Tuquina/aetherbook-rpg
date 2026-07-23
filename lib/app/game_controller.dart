@@ -190,9 +190,18 @@ class GameController extends ChangeNotifier {
       );
 
       // 3. Validate & apply the proposed deltas (AI proposes, engine disposes).
+      // `ProposedStateDelta.toStateDelta()` also drops any delta whose
+      // declared `operation` the engine doesn't support — see its doc
+      // comment. `expected_check`/`node_status`/the free-action classifier
+      // aren't consumed yet; that's Fase 8, once real content exists.
       final beforeLevel = session.character.level;
-      final application =
-          _applyDeltas(session.character, response.stateDeltas);
+      final candidateDeltas = [
+        for (final delta in response.stateDeltas) ?delta.toStateDelta(),
+      ];
+      final application = _applyDeltas(session.character, candidateDeltas);
+      final choiceLabels = [
+        for (final choice in response.suggestedChoices) choice.label,
+      ];
 
       // 4. Commit the new state.
       final turn = Turn(
@@ -200,14 +209,14 @@ class GameController extends ChangeNotifier {
         playerAction: action,
         narration: response.narration,
         tone: response.tone,
-        suggestedChoices: response.suggestedChoices,
+        suggestedChoices: choiceLabels,
       );
       _session = session.copyWith(
         character: application.character,
         turns: [...session.turns, turn],
       );
       _narration = response.narration;
-      _choices = response.suggestedChoices;
+      _choices = choiceLabels;
       _tone = response.tone;
       _lastResolution = resolution;
       _lastLevelsGained = application.character.level - beforeLevel;
@@ -227,7 +236,7 @@ class GameController extends ChangeNotifier {
           resolution: resolution,
           narration: response.narration,
           tone: response.tone,
-          suggestedChoices: response.suggestedChoices,
+          suggestedChoices: choiceLabels,
         );
       }
 

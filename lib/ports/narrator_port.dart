@@ -1,4 +1,5 @@
 import '../core/engine/action_resolution.dart';
+import '../core/engine/free_action_classification.dart';
 import '../core/engine/state_delta.dart';
 import '../core/state/character.dart';
 import '../core/world/world.dart';
@@ -32,9 +33,52 @@ class NarratorRequest {
   final String? memoryDigest;
 }
 
-/// The narrator's structured output (CLAUDE.md §5). The AI returns only this
-/// shape. [stateDeltas] here are **proposals** the engine validates before
-/// applying (§2.3).
+/// The check a suggested choice would trigger if taken — shown to the UI so
+/// the player can see what's at stake before choosing (campaign-bible
+/// §18.5/§18.10). The narrator only *suggests* this; the actual attribute and
+/// difficulty used at resolution time are still decided in code.
+class ExpectedCheck {
+  const ExpectedCheck({required this.attribute, this.difficultyId});
+
+  final String attribute;
+
+  /// A world/node-declared difficulty band id (e.g. `"standard"`), or `null`
+  /// when the choice carries no meaningful difficulty of its own.
+  final String? difficultyId;
+}
+
+/// A single suggested choice (campaign-bible §18.5): a stable [id] for
+/// analytics/critical-choice tracking (§19.4), the visible [label], and
+/// optionally the [intent]/[expectedCheck] the narrator believes this choice
+/// would resolve as.
+class SuggestedChoice {
+  const SuggestedChoice({
+    required this.id,
+    required this.label,
+    this.intent,
+    this.expectedCheck,
+  });
+
+  final String id;
+  final String label;
+  final ActionIntent? intent;
+  final ExpectedCheck? expectedCheck;
+}
+
+/// Whether the narrator considers the current node still in play, or ready
+/// for the engine to advance the graph (campaign-bible §18.5/§18.8).
+enum NodeStatus {
+  active,
+  readyToExit;
+
+  static NodeStatus fromWire(String? raw) {
+    return raw == 'ready_to_exit' ? NodeStatus.readyToExit : NodeStatus.active;
+  }
+}
+
+/// The narrator's structured output (campaign-bible §18.5). The AI returns
+/// only this shape. [stateDeltas] here are **proposals** the engine validates
+/// before applying (§2.3) — see `ProposedStateDelta.toStateDelta`.
 class NarratorResponse {
   const NarratorResponse({
     required this.narration,
@@ -42,13 +86,20 @@ class NarratorResponse {
     required this.stateDeltas,
     required this.imagePrompt,
     required this.tone,
+    this.memoryFacts = const [],
+    this.nodeStatus = NodeStatus.active,
   });
 
   final String narration;
-  final List<String> suggestedChoices;
-  final List<StateDelta> stateDeltas;
+  final List<SuggestedChoice> suggestedChoices;
+  final List<ProposedStateDelta> stateDeltas;
   final String imagePrompt;
   final String tone;
+
+  /// Discrete facts to fold into medium/long-term memory (campaign-bible
+  /// §18.5/§18.9), distinct from the free-prose diary digest.
+  final List<String> memoryFacts;
+  final NodeStatus nodeStatus;
 }
 
 /// The contract the game depends on. Concrete narrators — the fake now, a

@@ -23,6 +23,9 @@ class World {
     required this.criticalMargin,
     required this.primaryAttribute,
     this.attributeKeywords = const {},
+    this.intentKeywords = const {},
+    this.riskKeywords = const {},
+    this.selfGrantPatterns = const [],
     this.progression = const Progression(),
     this.resourceFormulas = const {},
     this.meterDefinitions = const {},
@@ -62,6 +65,21 @@ class World {
   /// per-world (CLAUDE.md §8) — the engine never hardcodes what "forzar"
   /// means for a given world.
   final Map<String, List<String>> attributeKeywords;
+
+  /// Keywords that map a free action's text to a `ClassifyFreeAction` intent
+  /// (e.g. `'force': ['forzar', 'romper']`), keyed by the intent's wire name
+  /// (campaign-bible §18.7). Empty for worlds that don't classify free
+  /// actions beyond their attribute.
+  final Map<String, List<String>> intentKeywords;
+
+  /// Keywords that map a free action's text to a `RiskLevel`, keyed by the
+  /// risk's name (e.g. `'high': ['sin cobertura', 'a ciegas']`).
+  final Map<String, List<String>> riskKeywords;
+
+  /// Substrings that flag a free action as an attempt to self-grant state
+  /// the AI isn't allowed to touch (rank, items, kinship — campaign-bible
+  /// §18.7's last rule), making it `CanonCompatibility.invalid`.
+  final List<String> selfGrantPatterns;
 
   /// How this world models advancement (levels/realms/none). See [Progression].
   final Progression progression;
@@ -163,6 +181,9 @@ class World {
       criticalMargin: (resolution['critical_margin'] as num?)?.toInt() ?? 5,
       primaryAttribute: resolution['primary_attribute'] as String? ?? 'cuerpo',
       attributeKeywords: _keywordsFromJson(resolution['attribute_keywords']),
+      intentKeywords: _keywordsFromJson(resolution['intent_keywords']),
+      riskKeywords: _keywordsFromJson(resolution['risk_keywords']),
+      selfGrantPatterns: _stringList(resolution['self_grant_patterns']),
       progression: Progression.fromJson(
         (json['progression'] as Map?)?.cast<String, dynamic>(),
       ),

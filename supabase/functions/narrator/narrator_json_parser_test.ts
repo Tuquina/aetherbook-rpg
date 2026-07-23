@@ -2,14 +2,51 @@ import { assertEquals, assertThrows } from "jsr:@std/assert@1";
 import { NarratorParseError, parseNarratorJson } from "./narrator_json_parser.ts";
 
 Deno.test("parses a clean JSON object", () => {
-  const raw = `{"narration":"Hola","suggested_choices":["A","B"],` +
-    `"state_deltas":[{"type":"exp","key":"exp","value":10}],` +
-    `"image_prompt":"algo","tone":"tenso"}`;
+  const raw = `{"narration":"Hola",` +
+    `"suggested_choices":[{"id":"a","label":"A"},{"id":"b","label":"B"}],` +
+    `"proposed_state_deltas":[{"type":"exp","key":"exp","value":10,` +
+    `"operation":"increment","reason":"porque sí"}],` +
+    `"image_prompt":"algo","tone":"tenso",` +
+    `"memory_facts":["prometió algo"],"node_status":"ready_to_exit"}`;
   const r = parseNarratorJson(raw);
   assertEquals(r.narration, "Hola");
-  assertEquals(r.suggested_choices, ["A", "B"]);
-  assertEquals(r.state_deltas, [{ type: "exp", key: "exp", value: 10 }]);
+  assertEquals(r.suggested_choices, [
+    { id: "a", label: "A", intent: undefined, expected_check: undefined },
+    { id: "b", label: "B", intent: undefined, expected_check: undefined },
+  ]);
+  assertEquals(r.proposed_state_deltas, [
+    {
+      type: "exp",
+      key: "exp",
+      value: 10,
+      operation: "increment",
+      reason: "porque sí",
+    },
+  ]);
   assertEquals(r.tone, "tenso");
+  assertEquals(r.memory_facts, ["prometió algo"]);
+  assertEquals(r.node_status, "ready_to_exit");
+});
+
+Deno.test("parses a choice's intent and expected_check", () => {
+  const raw = '{"narration":"x","suggested_choices":[{"id":"c",' +
+    '"label":"Investigar","intent":"investigate",' +
+    '"expected_check":{"attribute":"agudeza","difficulty_id":"standard"}}]}';
+  const r = parseNarratorJson(raw);
+  assertEquals(r.suggested_choices, [
+    {
+      id: "c",
+      label: "Investigar",
+      intent: "investigate",
+      expected_check: { attribute: "agudeza", difficulty_id: "standard" },
+    },
+  ]);
+});
+
+Deno.test("defaults a choice's id to its label when missing", () => {
+  const raw = '{"narration":"x","suggested_choices":[{"label":"Solo label"}]}';
+  const r = parseNarratorJson(raw);
+  assertEquals(r.suggested_choices[0].id, "Solo label");
 });
 
 Deno.test("strips ```json fences", () => {
@@ -28,19 +65,31 @@ Deno.test("ignores surrounding prose and grabs the object", () => {
 Deno.test("defaults missing optional fields", () => {
   const r = parseNarratorJson('{"narration":"x"}');
   assertEquals(r.suggested_choices, []);
-  assertEquals(r.state_deltas, []);
+  assertEquals(r.proposed_state_deltas, []);
   assertEquals(r.image_prompt, "");
   assertEquals(r.tone, "");
+  assertEquals(r.memory_facts, []);
+  assertEquals(r.node_status, "active");
 });
 
-Deno.test("drops malformed delta entries but keeps valid ones", () => {
-  const raw = '{"narration":"x","state_deltas":[' +
+Deno.test("drops malformed delta and choice entries but keeps valid ones", () => {
+  const raw = '{"narration":"x","proposed_state_deltas":[' +
     '{"type":"flag","key":"k","value":true},' +
     '{"type":"flag"},' +
     '"not an object"' +
-    "]}";
+    '],"suggested_choices":[{"label":"ok"},{"id":"no-label"},"nope"]}';
   const r = parseNarratorJson(raw);
-  assertEquals(r.state_deltas, [{ type: "flag", key: "k", value: true }]);
+  assertEquals(r.proposed_state_deltas, [
+    { type: "flag", key: "k", value: true, operation: undefined, reason: undefined },
+  ]);
+  assertEquals(r.suggested_choices, [
+    { id: "ok", label: "ok", intent: undefined, expected_check: undefined },
+  ]);
+});
+
+Deno.test("falls back to 'active' for an unrecognised node_status", () => {
+  const r = parseNarratorJson('{"narration":"x","node_status":"nonsense"}');
+  assertEquals(r.node_status, "active");
 });
 
 Deno.test("throws NarratorParseError on broken JSON", () => {

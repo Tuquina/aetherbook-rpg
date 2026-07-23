@@ -8,9 +8,15 @@ import type { NarratorRequest } from "./types.ts";
 export const OUTPUT_INSTRUCTION =
   `Devolvé SOLO un objeto JSON válido con esta forma exacta, sin markdown, ` +
   `sin backticks, sin preámbulo ni texto fuera del JSON:\n` +
-  `{"narration": string, "suggested_choices": string[], ` +
-  `"state_deltas": [{"type": "flag"|"exp"|"resource", "key": string, ` +
-  `"value": boolean|number}], "image_prompt": string, "tone": string}`;
+  `{"narration": string, ` +
+  `"suggested_choices": [{"id": string, "label": string, ` +
+  `"intent"?: string, "expected_check"?: {"attribute": string, ` +
+  `"difficulty_id"?: string}}], ` +
+  `"proposed_state_deltas": [{"type": "flag"|"exp"|"resource"|"meter"|` +
+  `"relationship", "key": string, "value": boolean|number, ` +
+  `"operation": "increment", "reason": string}], ` +
+  `"image_prompt": string, "tone": string, "memory_facts": string[], ` +
+  `"node_status": "active"|"ready_to_exit"}`;
 
 export function buildSystemPrompt(request: NarratorRequest): string {
   return [request.world.systemPrompt, OUTPUT_INSTRUCTION]

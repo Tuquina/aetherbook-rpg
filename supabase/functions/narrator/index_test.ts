@@ -29,9 +29,11 @@ function fakeChain(narration = "hola"): NarratorAdapter[] {
         Promise.resolve({
           narration,
           suggested_choices: [],
-          state_deltas: [],
+          proposed_state_deltas: [],
           image_prompt: "",
           tone: "",
+          memory_facts: [],
+          node_status: "active",
         }),
     },
   ];

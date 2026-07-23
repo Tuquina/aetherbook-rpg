@@ -136,6 +136,20 @@ class ApplyStateDeltas {
         final next = definition?.clamp(raw) ?? raw;
         return c.copyWith(meters: {...c.meters, delta.key: next});
 
+      case StateDeltaType.relationship:
+        final change = _asInt(delta.value);
+        // Campaign-bible §19.3: a single proposed relationship delta is
+        // capped at ±1 magnitude; the stored value is separately clamped to
+        // [-2, 3]. "One per node per NPC" is a per-visit de-dup rule that
+        // needs the current node context `ApplyStateDeltas` doesn't have —
+        // deferred to Fase 8, once `GameController` tracks that.
+        if (change == null || change.abs() > 1) return null;
+        final next =
+            (c.relationship(delta.key) + change).clamp(-2, 3);
+        return c.copyWith(
+          relationships: {...c.relationships, delta.key: next},
+        );
+
       case StateDeltaType.unknown:
         return null;
     }
