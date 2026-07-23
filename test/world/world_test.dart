@@ -131,4 +131,21 @@ void main() {
       expect(world.currentRank(world.startingCharacter), isNull);
     });
   });
+
+  group('World opponents', () {
+    test('parses opponents and finds them by id', () {
+      final json = baseWorldJson()
+        ..['opponents'] = [
+          {'id': 'coro_blanco', 'display_name': 'Coro Blanco', 'guard': 4},
+        ];
+      final world = World.fromJson(json);
+      expect(world.opponents, hasLength(1));
+      expect(world.opponentById('coro_blanco').maxGuard, 4);
+    });
+
+    test('opponentById throws for an unknown id', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(() => world.opponentById('no_existe'), throwsArgumentError);
+    });
+  });
 }

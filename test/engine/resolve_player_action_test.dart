@@ -92,4 +92,92 @@ void main() {
       );
     });
   });
+
+  group('ResolvePlayerAction — rollMode (ventaja/desventaja)', () {
+    test('advantage keeps the higher of two d20s', () {
+      final resolve = ResolvePlayerAction(SequenceDice([8, 17]));
+      final result = resolve(
+        attributeKey: 'espiritu',
+        attribute: 0,
+        difficulty: 12,
+        rollMode: RollMode.advantage,
+      );
+      expect(result.roll, 17);
+      expect(result.discardedRoll, 8);
+      expect(result.rollMode, RollMode.advantage);
+    });
+
+    test('disadvantage keeps the lower of two d20s', () {
+      final resolve = ResolvePlayerAction(SequenceDice([8, 17]));
+      final result = resolve(
+        attributeKey: 'espiritu',
+        attribute: 0,
+        difficulty: 12,
+        rollMode: RollMode.disadvantage,
+      );
+      expect(result.roll, 8);
+      expect(result.discardedRoll, 17);
+    });
+
+    test('a normal roll never sets a discarded roll', () {
+      final resolve = ResolvePlayerAction(const FixedDice(10));
+      final result = resolve(attributeKey: 'espiritu', attribute: 0, difficulty: 12);
+      expect(result.rollMode, RollMode.normal);
+      expect(result.discardedRoll, isNull);
+    });
+
+    test('advantage can turn a discarded 1 into a kept natural 20', () {
+      final resolve = ResolvePlayerAction(SequenceDice([1, 20]));
+      final result = resolve(
+        attributeKey: 'espiritu',
+        attribute: 0,
+        difficulty: 100,
+        rollMode: RollMode.advantage,
+      );
+      expect(result.isNatural20, isTrue);
+      expect(result.outcome, ActionOutcome.criticalSuccess);
+    });
+
+    test('disadvantage can turn a discarded 20 into a kept natural 1', () {
+      final resolve = ResolvePlayerAction(SequenceDice([20, 1]));
+      final result = resolve(
+        attributeKey: 'espiritu',
+        attribute: 50,
+        difficulty: 2,
+        rollMode: RollMode.disadvantage,
+      );
+      expect(result.isNatural1, isTrue);
+      expect(result.outcome, ActionOutcome.failure);
+    });
+  });
+
+  group('combineRollModifiers', () {
+    test('no sources -> normal', () {
+      expect(
+        combineRollModifiers(hasAdvantage: false, hasDisadvantage: false),
+        RollMode.normal,
+      );
+    });
+
+    test('advantage only -> advantage', () {
+      expect(
+        combineRollModifiers(hasAdvantage: true, hasDisadvantage: false),
+        RollMode.advantage,
+      );
+    });
+
+    test('disadvantage only -> disadvantage', () {
+      expect(
+        combineRollModifiers(hasAdvantage: false, hasDisadvantage: true),
+        RollMode.disadvantage,
+      );
+    });
+
+    test('both present -> they cancel to normal', () {
+      expect(
+        combineRollModifiers(hasAdvantage: true, hasDisadvantage: true),
+        RollMode.normal,
+      );
+    });
+  });
 }

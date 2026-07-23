@@ -1,3 +1,4 @@
+import '../narrative/abstract_opponent.dart';
 import '../state/character.dart';
 import 'character_origin.dart';
 import 'meter_definition.dart';
@@ -29,6 +30,7 @@ class World {
     this.origins = const [],
     this.vows = const [],
     this.ranks = const [],
+    this.opponents = const [],
     required this.startingCharacter,
     required this.seedNarration,
     required this.seedChoices,
@@ -93,6 +95,9 @@ class World {
   /// [progression] instead. See `core/engine/rank_progression.dart`.
   final List<RankDefinition> ranks;
 
+  /// Named opponents this campaign declares for abstract combat (§6.13).
+  final List<AbstractOpponent> opponents;
+
   final Character startingCharacter;
 
   /// Opening narration and choices shown before the first action.
@@ -107,6 +112,11 @@ class World {
   Vow vowById(String id) => vows.firstWhere(
         (v) => v.id == id,
         orElse: () => throw ArgumentError('unknown vow: $id'),
+      );
+
+  AbstractOpponent opponentById(String id) => opponents.firstWhere(
+        (o) => o.id == id,
+        orElse: () => throw ArgumentError('unknown opponent: $id'),
       );
 
   /// The [RankDefinition] matching [character]'s current level, or `null`
@@ -162,6 +172,7 @@ class World {
       origins: _originsFromJson(json['origins']),
       vows: _vowsFromJson(json['vows']),
       ranks: _ranksFromJson(json['ranks']),
+      opponents: _opponentsFromJson(json['opponents']),
       startingCharacter: _characterFromJson(
         (json['starting_character'] as Map).cast<String, dynamic>(),
         resourceFormulas: resourceFormulas,
@@ -273,6 +284,16 @@ class World {
       return [
         for (final item in value)
           RankDefinition.fromJson((item as Map).cast<String, dynamic>()),
+      ];
+    }
+    return const [];
+  }
+
+  static List<AbstractOpponent> _opponentsFromJson(Object? value) {
+    if (value is List) {
+      return [
+        for (final item in value)
+          AbstractOpponent.fromJson((item as Map).cast<String, dynamic>()),
       ];
     }
     return const [];

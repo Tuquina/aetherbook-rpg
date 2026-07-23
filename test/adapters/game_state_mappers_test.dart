@@ -85,6 +85,28 @@ void main() {
       expect(json['total'], 24);
       expect(json['isNatural20'], true);
       expect(json['isNatural1'], false);
+      expect(json['rollMode'], 'normal');
+      expect(json['discardedRoll'], isNull);
+    });
+
+    test('serializes rollMode and discardedRoll for an advantage roll', () {
+      const resolution = ActionResolution(
+        outcome: ActionOutcome.success,
+        attributeKey: 'espiritu',
+        attribute: 2,
+        modifiers: 0,
+        roll: 17,
+        difficulty: 12,
+        total: 19,
+        isNatural20: false,
+        isNatural1: false,
+        rollMode: RollMode.advantage,
+        discardedRoll: 8,
+      );
+
+      final json = resolutionToJson(resolution)!;
+      expect(json['rollMode'], 'advantage');
+      expect(json['discardedRoll'], 8);
     });
   });
 
