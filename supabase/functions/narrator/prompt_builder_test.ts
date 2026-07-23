@@ -1,4 +1,4 @@
-import { assertStringIncludes } from "jsr:@std/assert@1";
+import { assertEquals, assertStringIncludes } from "jsr:@std/assert@1";
 import { buildSystemPrompt, buildUserPrompt } from "./prompt_builder.ts";
 import type { NarratorRequest } from "./types.ts";
 
@@ -63,4 +63,22 @@ Deno.test("user prompt includes recent turns when present", () => {
   const prompt = buildUserPrompt(request);
   assertStringIncludes(prompt, "Contexto reciente");
   assertStringIncludes(prompt, "sentiste el qi fluir");
+});
+
+Deno.test("user prompt includes the memory digest when present", () => {
+  const request: NarratorRequest = {
+    ...baseRequest,
+    memoryDigest: "El discípulo dejó su aldea natal buscando un maestro.",
+  };
+  const prompt = buildUserPrompt(request);
+  assertStringIncludes(prompt, "Diario de la historia hasta ahora");
+  assertStringIncludes(prompt, "dejó su aldea natal");
+});
+
+Deno.test("user prompt omits the digest section when absent or blank", () => {
+  const withoutDigest = buildUserPrompt(baseRequest);
+  assertEquals(withoutDigest.includes("Diario de la historia"), false);
+
+  const blankDigest = buildUserPrompt({ ...baseRequest, memoryDigest: "   " });
+  assertEquals(blankDigest.includes("Diario de la historia"), false);
 });

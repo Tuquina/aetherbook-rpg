@@ -13,6 +13,7 @@ class NarratorRequest {
     required this.playerAction,
     required this.resolution,
     this.recentTurns = const [],
+    this.memoryDigest,
   });
 
   final World world;
@@ -25,6 +26,10 @@ class NarratorRequest {
 
   /// Short-term memory: the last few turns, literal (CLAUDE.md §6).
   final List<String> recentTurns;
+
+  /// Medium-term memory: the ~150-word digest regenerated every few turns
+  /// (CLAUDE.md §6, GDD §5.3). `null` until enough turns have accumulated.
+  final String? memoryDigest;
 }
 
 /// The narrator's structured output (CLAUDE.md §5). The AI returns only this

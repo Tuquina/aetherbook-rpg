@@ -31,6 +31,10 @@ export function buildUserPrompt(request: NarratorRequest): string {
         : ""),
   );
 
+  if (request.memoryDigest && request.memoryDigest.trim().length > 0) {
+    parts.push(`Diario de la historia hasta ahora:\n${request.memoryDigest}`);
+  }
+
   if (request.recentTurns && request.recentTurns.length > 0) {
     parts.push(
       `Contexto reciente:\n${request.recentTurns.map((t) => `- ${t}`).join("\n")}`,

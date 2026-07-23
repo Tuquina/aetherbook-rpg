@@ -33,4 +33,15 @@ abstract class GameStateRepositoryPort {
     required String tone,
     required List<String> suggestedChoices,
   });
+
+  /// Returns the most recent memory digest text for [sessionId], or `null`
+  /// if none has been generated yet (CLAUDE.md §6, GDD §5.3).
+  Future<String?> loadLatestMemoryDigest(String sessionId);
+
+  /// Persists a regenerated memory digest, covering turns up to [upToTurn].
+  Future<void> saveMemoryDigest({
+    required String sessionId,
+    required int upToTurn,
+    required String summaryText,
+  });
 }

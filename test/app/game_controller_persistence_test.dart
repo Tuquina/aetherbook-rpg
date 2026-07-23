@@ -41,8 +41,10 @@ class _FakeWorldRepository implements WorldRepositoryPort {
 /// assert on it, without touching Supabase.
 class _FakeGameStateRepository implements GameStateRepositoryPort {
   GameSession? seeded;
+  String? seededDigest;
   final List<String> savedCharacterCalls = [];
   final List<int> appendedTurnIndexes = [];
+  final List<int> savedDigestUpToTurn = [];
   int createSessionCalls = 0;
 
   @override
@@ -74,6 +76,18 @@ class _FakeGameStateRepository implements GameStateRepositoryPort {
     required List<String> suggestedChoices,
   }) async {
     appendedTurnIndexes.add(turnIndex);
+  }
+
+  @override
+  Future<String?> loadLatestMemoryDigest(String sessionId) async => seededDigest;
+
+  @override
+  Future<void> saveMemoryDigest({
+    required String sessionId,
+    required int upToTurn,
+    required String summaryText,
+  }) async {
+    savedDigestUpToTurn.add(upToTurn);
   }
 }
 

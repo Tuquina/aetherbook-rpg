@@ -85,6 +85,7 @@ class HttpNarratorAdapter implements NarratorPort {
       'playerAction': request.playerAction,
       'resolution': _resolutionJson(request.resolution),
       'recentTurns': request.recentTurns,
+      'memoryDigest': request.memoryDigest,
     };
   }
 

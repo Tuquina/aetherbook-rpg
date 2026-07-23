@@ -98,6 +98,7 @@ void main() {
         playerAction: 'forzar la puerta',
         resolution: resolution,
         recentTurns: const ['turno anterior'],
+        memoryDigest: 'El discípulo dejó su aldea natal.',
       ));
 
       expect(capturedUrl, endpoint);
@@ -111,6 +112,7 @@ void main() {
       expect(capturedBody!['resolution']['outcome'], 'success');
       expect(capturedBody!['resolution']['total'], 12);
       expect(capturedBody!['recentTurns'], ['turno anterior']);
+      expect(capturedBody!['memoryDigest'], 'El discípulo dejó su aldea natal.');
     });
 
     test('serializes a null resolution as JSON null (opening turn)', () async {

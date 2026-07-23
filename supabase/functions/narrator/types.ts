@@ -42,6 +42,8 @@ export interface NarratorRequest {
   resolution: ActionResolution | null;
   /** Short-term memory: the last few turns, literal (CLAUDE.md §6). */
   recentTurns?: string[];
+  /** Medium-term memory: the ~150-word digest (CLAUDE.md §6, GDD §5.3). */
+  memoryDigest?: string | null;
 }
 
 export interface StateDeltaWire {
