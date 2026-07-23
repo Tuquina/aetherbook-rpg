@@ -84,3 +84,40 @@ Deno.test("user prompt omits the digest section when absent or blank", () => {
   const blankDigest = buildUserPrompt({ ...baseRequest, memoryDigest: "   " });
   assertEquals(blankDigest.includes("Diario de la historia"), false);
 });
+
+Deno.test("user prompt includes fixed reveals the narrator must include", () => {
+  const request: NarratorRequest = {
+    ...baseRequest,
+    nodeFixedReveals: ["Siete personas ya fueron borradas."],
+  };
+  const prompt = buildUserPrompt(request);
+  assertStringIncludes(prompt, "DEBÉS incluir");
+  assertStringIncludes(prompt, "Siete personas ya fueron borradas.");
+});
+
+Deno.test("user prompt includes forbidden reveals", () => {
+  const request: NarratorRequest = {
+    ...baseRequest,
+    nodeForbiddenReveals: ["El ritual original distribuía recuerdos."],
+  };
+  const prompt = buildUserPrompt(request);
+  assertStringIncludes(prompt, "Nunca reveles");
+  assertStringIncludes(prompt, "El ritual original distribuía recuerdos.");
+});
+
+Deno.test("user prompt includes the corridor's single goal", () => {
+  const request: NarratorRequest = {
+    ...baseRequest,
+    nodeGoal: "Obtener exactamente un access_token.",
+  };
+  const prompt = buildUserPrompt(request);
+  assertStringIncludes(prompt, "tramo generativo acotado");
+  assertStringIncludes(prompt, "Obtener exactamente un access_token.");
+});
+
+Deno.test("user prompt omits node-context sections when absent", () => {
+  const prompt = buildUserPrompt(baseRequest);
+  assertEquals(prompt.includes("DEBÉS incluir"), false);
+  assertEquals(prompt.includes("Nunca reveles"), false);
+  assertEquals(prompt.includes("tramo generativo acotado"), false);
+});

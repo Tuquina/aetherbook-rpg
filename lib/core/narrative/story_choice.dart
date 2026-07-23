@@ -1,6 +1,7 @@
 import '../engine/action_resolution.dart';
 import '../engine/state_delta.dart';
 import '../state/character.dart';
+import 'checkable.dart';
 import 'gate.dart';
 
 /// The effects/destination a checked [StoryChoice] or `HubActivity` resolves
@@ -37,7 +38,7 @@ class ChoiceOutcome {
 /// unconditional behavior exactly. Actually performing the roll and applying
 /// the chosen outcome is the caller's job (`GameController`, Fase 8) — this
 /// class only holds the data and the pure fallback-resolution logic.
-class StoryChoice {
+class StoryChoice implements Checkable {
   const StoryChoice({
     required this.label,
     required this.targetNodeId,
@@ -63,10 +64,12 @@ class StoryChoice {
   /// Which attribute this choice's check uses, or `null` for no check at all
   /// (an unconditional choice, or one resolved "for free" by an already-met
   /// gate — campaign-bible's "no se tira si posee X").
+  @override
   final String? checkAttribute;
 
   /// The literal difficulty for this choice's check (9/12/15/18/21 per
   /// campaign-bible §6.3), or `null` when [checkAttribute] is also `null`.
+  @override
   final int? checkDifficulty;
 
   final ChoiceOutcome? onSuccess;
@@ -82,11 +85,13 @@ class StoryChoice {
   bool isAvailableTo(Character character) => gate.isSatisfiedBy(character);
 
   /// Whether taking this choice requires rolling a check at all.
+  @override
   bool get requiresCheck => checkAttribute != null;
 
   /// The [ChoiceOutcome] this choice resolves to for [outcome], falling back
   /// through `onCriticalSuccess -> onSuccess -> (targetNodeId, effects)` and
   /// `onFailure -> (targetNodeId, effects)` as documented per field.
+  @override
   ChoiceOutcome outcomeFor(ActionOutcome outcome) {
     final base = ChoiceOutcome(targetNodeId: targetNodeId, effects: effects);
     return switch (outcome) {

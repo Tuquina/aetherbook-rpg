@@ -47,6 +47,28 @@ export function buildUserPrompt(request: NarratorRequest): string {
     );
   }
 
+  if (request.nodeFixedReveals && request.nodeFixedReveals.length > 0) {
+    parts.push(
+      `Hechos que DEBÉS incluir en esta escena:\n` +
+        request.nodeFixedReveals.map((f) => `- ${f}`).join("\n"),
+    );
+  }
+
+  if (request.nodeForbiddenReveals && request.nodeForbiddenReveals.length > 0) {
+    parts.push(
+      `Nunca reveles todavía:\n` +
+        request.nodeForbiddenReveals.map((f) => `- ${f}`).join("\n"),
+    );
+  }
+
+  if (request.nodeGoal) {
+    parts.push(
+      `Estás narrando un tramo generativo acotado. Objetivo único de este ` +
+        `tramo (no generes otro hito, antagonista principal ni solución ` +
+        `final): ${request.nodeGoal}`,
+    );
+  }
+
   if (request.resolution === null) {
     parts.push(
       `Es el turno inicial: todavía no hubo acción del jugador. Narrá la ` +

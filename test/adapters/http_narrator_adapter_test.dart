@@ -103,6 +103,9 @@ void main() {
         resolution: resolution,
         recentTurns: const ['turno anterior'],
         memoryDigest: 'El discípulo dejó su aldea natal.',
+        nodeFixedReveals: const ['Siete personas ya fueron borradas.'],
+        nodeForbiddenReveals: const ['El ritual original distribuía recuerdos.'],
+        nodeGoal: 'Obtener exactamente un access_token.',
       ));
 
       expect(capturedUrl, endpoint);
@@ -117,6 +120,10 @@ void main() {
       expect(capturedBody!['resolution']['total'], 12);
       expect(capturedBody!['recentTurns'], ['turno anterior']);
       expect(capturedBody!['memoryDigest'], 'El discípulo dejó su aldea natal.');
+      expect(capturedBody!['nodeFixedReveals'], ['Siete personas ya fueron borradas.']);
+      expect(capturedBody!['nodeForbiddenReveals'],
+          ['El ritual original distribuía recuerdos.']);
+      expect(capturedBody!['nodeGoal'], 'Obtener exactamente un access_token.');
     });
 
     test('serializes a null resolution as JSON null (opening turn)', () async {
