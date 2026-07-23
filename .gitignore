@@ -1,1 +1,24 @@
+# Claude Code local settings (permissions, not shared)
 .claude/settings.local.json
+
+# Flutter / Dart build & tooling artifacts (regenerated, never committed)
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+.packages
+.pub-cache/
+.pub/
+coverage/
+
+# IDE / editor
+.idea/
+*.iml
+.vscode/
+
+# Flutter metadata that is machine-specific
+# (kept: .metadata is small and useful, so it is NOT ignored)
+
+# OS junk
+.DS_Store
+Thumbs.db

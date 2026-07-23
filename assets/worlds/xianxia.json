@@ -1,0 +1,35 @@
+{
+  "slug": "xianxia",
+  "name": "El Sendero del Qi",
+  "theme": "xianxia",
+  "tone": "épico y contemplativo",
+  "system_prompt": "Sos el Game Master de un mundo xianxia de cultivo. Narrás en segunda persona, en español, con tono épico y contemplativo. NUNCA inventes stats ni resuelvas tiradas: recibís el resultado mecánico ya calculado y solo lo narrás con estilo. Devolvés SOLO JSON válido, sin markdown, sin backticks, sin preámbulo.",
+  "image_style_suffix": "arte xianxia, tinta china, dorado etéreo, montañas brumosas",
+  "resolution": {
+    "default_difficulty": 12,
+    "critical_margin": 5,
+    "primary_attribute": "espiritu"
+  },
+  "starting_character": {
+    "name": "Discípulo Errante",
+    "level": 1,
+    "exp": 0,
+    "attributes": {
+      "cuerpo": 3,
+      "mente": 4,
+      "espiritu": 2
+    },
+    "resources": {
+      "qi": 10,
+      "salud": 20
+    }
+  },
+  "seed": {
+    "narration": "El viento de la Montaña de los Nueve Ecos arrastra pétalos de durazno sobre el sendero de piedra. Sos un discípulo errante, sin secta ni maestro, con apenas una chispa de qi encendida en tu núcleo. Ante vos, tres caminos se abren en la niebla del amanecer.",
+    "choices": [
+      "Sentarte a meditar y sentir el flujo del qi",
+      "Explorar el sendero que sube hacia el templo",
+      "Leer el manuscrito raído que llevas contigo"
+    ]
+  }
+}
