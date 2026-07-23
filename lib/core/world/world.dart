@@ -15,6 +15,7 @@ class World {
     required this.defaultDifficulty,
     required this.criticalMargin,
     required this.primaryAttribute,
+    this.attributeKeywords = const {},
     required this.startingCharacter,
     required this.seedNarration,
     required this.seedChoices,
@@ -37,8 +38,15 @@ class World {
   /// Margin above the difficulty that turns a success into a critical.
   final int criticalMargin;
 
-  /// Attribute used for freeform checks in Fase 0.
+  /// Fallback attribute when no keyword in [attributeKeywords] matches the
+  /// action text (CLAUDE.md §2.2, GDD §4.1).
   final String primaryAttribute;
+
+  /// Keywords that map an action's text to an attribute (e.g. `'cuerpo':
+  /// ['forzar', 'pelear']`), used by `InferActionAttribute`. Declarative and
+  /// per-world (CLAUDE.md §8) — the engine never hardcodes what "forzar"
+  /// means for a given world.
+  final Map<String, List<String>> attributeKeywords;
 
   final Character startingCharacter;
 
@@ -62,6 +70,7 @@ class World {
           12,
       criticalMargin: (resolution['critical_margin'] as num?)?.toInt() ?? 5,
       primaryAttribute: resolution['primary_attribute'] as String? ?? 'cuerpo',
+      attributeKeywords: _keywordsFromJson(resolution['attribute_keywords']),
       startingCharacter: _characterFromJson(
         (json['starting_character'] as Map).cast<String, dynamic>(),
       ),
@@ -94,5 +103,14 @@ class World {
       return value.whereType<String>().toList(growable: false);
     }
     return const [];
+  }
+
+  static Map<String, List<String>> _keywordsFromJson(Object? value) {
+    if (value is Map) {
+      return value.map(
+        (key, v) => MapEntry(key as String, _stringList(v)),
+      );
+    }
+    return const {};
   }
 }

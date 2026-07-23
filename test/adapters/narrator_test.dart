@@ -32,6 +32,7 @@ const _world = World(
 
 ActionResolution _resolution(ActionOutcome outcome) => ActionResolution(
       outcome: outcome,
+      attributeKey: 'espiritu',
       attribute: 2,
       modifiers: 0,
       roll: 10,

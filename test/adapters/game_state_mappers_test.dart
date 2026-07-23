@@ -52,6 +52,7 @@ void main() {
     test('serializes every field of a resolution', () {
       const resolution = ActionResolution(
         outcome: ActionOutcome.criticalSuccess,
+        attributeKey: 'espiritu',
         attribute: 3,
         modifiers: 1,
         roll: 20,
@@ -77,6 +78,7 @@ void main() {
         playerAction: 'meditar',
         resolution: const ActionResolution(
           outcome: ActionOutcome.success,
+          attributeKey: 'espiritu',
           attribute: 2,
           modifiers: 0,
           roll: 10,

@@ -8,6 +8,7 @@ enum ActionOutcome { failure, success, criticalSuccess }
 class ActionResolution {
   const ActionResolution({
     required this.outcome,
+    required this.attributeKey,
     required this.attribute,
     required this.modifiers,
     required this.roll,
@@ -18,6 +19,11 @@ class ActionResolution {
   });
 
   final ActionOutcome outcome;
+
+  /// Which attribute this check was made against (e.g. `'cuerpo'`), decided
+  /// deterministically in code (CLAUDE.md §2.2) — never by the AI. Lets the
+  /// narrator and UI reflect which attribute mattered for this action.
+  final String attributeKey;
 
   /// The attribute value used for the check.
   final int attribute;
