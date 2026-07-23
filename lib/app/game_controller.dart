@@ -105,6 +105,7 @@ class GameController extends ChangeNotifier {
         meterDefinitions: world.meterDefinitions,
         rankProgression:
             world.ranks.isEmpty ? null : RankProgression(world.ranks),
+        resourceFormulas: world.resourceFormulas,
       );
 
       final persistence = _persistence;

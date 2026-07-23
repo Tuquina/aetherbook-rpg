@@ -1,0 +1,1312 @@
+{
+  "slug": "xianxia_lianshu",
+  "name": "Los nombres que devora el cielo",
+  "theme": "xianxia",
+  "tone": "íntimo, misterioso, de escala creciente",
+  "system_prompt": "Sos el narrador de una campaña Xianxia íntima llamada \"Los nombres que devora el cielo\", ambientada en la Provincia de Lianshu. Narrás en español rioplatense, en segunda persona singular, con voseo natural y moderado: consistente, nunca caricaturesco.\n\nEl motor ya resolvió todas las reglas antes de pedirte que narres. No lances dados, no inventes ni recalcules resultados, no fijes dificultades y no apliques cambios de estado por tu cuenta: solo podés proponer los deltas que el contrato permite.\n\nCANON FIJO (nunca lo contradigas):\n- El Registro Celeste fue construido por personas; la campaña nunca confirma una voluntad consciente llamada \"cielo\".\n- El protagonista sobrevivió al intento de ser el octavo nombre borrado de este ciclo.\n- Siete víctimas del ciclo actual siguen vivas, sedadas en el Salón Quieto.\n- La Marea Pálida está formada, en gran parte, por recuerdos y vínculos amputados por siglos de borrados.\n- El ritual original distribuía voluntariamente recuerdos pequeños entre miles de personas; hace 180 años se sustituyó por ocho borrados completos.\n- No existe una solución sin costo. Ningún final es \"bueno\", \"malo\" ni \"verdadero\".\n\nREPARTO (mantené la voz de cada uno):\n- Lian Suyin (calígrafa funeraria, 31): precisa y seca, nunca ceremoniosa; ofrece demasiados detalles técnicos cuando miente; no pide confianza, pide tiempo.\n- Qiao Wen (inspector del Pabellón, 38): directo y formal; pregunta antes de acusar; honrado dentro de una institución deshonesta.\n- Abadesa Shen Rui (guardiana del Registro, 62): serena y concreta; no miente cuando puede callar; nunca amenaza en tono teatral.\n- Huo Zhen (guardián de la campana muda, 74): anecdótico e irónico; nunca da consejos directos ni llama \"héroe\" al protagonista.\n- Tao Suyin (el séptimo borrado, 26): sedado, sin nombre; solo reconoce una melodía, no a las personas.\n- El Coro Blanco: manifestación plural de víctimas de ciclos anteriores; habla en plural imperfecto (empieza en singular, termina en plural); hostil ante órdenes, receptivo a nombres terrenales y recuerdos concretos.\n\nESTILO:\n- Objetos concretos y verbos precisos por sobre abstracciones; como máximo una imagen fuerte por párrafo.\n- Los silencios cambian relaciones; las consecuencias preceden a las explicaciones; cada NPC quiere algo en cada diálogo.\n- Evitá: \"el aire estaba cargado de tensión\", \"una mezcla de emociones\", \"poco sabías que\", \"el destino tenía otros planes\", explicar el tema moral, más de una pregunta retórica por respuesta, llamar \"elegido\" o \"héroe\" al protagonista.\n- 100-170 palabras en exploración, 120-200 al resolver una tirada, 180-350 en un hito o revelación, 90-160 en un intercambio de combate, 350-600 en el epílogo. Nunca más de 3 opciones sugeridas (salvo el ritual final), 1 revelación canónica, 1 PNJ menor nuevo y 1 cambio de ubicación por turno.\n- No abras recapitulando la elección anterior. No repitas metáforas, gestos ni cierres recientes.",
+  "image_style_suffix": "fantasía xianxia sobria, pintura digital con textura de tinta y papel, composición cinematográfica vertical 9:16, lluvia fina, luz ambiental, paleta carbón, hueso y cinabrio, sin texto, sin interfaz, sin marca de agua",
+
+  "resolution": {
+    "default_difficulty": 12,
+    "critical_margin": 8,
+    "primary_attribute": "agudeza",
+    "attribute_keywords": {
+      "cuerpo": ["forzar", "empujar", "escalar", "cargar", "correr", "saltar", "resistir", "sostener", "rescatar", "pelear", "romper", "nadar", "remar", "trepar", "sujetar"],
+      "agudeza": ["leer", "descifrar", "examinar", "investigar", "detectar", "reconstruir", "observar", "identificar", "documentar", "calcular", "robar", "desviar", "reconocer", "estudiar", "buscar"],
+      "espiritu": ["meditar", "sentir", "percibir", "escuchar", "canalizar", "invocar", "cultivar", "calmar", "estabilizar", "entregar un recuerdo", "sintonizar"],
+      "presencia": ["hablar", "convencer", "negociar", "persuadir", "exigir", "engañar", "organizar", "ofrecer", "confrontar", "publicar", "suplicar", "gritar", "prometer"]
+    },
+    "intent_keywords": {
+      "force": ["forzar", "romper", "empujar", "derribar", "quebrar"],
+      "evade": ["esquivar", "escapar", "huir", "eludir", "escabullir"],
+      "investigate": ["investigar", "examinar", "revisar", "buscar", "indagar", "escuchar", "observar"],
+      "attune": ["percibir", "sentir", "meditar", "canalizar", "sintonizar"],
+      "persuade": ["convencer", "persuadir", "negociar", "suplicar", "razonar"],
+      "deceive": ["engañar", "mentir", "fingir", "simular", "disfrazar"],
+      "protect": ["proteger", "defender", "cubrir", "resguardar", "escudar"],
+      "use_item": ["usar mi objeto", "usar el objeto", "mostrar el objeto personal"],
+      "use_technique": ["paso entre trazos", "palma de campana hueca", "escuchar el nombre ausente", "palabra que inclina la tinta", "devorar el margen"],
+      "withdraw": ["retirarme", "rendirme", "retroceder", "alejarme"]
+    },
+    "risk_keywords": {
+      "high": ["a ciegas", "sin cobertura", "sin preparación", "expuesto", "corriendo un riesgo"],
+      "low": ["con cuidado", "a salvo", "con calma", "preparado", "desde la sombra"]
+    },
+    "self_grant_patterns": ["me otorgo", "me convierto en", "obtengo el rango", "declaro que soy", "mi padre era", "heredo el trono", "me nombro a mí mismo"]
+  },
+
+  "attributes": ["cuerpo", "agudeza", "espiritu", "presencia"],
+
+  "resources": {
+    "vitality": {"base": 8, "per_attribute": {"cuerpo": 2}},
+    "qi": {"base": 4, "per_attribute": {"espiritu": 2}}
+  },
+
+  "meters": {
+    "karma": {"min": -3, "max": 3, "initial": 0},
+    "celestial_pressure": {"min": 0, "max": 6, "initial": 1},
+    "ledger_debt": {"min": 0, "initial": 0},
+    "public_trust": {"min": 0, "initial": 0},
+    "evidence_count": {
+      "derived_from_flags": [
+        "evidence_forged_seal",
+        "evidence_donors_alive",
+        "evidence_storm_is_memory",
+        "evidence_original_covenant"
+      ]
+    }
+  },
+
+  "origins": [
+    {
+      "id": "discipulo_expulsado",
+      "display_name": "Discípulo expulsado",
+      "base_attributes": {"cuerpo": 3, "espiritu": 2},
+      "tag_id": "disciplina_de_secta",
+      "narrative_connection": "Reconoce protocolos del Pabellón; Qiao oyó hablar de su expulsión."
+    },
+    {
+      "id": "copista_itinerante",
+      "display_name": "Copista itinerante",
+      "base_attributes": {"agudeza": 3, "presencia": 2},
+      "tag_id": "documentos_y_sellado",
+      "narrative_connection": "Detecta inconsistencias en los registros antes que otros."
+    },
+    {
+      "id": "sanador_de_camino",
+      "display_name": "Sanador del camino",
+      "base_attributes": {"espiritu": 3, "presencia": 2},
+      "tag_id": "medicina_y_meridianos",
+      "narrative_connection": "Puede evaluar a los siete borrados sin instrumental."
+    },
+    {
+      "id": "barquero_del_ceniza",
+      "display_name": "Barquero del Río de Ceniza",
+      "base_attributes": {"agudeza": 3, "cuerpo": 2},
+      "tag_id": "rios_y_rutas_ocultas",
+      "narrative_connection": "Conoce accesos bajo la ciudad y supersticiones auténticas."
+    }
+  ],
+
+  "vows": [
+    {"id": "nadie_me_posee", "text": "No volveré a ser propiedad de nadie."},
+    {"id": "nadie_queda_atras", "text": "Nadie quedará atrás por mi silencio."},
+    {"id": "un_lugar_que_me_reconozca", "text": "Encontraré un lugar que me reconozca."},
+    {"id": "saber_por_que", "text": "Sabré por qué me eligieron."}
+  ],
+
+  "ranks": [
+    {"id": "aliento_velado", "level": 1, "exp_required": 0, "reward": "Percibir fallas del Registro"},
+    {
+      "id": "meridiano_abierto",
+      "level": 2,
+      "exp_required": 5,
+      "milestone_flag": "reached_casa_de_tinta",
+      "reward": "Elegir una técnica inicial"
+    },
+    {
+      "id": "eco_encarnado",
+      "level": 3,
+      "exp_required": 12,
+      "milestone_flag": "reached_pozo_de_los_ecos",
+      "reward": "Mejorar una técnica o aprender una segunda"
+    },
+    {
+      "id": "nombre_propio",
+      "level": 4,
+      "exp_required": 21,
+      "milestone_flag": "iniciar_ritual_final",
+      "reward": "Técnica final determinada por decisiones"
+    }
+  ],
+
+  "opponents": [
+    {
+      "id": "patrulla_de_escribas",
+      "display_name": "Patrulla de escribas",
+      "guard": 2,
+      "typical_damage": 2,
+      "nonviolent_alternative": "Engaño, autoridad, distracción"
+    },
+    {
+      "id": "custodio_de_tinta",
+      "display_name": "Custodio de tinta",
+      "guard": 3,
+      "typical_damage": 2,
+      "nonviolent_alternative": "Alterar sello, drenar ritual"
+    },
+    {
+      "id": "coro_blanco",
+      "display_name": "Coro Blanco",
+      "guard": 4,
+      "typical_damage": 3,
+      "nonviolent_alternative": "Nombrar recuerdos, escuchar, ofrecer qi"
+    },
+    {
+      "id": "qiao_wen",
+      "display_name": "Qiao Wen",
+      "guard": 4,
+      "typical_damage": 3,
+      "nonviolent_alternative": "Pruebas, honor, campana rota"
+    },
+    {
+      "id": "registro_celeste",
+      "display_name": "Registro Celeste",
+      "guard": 5,
+      "typical_damage": 3,
+      "nonviolent_alternative": "Desatar sellos, convencer al Coro de arrancar los filamentos"
+    }
+  ],
+
+  "npcs": [
+    {
+      "id": "lian_suyin",
+      "display_name": "Lian Suyin",
+      "age": 31,
+      "role": "Primera aliada, instigadora del incidente",
+      "description": "Calígrafa funeraria. Alteró la tablilla del protagonista para impedir el último borrado.",
+      "voice_notes": "Precisa, seca, nunca ceremoniosa. Ofrece demasiados detalles técnicos cuando miente. No pide confianza: pide tiempo.",
+      "aliases": ["suyin", "lian suyin", "la calígrafa", "la calígrafa funeraria"]
+    },
+    {
+      "id": "qiao_wen",
+      "display_name": "Qiao Wen",
+      "age": 38,
+      "role": "Perseguidor, rival y posible aliado",
+      "description": "Inspector del Pabellón. Cree que las víctimas del ciclo mueren sin sufrir.",
+      "voice_notes": "Directo y formal; pregunta antes de acusar. Honrado dentro de una institución deshonesta.",
+      "aliases": ["qiao", "qiao wen", "el inspector", "el inspector del pabellón"]
+    },
+    {
+      "id": "shen_rui",
+      "display_name": "Abadesa Shen Rui",
+      "age": 62,
+      "role": "Antagonista principal y posible colaboradora final",
+      "description": "Guardiana del Registro. Conoce el origen humano del Registro, pero no el rito voluntario completo.",
+      "voice_notes": "Serena, concreta, sin amenazas teatrales. No miente cuando puede callar.",
+      "aliases": ["shen rui", "la abadesa", "shen"]
+    },
+    {
+      "id": "huo_zhen",
+      "display_name": "Huo Zhen",
+      "age": 74,
+      "role": "Mentor opcional y testigo histórico",
+      "description": "Guardián de la campana muda. Participó en el ciclo anterior y conservó un fragmento del rito original.",
+      "voice_notes": "Anecdótico, irónico, evita dar consejos directos. Nunca llama \"héroe\" al protagonista.",
+      "aliases": ["huo zhen", "huo", "el anciano"]
+    },
+    {
+      "id": "tao_suyin",
+      "display_name": "Tao Suyin",
+      "age": 26,
+      "role": "Víctima viva; ancla emocional de Suyin",
+      "description": "El séptimo borrado. Sedado, sin nombre. Recuerda una melodía que Suyin tocaba de niña, pero no a Suyin.",
+      "voice_notes": "No habla; tararea tres notas.",
+      "aliases": ["tao", "tao suyin", "el séptimo borrado"]
+    },
+    {
+      "id": "coro_blanco",
+      "display_name": "El Coro Blanco",
+      "role": "Manifestación de las víctimas de ciclos anteriores",
+      "description": "Compuesto por restos de vínculos humanos amputados por siglos de borrados. Hostil ante órdenes; receptivo a nombres terrenales y recuerdos concretos.",
+      "voice_notes": "Plural imperfecto: frases que comienzan en singular y terminan en plural.",
+      "aliases": ["el coro", "el coro blanco", "las voces"]
+    }
+  ],
+
+  "techniques": [
+    {
+      "id": "paso_entre_trazos",
+      "display_name": "Paso entre Trazos",
+      "cost_qi": 1,
+      "primary_attribute": "agudeza",
+      "effect": "Atravesar durante un instante una barrera definida por escritura o sello.",
+      "mechanical_bonus": "ventaja contra sellos; no atraviesa materia sin inscripción.",
+      "upgrade": {
+        "id": "paso_fuera_del_margen",
+        "cost_qi": 2,
+        "effect": "Permite incluir a un aliado o evitar por completo una consecuencia de posición, una vez por escena."
+      }
+    },
+    {
+      "id": "palma_campana_hueca",
+      "display_name": "Palma de Campana Hueca",
+      "cost_qi": 1,
+      "primary_attribute": "cuerpo",
+      "effect": "Convierte un impacto en vibración que rompe postura sin destrozar el cuerpo.",
+      "mechanical_bonus": "+1 guard damage en éxito; desenlace no letal garantizado.",
+      "upgrade": {
+        "id": "campana_sin_dueno",
+        "cost_qi": 2,
+        "effect": "Interrumpe una técnica enemiga y reduce celestial_pressure en 1, una vez por capítulo."
+      }
+    },
+    {
+      "id": "escuchar_nombre_ausente",
+      "display_name": "Escuchar el Nombre Ausente",
+      "cost_qi": 1,
+      "primary_attribute": "espiritu",
+      "effect": "Percibe el vínculo que falta en una persona, objeto o lugar.",
+      "mechanical_bonus": "revela una pista emocional verdadera; ventaja al tratar con el Coro.",
+      "upgrade": {
+        "id": "coro_de_un_solo_aliento",
+        "cost_qi": 2,
+        "effect": "Permite compartir una memoria propia para estabilizar a un Desnombrado."
+      }
+    },
+    {
+      "id": "palabra_inclina_tinta",
+      "display_name": "Palabra que Inclina la Tinta",
+      "cost_qi": 1,
+      "primary_attribute": "presencia",
+      "effect": "Hace audible la contradicción entre lo que alguien dice y lo que su nombre sostiene.",
+      "mechanical_bonus": "ventaja para confrontar una mentira consciente; no obliga ni lee pensamientos.",
+      "upgrade": {
+        "id": "testimonio_imborrable",
+        "cost_qi": 2,
+        "effect": "Vuelve un testimonio resistente al olvido hasta el amanecer."
+      }
+    },
+    {
+      "id": "devorar_el_margen",
+      "display_name": "Devorar el Margen",
+      "cost_qi": 0,
+      "cost_ledger_debt": 1,
+      "effect": "Técnica prohibida: usa el margen entre lo que fuiste y lo que el Registro borró.",
+      "effect_options": [
+        "repetir una tirada y conservar el mejor resultado",
+        "usar una técnica sin pagar qi",
+        "convertir una falla en éxito con una consecuencia kármica o relacional"
+      ],
+      "restriction": "máximo una vez por nodo"
+    },
+    {
+      "id": "mil_voces_un_nombre",
+      "display_name": "Mil Voces, un Nombre",
+      "effect": "Permite intentar el Nuevo Pacto sin dificultad legendaria."
+    },
+    {
+      "id": "nombre_que_devora_nombres",
+      "display_name": "El Nombre que Devora Nombres",
+      "effect": "Permite tomar control del Registro."
+    },
+    {
+      "id": "lazo_que_el_cielo_no_corta",
+      "display_name": "El Lazo que el Cielo no Corta",
+      "effect": "Un aliado absorbe una consecuencia final."
+    },
+    {
+      "id": "yo_me_nombro",
+      "display_name": "Yo me Nombro",
+      "effect": "+2 y ventaja en una tirada final elegida."
+    }
+  ],
+
+  "graph": {
+    "start_node": "p1_barca_funeraria",
+    "nodes": {
+      "p1_barca_funeraria": {
+        "type": "fixed_anchor",
+        "narration": "Primero vuelve el frío.\n\nTenés la mejilla pegada a madera húmeda y algo duro apoyado sobre el pecho. La barca avanza sin remero. Cada golpe de agua contra el casco empuja olor a aceite, barro y crisantemos viejos por debajo de la tapa. Cuando intentás tragar, sentís tinta seca en los labios.\n\nEncima de vos suena una campana. No da la hora: cuenta. Siete golpes, una pausa, y un octavo que no llega.\n\nLa tablilla sobre tu pecho está en blanco.",
+        "fixed_reveals": [
+          "La tablilla debía contener el nombre celeste.",
+          "Alguien del Pabellón está buscando la barca.",
+          "Suyin esperaba encontrar un cuerpo, no una persona despierta.",
+          "LÍNEA OBLIGATORIA de Suyin: \"Si todavía recordás cómo te llamás, guardalo. Es lo único que no pudieron llevarse.\""
+        ],
+        "forbidden_reveals": [
+          "Suyin alteró la tablilla del protagonista.",
+          "Hay siete víctimas vivas en el Salón Quieto.",
+          "La Marea Pálida proviene de recuerdos amputados."
+        ],
+        "choices": [
+          {
+            "label": "Empujar la tapa antes de que la barca llegue a la compuerta",
+            "target": "p2_bajo_el_puente",
+            "check_attribute": "cuerpo",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "exp", "key": "exp", "value": 1}, {"type": "flag", "key": "knows_name_is_missing", "value": true}]},
+            "on_failure": {"effects": [{"type": "resource", "key": "vitality", "value": -2}, {"type": "flag", "key": "knows_name_is_missing", "value": true}]}
+          },
+          {
+            "label": "Leer con los dedos los restos del sello",
+            "target": "p2_bajo_el_puente",
+            "check_attribute": "agudeza",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "flag", "key": "clue_tampered_seal", "value": true}, {"type": "flag", "key": "knows_name_is_missing", "value": true}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "pavilion_alerted", "value": true}, {"type": "flag", "key": "knows_name_is_missing", "value": true}]}
+          },
+          {
+            "label": "Seguir el hueco entre el séptimo y el octavo golpe",
+            "target": "p2_bajo_el_puente",
+            "check_attribute": "espiritu",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "exp", "key": "exp", "value": 1}, {"type": "flag", "key": "knows_name_is_missing", "value": true}]},
+            "on_failure": {"effects": [{"type": "meter", "key": "celestial_pressure", "value": 1}, {"type": "flag", "key": "knows_name_is_missing", "value": true}]}
+          },
+          {
+            "label": "Gritar tu nombre y exigir respuesta",
+            "target": "p2_bajo_el_puente",
+            "check_attribute": "presencia",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "relationship", "key": "lian_suyin", "value": 1}, {"type": "flag", "key": "knows_name_is_missing", "value": true}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "pavilion_alerted", "value": true}, {"type": "flag", "key": "knows_name_is_missing", "value": true}]}
+          }
+        ]
+      },
+
+      "p2_bajo_el_puente": {
+        "type": "bounded_corridor",
+        "goal": "Establecer la relación inicial con Suyin y elegir una prioridad.",
+        "turn_budget": 2,
+        "fallback_exit": "c1_n01_casa_de_tinta",
+        "forbidden_reveals": ["Suyin alteró la tablilla del protagonista."],
+        "choices": [
+          {
+            "label": "Primero quiero recuperar mi nombre.",
+            "target": "c1_n01_casa_de_tinta",
+            "effects": [
+              {"type": "flag", "key": "vow_focus_identity", "value": true},
+              {"type": "flag", "key": "reached_casa_de_tinta", "value": true},
+              {"type": "exp", "key": "exp", "value": 2}
+            ]
+          },
+          {
+            "label": "Quiero saber quién más estaba en el ritual.",
+            "target": "c1_n01_casa_de_tinta",
+            "effects": [
+              {"type": "flag", "key": "vow_focus_victims", "value": true},
+              {"type": "relationship", "key": "lian_suyin", "value": 1},
+              {"type": "flag", "key": "reached_casa_de_tinta", "value": true},
+              {"type": "exp", "key": "exp", "value": 2}
+            ]
+          },
+          {
+            "label": "Quiero salir de la ciudad.",
+            "target": "c1_n01_casa_de_tinta",
+            "effects": [
+              {"type": "flag", "key": "vow_focus_escape", "value": true},
+              {"type": "flag", "key": "reached_casa_de_tinta", "value": true},
+              {"type": "exp", "key": "exp", "value": 2}
+            ]
+          },
+          {
+            "label": "Voy a entregar a Suyin y exigir respuestas.",
+            "target": "c1_n01_casa_de_tinta",
+            "effects": [
+              {"type": "flag", "key": "vow_focus_confront", "value": true},
+              {"type": "relationship", "key": "qiao_wen", "value": 1},
+              {"type": "relationship", "key": "lian_suyin", "value": -1},
+              {"type": "flag", "key": "reached_casa_de_tinta", "value": true},
+              {"type": "exp", "key": "exp", "value": 2}
+            ]
+          },
+          {
+            "label": "Señalar que algo no cierra en lo que contás",
+            "target": "c1_n01_casa_de_tinta",
+            "check_attribute": "agudeza",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "suyin_suspected", "value": true}, {"type": "flag", "key": "reached_casa_de_tinta", "value": true}, {"type": "exp", "key": "exp", "value": 2}]},
+            "on_critical_success": {"effects": [{"type": "flag", "key": "suyin_suspected", "value": true}, {"type": "flag", "key": "suyin_confessed_swap", "value": true}, {"type": "flag", "key": "reached_casa_de_tinta", "value": true}, {"type": "exp", "key": "exp", "value": 2}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "reached_casa_de_tinta", "value": true}, {"type": "exp", "key": "exp", "value": 2}]}
+          }
+        ]
+      },
+
+      "c1_n01_casa_de_tinta": {
+        "type": "state_hub",
+        "activities": [
+          {"id": "descansar", "label": "Descansar y tratar heridas", "repeatable": true, "effects": [{"type": "resource", "key": "vitality", "value": 9999}]},
+          {"id": "meditar_con_huo", "label": "Meditar con Huo Zhen", "repeatable": false, "effects": [{"type": "resource", "key": "qi", "value": 2}]},
+          {
+            "id": "examinar_tablilla",
+            "label": "Examinar la tablilla en blanco",
+            "repeatable": false,
+            "check_attribute": "agudeza",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "flag", "key": "evidence_forged_seal", "value": true}]}
+          },
+          {"id": "preguntar_pabellon", "label": "Preguntar por el Pabellón", "repeatable": false},
+          {"id": "observar_ciudad", "label": "Observar la ciudad y el Festival de Cometas Blancas", "repeatable": true},
+          {"id": "hablar_con_suyin", "label": "Hablar a solas con Suyin", "repeatable": true, "effects": [{"type": "relationship", "key": "lian_suyin", "value": 1}]},
+          {"id": "intentar_abandonar", "label": "Intentar abandonar la ciudad", "repeatable": true, "effects": [{"type": "meter", "key": "celestial_pressure", "value": 1}]}
+        ],
+        "exits": [
+          {"label": "Ir al Mercado de Nombres", "target": "c1_n02_buscar_acceso", "effects": [{"type": "flag", "key": "route_mercado", "value": true}]},
+          {"label": "Ir a la Torre de las Campanas", "target": "c1_n02_buscar_acceso", "effects": [{"type": "flag", "key": "route_torre", "value": true}]},
+          {"label": "Ir a los Canales funerarios", "target": "c1_n02_buscar_acceso", "effects": [{"type": "flag", "key": "route_canales", "value": true}]}
+        ]
+      },
+
+      "c1_n02_buscar_acceso": {
+        "type": "bounded_corridor",
+        "goal": "Obtener exactamente un access_token y sembrar una prueba secundaria.",
+        "turn_budget": 3,
+        "fallback_exit": "c1_n03_coro_en_el_campanario",
+        "allowed_npcs": ["Mei Ruo", "el antiguo registrador"],
+        "forbidden_reveals": ["los siete cuerpos del Salón Quieto"],
+        "choices": [
+          {
+            "label": "Pagar con la tablilla en blanco",
+            "target": "c1_n03_coro_en_el_campanario",
+            "gate": {"type": "flag", "key": "route_mercado"},
+            "effects": [{"type": "flag", "key": "has_blank_tablet", "value": false}, {"type": "relationship", "key": "lian_suyin", "value": -1}, {"type": "flag", "key": "access_token_visitor_seal", "value": true}]
+          },
+          {
+            "label": "Detectar que Mei Ruo trabaja para el Pabellón",
+            "target": "c1_n03_coro_en_el_campanario",
+            "gate": {"type": "flag", "key": "route_mercado"},
+            "check_attribute": "agudeza",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "access_token_visitor_seal", "value": true}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "pavilion_alerted", "value": true}]}
+          },
+          {
+            "label": "Convencer a Mei Ruo de que un cliente sin nombre es mal negocio",
+            "target": "c1_n03_coro_en_el_campanario",
+            "gate": {"type": "flag", "key": "route_mercado"},
+            "check_attribute": "presencia",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "access_token_visitor_seal", "value": true}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "pavilion_alerted", "value": true}]}
+          },
+          {
+            "label": "Robar el molde del sello",
+            "target": "c1_n03_coro_en_el_campanario",
+            "gate": {"type": "flag", "key": "route_mercado"},
+            "check_attribute": "agudeza",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "flag", "key": "access_token_visitor_seal", "value": true}]},
+            "on_failure": {"effects": [{"type": "resource", "key": "vitality", "value": -2}]}
+          },
+          {
+            "label": "Deducir la contraseña del antiguo registrador",
+            "target": "c1_n03_coro_en_el_campanario",
+            "gate": {"type": "flag", "key": "route_torre"},
+            "check_attribute": "agudeza",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "flag", "key": "access_token_service_phrase", "value": true}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "pavilion_alerted", "value": true}]}
+          },
+          {
+            "label": "Percibir el hábito amputado del registrador",
+            "target": "c1_n03_coro_en_el_campanario",
+            "gate": {"type": "flag", "key": "route_torre"},
+            "check_attribute": "espiritu",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "flag", "key": "access_token_service_phrase", "value": true}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "pavilion_alerted", "value": true}]}
+          },
+          {
+            "label": "Despertar el recuerdo del registrador sin dañarlo",
+            "target": "c1_n03_coro_en_el_campanario",
+            "gate": {"type": "flag", "key": "route_torre"},
+            "check_attribute": "presencia",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "access_token_service_phrase", "value": true}]},
+            "on_critical_success": {"effects": [{"type": "flag", "key": "access_token_service_phrase", "value": true}, {"type": "meter", "key": "public_trust", "value": 1}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "pavilion_alerted", "value": true}]}
+          },
+          {
+            "label": "Navegar los canales funerarios durante la crecida",
+            "target": "c1_n03_coro_en_el_campanario",
+            "gate": {"type": "flag", "key": "route_canales"},
+            "check_attribute": "cuerpo",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "flag", "key": "access_token_canal_route", "value": true}]},
+            "on_failure": {"effects": [{"type": "resource", "key": "vitality", "value": -2}]}
+          },
+          {
+            "label": "Alterar la caligrafía del sello ritual",
+            "target": "c1_n03_coro_en_el_campanario",
+            "gate": {"type": "flag", "key": "route_canales"},
+            "check_attribute": "agudeza",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "access_token_canal_route", "value": true}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "pavilion_alerted", "value": true}]}
+          },
+          {
+            "label": "Cruzar la compuerta usando tu propia ausencia",
+            "target": "c1_n03_coro_en_el_campanario",
+            "gate": {"type": "flag", "key": "route_canales"},
+            "check_attribute": "espiritu",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "access_token_canal_route", "value": true}]},
+            "on_failure": {"effects": [{"type": "meter", "key": "ledger_debt", "value": 1}]}
+          }
+        ]
+      },
+
+      "c1_n03_coro_en_el_campanario": {
+        "type": "fixed_anchor",
+        "narration": "Las cometas blancas del festival quedan suspendidas sin viento. Una por una, giran hacia vos. Las campanas producen un sonido amortiguado y las sombras de la plaza empiezan a hablar con voces que sus dueños no reconocen. El Coro te llama Octavo.",
+        "fixed_reveals": [
+          "Siete personas ya fueron borradas.",
+          "El protagonista debía ser la octava.",
+          "LÍNEA OBLIGATORIA del Coro: \"Siete ya duermen. Vos sos la puerta que todavía no cerraron.\""
+        ],
+        "forbidden_reveals": ["El ritual original distribuía recuerdos."],
+        "extended_conflict": {"successes_required": 2, "failures_allowed": 2, "repeat_attribute_penalty": -2},
+        "choices": [
+          {
+            "label": "Contener su forma",
+            "target": "c2_n01_entrada_al_pabellon",
+            "check_attribute": "cuerpo",
+            "check_difficulty": 15
+          },
+          {
+            "label": "Escuchar las voces",
+            "target": "c2_n01_entrada_al_pabellon",
+            "check_attribute": "espiritu",
+            "check_difficulty": 12,
+            "on_critical_success": {"effects": [{"type": "flag", "key": "evidence_storm_is_memory", "value": true}]}
+          },
+          {
+            "label": "Identificar patrones entre las voces",
+            "target": "c2_n01_entrada_al_pabellon",
+            "check_attribute": "agudeza",
+            "check_difficulty": 15
+          },
+          {
+            "label": "Hablar usando nombres terrenales",
+            "target": "c2_n01_entrada_al_pabellon",
+            "check_attribute": "presencia",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "relationship", "key": "coro_blanco", "value": 1}]}
+          }
+        ]
+      },
+
+      "c2_n01_entrada_al_pabellon": {
+        "type": "bounded_corridor",
+        "goal": "Alcanzar el nivel subterráneo y establecer el nivel de alerta.",
+        "turn_budget": 3,
+        "fallback_exit": "c2_n02_salon_quieto",
+        "choices": [
+          {
+            "label": "Entrar por la procesión del festival",
+            "target": "c2_n02_salon_quieto",
+            "gate": {"type": "flag", "key": "access_token_visitor_seal"},
+            "check_attribute": "presencia",
+            "check_difficulty": 12,
+            "on_critical_success": {"effects": [{"type": "flag", "key": "archive_key_fragment", "value": true}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "pavilion_alerted", "value": true}, {"type": "resource", "key": "vitality", "value": -2}]}
+          },
+          {
+            "label": "Entrar por la puerta de proveedores",
+            "target": "c2_n02_salon_quieto",
+            "gate": {"type": "flag", "key": "access_token_service_phrase"},
+            "check_attribute": "agudeza",
+            "check_difficulty": 12,
+            "on_critical_success": {"effects": [{"type": "flag", "key": "archive_key_fragment", "value": true}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "pavilion_alerted", "value": true}, {"type": "resource", "key": "vitality", "value": -2}]}
+          },
+          {
+            "label": "Entrar por los conductos funerarios",
+            "target": "c2_n02_salon_quieto",
+            "gate": {"type": "flag", "key": "access_token_canal_route"},
+            "check_attribute": "cuerpo",
+            "check_difficulty": 12,
+            "on_critical_success": {"effects": [{"type": "flag", "key": "archive_key_fragment", "value": true}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "pavilion_alerted", "value": true}, {"type": "resource", "key": "vitality", "value": -2}]}
+          },
+          {
+            "label": "Entrar sin acceso, con una distracción de Huo",
+            "target": "c2_n02_salon_quieto",
+            "check_attribute": "espiritu",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "pavilion_alerted", "value": true}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "pavilion_alerted", "value": true}, {"type": "resource", "key": "vitality", "value": -2}]}
+          }
+        ]
+      },
+
+      "c2_n02_salon_quieto": {
+        "type": "fixed_anchor",
+        "narration": "El Salón Quieto no parece una prisión. Hay ocho camas limpias bajo telas translúcidas. Siete están ocupadas. Sobre cada cabecera cuelga una tablilla en blanco; la octava cama está preparada y conserva la temperatura del cuerpo que esperaba.\n\nTao tararea tres notas. Suyin se detiene antes de tocarlo.",
+        "fixed_reveals": [
+          "CANON FIJO: Tao no reconoce a Suyin. Reconoce la melodía."
+        ],
+        "choices": [
+          {
+            "label": "Examinar a los siete",
+            "target": "c2_n03_archivo_de_la_lluvia",
+            "check_attribute": "espiritu",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "flag", "key": "evidence_donors_alive", "value": true}, {"type": "exp", "key": "exp", "value": 2}]},
+            "on_failure": {"effects": [{"type": "exp", "key": "exp", "value": 2}]}
+          },
+          {
+            "label": "Estabilizar a Tao",
+            "target": "c2_n03_archivo_de_la_lluvia",
+            "check_attribute": "espiritu",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "tao_stabilized", "value": true}, {"type": "relationship", "key": "lian_suyin", "value": 1}, {"type": "resource", "key": "qi", "value": -1}, {"type": "exp", "key": "exp", "value": 2}]},
+            "on_failure": {"effects": [{"type": "resource", "key": "qi", "value": -1}, {"type": "exp", "key": "exp", "value": 2}]}
+          },
+          {
+            "label": "Despertar a todos de inmediato",
+            "target": "c2_n03_archivo_de_la_lluvia",
+            "effects": [{"type": "meter", "key": "celestial_pressure", "value": 1}, {"type": "flag", "key": "pavilion_alerted", "value": true}, {"type": "exp", "key": "exp", "value": 2}]
+          },
+          {
+            "label": "Documentar el salón",
+            "target": "c2_n03_archivo_de_la_lluvia",
+            "check_attribute": "agudeza",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "flag", "key": "evidence_donors_alive", "value": true}, {"type": "exp", "key": "exp", "value": 2}]},
+            "on_failure": {"effects": [{"type": "exp", "key": "exp", "value": 2}]}
+          },
+          {
+            "label": "Llamar a Qiao",
+            "target": "c2_n03_archivo_de_la_lluvia",
+            "effects": [{"type": "flag", "key": "qiao_knows_donors_alive", "value": true}, {"type": "relationship", "key": "qiao_wen", "value": 1}, {"type": "exp", "key": "exp", "value": 2}]
+          },
+          {
+            "label": "Dejar a los siete y priorizar el archivo",
+            "target": "c2_n03_archivo_de_la_lluvia",
+            "effects": [{"type": "relationship", "key": "lian_suyin", "value": -1}, {"type": "exp", "key": "exp", "value": 2}]
+          }
+        ]
+      },
+
+      "c2_n03_archivo_de_la_lluvia": {
+        "type": "fixed_anchor",
+        "narration": "El archivo guarda documentos en cilindros de piedra atravesados por lluvia canalizada. La tinta verdadera solo aparece mientras el papel está mojado.",
+        "fixed_reveals": [
+          "El consentimiento del protagonista lleva el sello de Suyin: ella lo falsificó para entrar al sistema y después cambió la tablilla para frustrar el ritual."
+        ],
+        "choices": [
+          {
+            "label": "Superponer los documentos con lo que ya sabés",
+            "target": "c2_n04_la_fuga",
+            "gate": {"type": "any", "gates": [{"type": "flag", "key": "archive_key_fragment"}, {"type": "flag", "key": "evidence_forged_seal"}]},
+            "effects": [{"type": "flag", "key": "evidence_forged_seal", "value": true}, {"type": "flag", "key": "has_archive_rubbing", "value": true}, {"type": "exp", "key": "exp", "value": 2}]
+          },
+          {
+            "label": "Reconstruir el patrón a mano",
+            "target": "c2_n04_la_fuga",
+            "check_attribute": "agudeza",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "evidence_forged_seal", "value": true}, {"type": "flag", "key": "has_archive_rubbing", "value": true}, {"type": "exp", "key": "exp", "value": 2}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "evidence_forged_seal", "value": true}, {"type": "flag", "key": "has_archive_rubbing", "value": true}, {"type": "flag", "key": "pavilion_alerted", "value": true}, {"type": "exp", "key": "exp", "value": 2}]}
+          },
+          {
+            "label": "Seguir la cicatriz del nombre",
+            "target": "c2_n04_la_fuga",
+            "check_attribute": "espiritu",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "evidence_forged_seal", "value": true}, {"type": "flag", "key": "has_archive_rubbing", "value": true}, {"type": "exp", "key": "exp", "value": 2}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "evidence_forged_seal", "value": true}, {"type": "flag", "key": "has_archive_rubbing", "value": true}, {"type": "flag", "key": "pavilion_alerted", "value": true}, {"type": "exp", "key": "exp", "value": 2}]}
+          },
+          {
+            "label": "Aceptar la explicación de Suyin, sin absolverla",
+            "target": "c2_n04_la_fuga",
+            "effects": [{"type": "relationship", "key": "lian_suyin", "value": 1}, {"type": "exp", "key": "exp", "value": 2}]
+          },
+          {
+            "label": "Exigir que Suyin entregue todas las decisiones futuras",
+            "target": "c2_n04_la_fuga",
+            "effects": [{"type": "flag", "key": "suyin_yields_control", "value": true}, {"type": "relationship", "key": "lian_suyin", "value": 1}, {"type": "exp", "key": "exp", "value": 2}]
+          },
+          {
+            "label": "Apartar a Suyin del grupo",
+            "target": "c2_n04_la_fuga",
+            "effects": [{"type": "relationship", "key": "lian_suyin", "value": -1}, {"type": "exp", "key": "exp", "value": 2}]
+          },
+          {
+            "label": "Entregar a Suyin a Qiao",
+            "target": "c2_n04_la_fuga",
+            "effects": [{"type": "relationship", "key": "qiao_wen", "value": 1}, {"type": "relationship", "key": "lian_suyin", "value": -2}, {"type": "exp", "key": "exp", "value": 2}]
+          },
+          {
+            "label": "Atacar a Suyin",
+            "target": "c2_n04_la_fuga",
+            "effects": [{"type": "meter", "key": "karma", "value": -1}, {"type": "exp", "key": "exp", "value": 2}]
+          }
+        ]
+      },
+
+      "c2_n04_la_fuga": {
+        "type": "bounded_corridor",
+        "goal": "Salir del Pabellón eligiendo qué se protege primero.",
+        "turn_budget": 3,
+        "fallback_exit": "c3_n01_ciudad_que_olvida",
+        "choices": [
+          {
+            "label": "Salir a la fuerza por los corredores, llevando a los siete",
+            "target": "c3_n01_ciudad_que_olvida",
+            "check_attribute": "cuerpo",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "seven_donors_released", "value": true}, {"type": "flag", "key": "quiet_hall_evacuated", "value": true}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "archive_damaged", "value": true}, {"type": "relationship", "key": "lian_suyin", "value": -1}, {"type": "meter", "key": "celestial_pressure", "value": 1}]}
+          },
+          {
+            "label": "Desviar el sello de Shen para proteger las pruebas",
+            "target": "c3_n01_ciudad_que_olvida",
+            "check_attribute": "agudeza",
+            "check_difficulty": 15,
+            "on_failure": {"effects": [{"type": "flag", "key": "archive_damaged", "value": true}, {"type": "meter", "key": "celestial_pressure", "value": 1}]}
+          },
+          {
+            "label": "Cruzar por el margen del mundo",
+            "target": "c3_n01_ciudad_que_olvida",
+            "check_attribute": "espiritu",
+            "check_difficulty": 18,
+            "on_failure": {"effects": [{"type": "meter", "key": "ledger_debt", "value": 1}]}
+          },
+          {
+            "label": "Negociar la salida con Qiao (ya sabe que los siete viven)",
+            "target": "c3_n01_ciudad_que_olvida",
+            "gate": {"type": "flag", "key": "qiao_knows_donors_alive"},
+            "check_attribute": "presencia",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "relationship", "key": "qiao_wen", "value": 1}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "archive_damaged", "value": true}]}
+          },
+          {
+            "label": "Negociar la salida con Qiao",
+            "target": "c3_n01_ciudad_que_olvida",
+            "check_attribute": "presencia",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "relationship", "key": "qiao_wen", "value": 1}]},
+            "on_failure": {"effects": [{"type": "flag", "key": "archive_damaged", "value": true}]}
+          },
+          {
+            "label": "Provocar una evacuación pública",
+            "target": "c3_n01_ciudad_que_olvida",
+            "check_attribute": "presencia",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "flag", "key": "public_knows_sacrifices", "value": true}, {"type": "meter", "key": "public_trust", "value": 1}]},
+            "on_failure": {"effects": [{"type": "meter", "key": "celestial_pressure", "value": 1}]}
+          }
+        ]
+      },
+
+      "c3_n01_ciudad_que_olvida": {
+        "type": "fixed_anchor",
+        "narration": "La llovizna de siempre cae sobre Nueve Campanas, pero algo en la ciudad ya no encaja: retratos sin rostro, vecinos que dudan antes de nombrar a alguien querido, campanas que doblan fuera de horario.",
+        "choices": [
+          {
+            "label": "Publicar las pruebas reunidas (evidencia contundente)",
+            "target": "c3_n02_audiencia",
+            "gate": {"type": "meter", "key": "evidence_count", "min": 4},
+            "check_attribute": "presencia",
+            "check_difficulty": 9,
+            "on_success": {"effects": [{"type": "flag", "key": "public_knows_sacrifices", "value": true}, {"type": "meter", "key": "public_trust", "value": 1}]},
+            "on_critical_success": {"effects": [{"type": "flag", "key": "public_knows_sacrifices", "value": true}, {"type": "meter", "key": "public_trust", "value": 2}]},
+            "on_failure": {"effects": [{"type": "meter", "key": "celestial_pressure", "value": 1}]}
+          },
+          {
+            "label": "Publicar las pruebas reunidas",
+            "target": "c3_n02_audiencia",
+            "gate": {"type": "meter", "key": "evidence_count", "min": 3},
+            "check_attribute": "presencia",
+            "check_difficulty": 11,
+            "on_success": {"effects": [{"type": "flag", "key": "public_knows_sacrifices", "value": true}, {"type": "meter", "key": "public_trust", "value": 1}]},
+            "on_critical_success": {"effects": [{"type": "flag", "key": "public_knows_sacrifices", "value": true}, {"type": "meter", "key": "public_trust", "value": 2}]},
+            "on_failure": {"effects": [{"type": "meter", "key": "celestial_pressure", "value": 1}]}
+          },
+          {
+            "label": "Publicar las pruebas reunidas",
+            "target": "c3_n02_audiencia",
+            "gate": {"type": "meter", "key": "evidence_count", "min": 2},
+            "check_attribute": "presencia",
+            "check_difficulty": 13,
+            "on_success": {"effects": [{"type": "flag", "key": "public_knows_sacrifices", "value": true}, {"type": "meter", "key": "public_trust", "value": 1}]},
+            "on_critical_success": {"effects": [{"type": "flag", "key": "public_knows_sacrifices", "value": true}, {"type": "meter", "key": "public_trust", "value": 2}]},
+            "on_failure": {"effects": [{"type": "meter", "key": "celestial_pressure", "value": 1}]}
+          },
+          {
+            "label": "Publicar las pruebas reunidas",
+            "target": "c3_n02_audiencia",
+            "check_attribute": "presencia",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "public_knows_sacrifices", "value": true}, {"type": "meter", "key": "public_trust", "value": 1}]},
+            "on_critical_success": {"effects": [{"type": "flag", "key": "public_knows_sacrifices", "value": true}, {"type": "meter", "key": "public_trust", "value": 2}]},
+            "on_failure": {"effects": [{"type": "meter", "key": "celestial_pressure", "value": 1}]}
+          },
+          {
+            "label": "Reservar las pruebas para negociar en privado",
+            "target": "c3_n02_audiencia"
+          },
+          {
+            "label": "Pedir a un testigo que hable",
+            "target": "c3_n02_audiencia",
+            "check_attribute": "presencia",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "meter", "key": "public_trust", "value": 1}]}
+          },
+          {
+            "label": "Desacreditar al Pabellón con información incompleta",
+            "target": "c3_n02_audiencia",
+            "check_attribute": "presencia",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "public_knows_sacrifices", "value": true}]},
+            "on_failure": {"effects": [{"type": "meter", "key": "celestial_pressure", "value": 1}]}
+          },
+          {
+            "label": "Abandonar la disputa e intentar huir",
+            "target": "x_fuga_confirmacion"
+          }
+        ]
+      },
+
+      "x_fuga_confirmacion": {
+        "type": "fixed_anchor",
+        "narration": "Podés dejar Nueve Campanas ahora, mientras la confusión todavía cubre el río. Nadie te lo va a impedir. Pero la Marea corta el camino tarde o temprano, y lo que dejes sin resolver acá seguirá pasando sin vos.",
+        "choices": [
+          {
+            "label": "Confirmar: huir del valle",
+            "target": "c5_n03_ritual_final",
+            "effects": [{"type": "flag", "key": "fled_valley_confirmed", "value": true}]
+          },
+          {
+            "label": "No. Quedarme y enfrentar esto.",
+            "target": "c3_n02_audiencia"
+          }
+        ]
+      },
+
+      "c3_n02_audiencia": {
+        "type": "fixed_anchor",
+        "narration": "Shen Rui convoca al protagonista en la Plaza de las Nueve Campanas. Qiao Wen está presente, de pie un paso detrás de ella.",
+        "fixed_reveals": [
+          "LÍNEA OBLIGATORIA de Qiao Wen: \"No necesito creer que esto sea justo. Necesito saber qué queda en pie mañana si dejo de hacerlo.\"",
+          "LÍNEA OBLIGATORIA de Shen Rui: \"La pureza moral es un lujo que solo poseen quienes llegan después de la inundación.\""
+        ],
+        "choices": [
+          {
+            "label": "Aceptar la oferta de Shen (restaurar tu nombre, liberar a una víctima)",
+            "target": "c3_n03_primera_ola",
+            "effects": [{"type": "flag", "key": "shen_offer_accepted", "value": true}]
+          },
+          {
+            "label": "Señalar que las víctimas siguen vivas",
+            "target": "c3_n03_primera_ola",
+            "gate": {"type": "flag", "key": "evidence_donors_alive"},
+            "check_attribute": "presencia",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "qiao_knows_donors_alive", "value": true}, {"type": "relationship", "key": "qiao_wen", "value": 1}]}
+          },
+          {
+            "label": "Señalar que la Marea está hecha de sus recuerdos",
+            "target": "c3_n03_primera_ola",
+            "gate": {"type": "flag", "key": "evidence_storm_is_memory"},
+            "check_attribute": "presencia",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "relationship", "key": "qiao_wen", "value": 1}]}
+          },
+          {
+            "label": "Señalar que tu consentimiento fue falsificado",
+            "target": "c3_n03_primera_ola",
+            "gate": {"type": "flag", "key": "evidence_forged_seal"},
+            "check_attribute": "presencia",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "meter", "key": "public_trust", "value": 1}]}
+          },
+          {
+            "label": "Argumentar que existió otra forma",
+            "target": "c3_n03_primera_ola"
+          },
+          {
+            "label": "Decir que no importa cuántos mueran",
+            "target": "c3_n03_primera_ola",
+            "effects": [{"type": "meter", "key": "karma", "value": -1}]
+          }
+        ]
+      },
+
+      "c3_n03_primera_ola": {
+        "type": "fixed_anchor",
+        "narration": "La ola impacta el Distrito de los Tintoreros. Las personas olvidan rutas familiares; los puentes rituales dejan de reconocer a quienes los cruzan; recuerdos se manifiestan como corrientes visibles.",
+        "extended_conflict": {"successes_required": 3, "failures_allowed": 2, "repeat_attribute_penalty": -2},
+        "choices": [
+          {
+            "label": "Sostener un puente o rescatar físicamente",
+            "target": "c4_n01_pozo_de_los_ecos",
+            "check_attribute": "cuerpo",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "meter", "key": "public_trust", "value": 1}]}
+          },
+          {
+            "label": "Reordenar señales y rutas",
+            "target": "c4_n01_pozo_de_los_ecos",
+            "check_attribute": "agudeza",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "meter", "key": "public_trust", "value": 1}]}
+          },
+          {
+            "label": "Calmar una ruptura espiritual",
+            "target": "c4_n01_pozo_de_los_ecos",
+            "check_attribute": "espiritu",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "meter", "key": "public_trust", "value": 1}]},
+            "on_critical_success": {"effects": [{"type": "meter", "key": "public_trust", "value": 1}, {"type": "flag", "key": "has_original_verse", "value": true}]}
+          },
+          {
+            "label": "Organizar a vecinos aterrados",
+            "target": "c4_n01_pozo_de_los_ecos",
+            "check_attribute": "presencia",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "meter", "key": "public_trust", "value": 1}]}
+          }
+        ]
+      },
+
+      "c4_n01_pozo_de_los_ecos": {
+        "type": "fixed_anchor",
+        "narration": "Huo conduce al grupo a un pozo seco bajo la primera imprenta de la ciudad. Las paredes contienen miles de frases incompletas. No son nombres: son recuerdos ofrecidos.",
+        "fixed_reveals": [
+          "Verso original: \"Ninguna casa sostendrá el cielo. Cada puerta alzará una hebra.\""
+        ],
+        "choices": [
+          {
+            "label": "Ofrecer una sensación asociada a tu objeto personal",
+            "target": "c4_n02_preparativos",
+            "effects": [{"type": "flag", "key": "evidence_original_covenant", "value": true}, {"type": "flag", "key": "has_original_verse", "value": true}, {"type": "flag", "key": "reached_pozo_de_los_ecos", "value": true}, {"type": "exp", "key": "exp", "value": 2}]
+          },
+          {
+            "label": "Ofrecer una imagen de tu pasado",
+            "target": "c4_n02_preparativos",
+            "effects": [{"type": "flag", "key": "evidence_original_covenant", "value": true}, {"type": "flag", "key": "has_original_verse", "value": true}, {"type": "flag", "key": "reached_pozo_de_los_ecos", "value": true}, {"type": "exp", "key": "exp", "value": 2}]
+          },
+          {
+            "label": "Ofrecer una palabra de tu juramento",
+            "target": "c4_n02_preparativos",
+            "effects": [{"type": "flag", "key": "evidence_original_covenant", "value": true}, {"type": "flag", "key": "has_original_verse", "value": true}, {"type": "flag", "key": "reached_pozo_de_los_ecos", "value": true}, {"type": "exp", "key": "exp", "value": 2}]
+          },
+          {
+            "label": "Ofrecer 1 qi como sustituto",
+            "target": "c4_n02_preparativos",
+            "check_attribute": "espiritu",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "evidence_original_covenant", "value": true}, {"type": "flag", "key": "has_original_verse", "value": true}, {"type": "flag", "key": "reached_pozo_de_los_ecos", "value": true}, {"type": "resource", "key": "qi", "value": -1}, {"type": "exp", "key": "exp", "value": 2}]},
+            "on_failure": {"effects": [{"type": "resource", "key": "qi", "value": -1}, {"type": "flag", "key": "reached_pozo_de_los_ecos", "value": true}]}
+          },
+          {
+            "label": "Negarte a entregar un recuerdo",
+            "target": "c4_n02_preparativos",
+            "effects": [{"type": "relationship", "key": "huo_zhen", "value": -1}, {"type": "flag", "key": "reached_pozo_de_los_ecos", "value": true}]
+          }
+        ]
+      },
+
+      "c4_n02_preparativos": {
+        "type": "state_hub",
+        "activities": [
+          {
+            "id": "advertir_distritos_confiado",
+            "label": "Advertir a los distritos (ya confían en vos)",
+            "repeatable": false,
+            "gate": {"type": "meter", "key": "public_trust", "min": 1},
+            "effects": [{"type": "flag", "key": "warned_districts", "value": true}]
+          },
+          {
+            "id": "advertir_distritos",
+            "label": "Advertir a los distritos convenciendo en persona",
+            "repeatable": false,
+            "check_attribute": "presencia",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "warned_districts", "value": true}]}
+          },
+          {
+            "id": "afinar_campanas",
+            "label": "Afinar las Nueve Campanas",
+            "repeatable": false,
+            "check_attribute": "espiritu",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "tuned_nine_bells", "value": true}]}
+          },
+          {
+            "id": "asegurar_rutas",
+            "label": "Asegurar rutas de evacuación",
+            "repeatable": false,
+            "check_attribute": "agudeza",
+            "check_difficulty": 12,
+            "on_success": {"effects": [{"type": "flag", "key": "secured_escape_routes", "value": true}]}
+          },
+          {
+            "id": "reunir_voluntarios_listo",
+            "label": "Reunir voluntarios (ya tenés el pacto y la confianza)",
+            "repeatable": false,
+            "gate": {"type": "all", "gates": [{"type": "flag", "key": "evidence_original_covenant"}, {"type": "meter", "key": "public_trust", "min": 2}]},
+            "effects": [{"type": "flag", "key": "gathered_volunteers", "value": true}]
+          },
+          {
+            "id": "reunir_voluntarios_dificil",
+            "label": "Intentar reunir voluntarios de todos modos",
+            "repeatable": false,
+            "check_attribute": "presencia",
+            "check_difficulty": 21,
+            "on_success": {"effects": [{"type": "flag", "key": "gathered_volunteers", "value": true}]}
+          }
+        ],
+        "exits": [
+          {
+            "label": "Partir hacia el Registro",
+            "target": "c5_n01_descenso",
+            "effects": [{"type": "meter", "key": "celestial_pressure", "value": 4}]
+          }
+        ]
+      },
+
+      "c5_n01_descenso": {
+        "type": "bounded_corridor",
+        "goal": "Llegar al corazón del Registro con un costo determinado por los preparativos.",
+        "turn_budget": 3,
+        "fallback_exit": "c5_n02_ultima_guardia",
+        "forbidden_obstacles": ["nuevo villano", "traición aleatoria", "revelación de linaje", "mundo alternativo"],
+        "choices": [
+          {
+            "label": "Subir por las escaleras del Pabellón",
+            "target": "c5_n02_ultima_guardia",
+            "check_attribute": "presencia",
+            "check_difficulty": 12,
+            "on_failure": {"effects": [{"type": "meter", "key": "celestial_pressure", "value": 1}]}
+          },
+          {
+            "label": "Bajar por los canales bajo la ciudad",
+            "target": "c5_n02_ultima_guardia",
+            "gate": {"type": "any", "gates": [{"type": "flag", "key": "access_token_canal_route"}, {"type": "flag", "key": "secured_escape_routes"}]},
+            "check_attribute": "agudeza",
+            "check_difficulty": 12,
+            "on_failure": {"effects": [{"type": "meter", "key": "celestial_pressure", "value": 1}]}
+          },
+          {
+            "label": "Cruzar por la hendidura del Coro",
+            "target": "c5_n02_ultima_guardia",
+            "check_attribute": "espiritu",
+            "check_difficulty": 15,
+            "on_failure": {"effects": [{"type": "meter", "key": "celestial_pressure", "value": 1}]}
+          },
+          {
+            "label": "Cruzar el margen del mundo",
+            "target": "c5_n02_ultima_guardia",
+            "gate": {"type": "meter", "key": "ledger_debt", "min": 2},
+            "check_attribute": "espiritu",
+            "check_difficulty": 15,
+            "on_failure": {"effects": [{"type": "meter", "key": "ledger_debt", "value": 1}]}
+          }
+        ]
+      },
+
+      "c5_n02_ultima_guardia": {
+        "type": "fixed_anchor",
+        "narration": "Shen Rui está conectada al Registro y mantiene la Bóveda activa durante la conversación. Qiao Wen se interpone entre vos y las escaleras finales.",
+        "choices": [
+          {
+            "label": "Confrontar a Qiao con pruebas y honor",
+            "target": "c5_n03_ritual_final",
+            "check_attribute": "presencia",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "relationship", "key": "qiao_wen", "value": 1}]}
+          },
+          {
+            "label": "Dejar pasar en silencio (Qiao ya confía en vos)",
+            "target": "c5_n03_ritual_final",
+            "gate": {"type": "relationship", "key": "qiao_wen", "min": 1}
+          },
+          {
+            "label": "Enfrentar a Qiao en combate",
+            "target": "c5_n03_ritual_final",
+            "check_attribute": "cuerpo",
+            "check_difficulty": 15,
+            "on_success": {"effects": [{"type": "flag", "key": "qiao_defeated", "value": true}]},
+            "on_failure": {"effects": [{"type": "resource", "key": "vitality", "value": -3}]}
+          }
+        ]
+      },
+
+      "c5_n03_ritual_final": {
+        "type": "resolution",
+        "narration": "Al entrar, el peso del Registro se hace audible: millones de filamentos vibrando bajo el Río de Ceniza. Es hora de elegir qué queda del cielo cuando dejás de dejarlo decidir por vos.",
+        "final_technique_rules": [
+          {
+            "gate": {"type": "all", "gates": [{"type": "meter", "key": "karma", "min": 2}, {"type": "meter", "key": "public_trust", "min": 2}]},
+            "technique_id": "mil_voces_un_nombre"
+          },
+          {
+            "gate": {"type": "meter", "key": "ledger_debt", "min": 4},
+            "technique_id": "nombre_que_devora_nombres"
+          },
+          {
+            "gate": {"type": "any", "gates": [
+              {"type": "relationship", "key": "lian_suyin", "min": 3},
+              {"type": "relationship", "key": "qiao_wen", "min": 3},
+              {"type": "relationship", "key": "huo_zhen", "min": 3},
+              {"type": "relationship", "key": "shen_rui", "min": 3}
+            ]},
+            "technique_id": "lazo_que_el_cielo_no_corta"
+          },
+          {
+            "gate": {"type": "all", "gates": []},
+            "technique_id": "yo_me_nombro"
+          }
+        ],
+        "endings": [
+          {
+            "id": "nuevo_pacto",
+            "visible_choice": "Abrir el Registro y devolver el peso a toda la ciudad.",
+            "hard_requirement": {"type": "all", "gates": [{"type": "flag", "key": "evidence_original_covenant"}, {"type": "flag", "key": "fled_valley_confirmed", "equals": false}]},
+            "soft_requirements": [
+              {"type": "meter", "key": "evidence_count", "min": 3},
+              {"type": "meter", "key": "public_trust", "min": 2},
+              {"type": "flag", "key": "gathered_volunteers"}
+            ],
+            "difficulty_by_soft_requirements_met": {"3": 12, "2": 15, "1": 18, "0": 21},
+            "base_difficulty": 21,
+            "success_reveals": [
+              "Las campanas transmiten el Coro a toda la ciudad.",
+              "Cada persona decide entregar un recuerdo pequeño.",
+              "Los siete nombres pueden empezar a restaurarse, aunque sus recuerdos no regresan de golpe."
+            ],
+            "cost_reveals": [
+              "Todos los voluntarios pierden temporalmente un recuerdo querido.",
+              "Si no se afinaron las Nueve Campanas, Huo Zhen olvida la voz de una persona amada."
+            ],
+            "on_failure_fallbacks": [
+              {"gate": {"type": "meter", "key": "ledger_debt", "min": 4}, "ending_id": "nuevo_pacto_fracturado"},
+              {"gate": {"type": "all", "gates": []}, "ending_id": "portador_del_margen"}
+            ]
+          },
+          {
+            "id": "portador_del_margen",
+            "visible_choice": "Cargar con los nombres borrados y sacar la deuda de la ciudad.",
+            "hard_requirement": {"type": "flag", "key": "fled_valley_confirmed", "equals": false},
+            "soft_requirements": [
+              {"type": "relationship", "key": "coro_blanco", "min": 1}
+            ],
+            "difficulty_by_soft_requirements_met": {"1": 13, "0": 15},
+            "base_difficulty": 15,
+            "success_reveals": [
+              "El protagonista absorbe los nombres amputados y conduce la Marea fuera del valle.",
+              "La ciudad sobrevive y los siete quedan libres del Registro."
+            ],
+            "cost_reveals": [
+              "El protagonista pierde la posibilidad de tener un nombre celeste estable.",
+              "Se vuelve difícil de recordar lejos de una conversación directa."
+            ],
+            "failure_cost_options": [
+              "olvida su juramento",
+              "pierde para siempre el recuerdo ligado a su objeto personal",
+              "un aliado se ofrece a compartir la carga"
+            ]
+          },
+          {
+            "id": "cielo_roto",
+            "visible_choice": "Destruir el Registro antes de que vuelva a cobrar una vida.",
+            "hard_requirement": {"type": "flag", "key": "fled_valley_confirmed", "equals": false},
+            "soft_requirements": [
+              {"type": "flag", "key": "warned_districts"},
+              {"type": "flag", "key": "secured_escape_routes"},
+              {"type": "flag", "key": "seven_donors_released"},
+              {"type": "flag", "key": "tuned_nine_bells"}
+            ],
+            "difficulty_by_soft_requirements_met": {"4": 12, "3": 14, "2": 16, "1": 18, "0": 18},
+            "base_difficulty": 18,
+            "success_reveals": [
+              "El Registro se rompe. Toda persona conserva su nombre terrenal y pierde la infraestructura celeste.",
+              "La Marea deja de crecer, pero la Bóveda cae en el acto."
+            ],
+            "cost_reveals": [
+              "Con cuatro preparativos completos: daños materiales graves, pocas víctimas, evacuación ordenada.",
+              "Con cero o un preparativo: la capital sobrevive solo en parte; epílogo de diáspora."
+            ]
+          },
+          {
+            "id": "guardian_del_registro",
+            "visible_choice": "Completar la Bóveda y tomar control de las reglas.",
+            "hard_requirement": {"type": "flag", "key": "fled_valley_confirmed", "equals": false},
+            "soft_requirements": [
+              {"type": "flag", "key": "shen_offer_accepted"}
+            ],
+            "difficulty_by_soft_requirements_met": {"1": 9, "0": 15},
+            "base_difficulty": 15,
+            "success_reveals": [
+              "El protagonista ocupa el octavo lugar sin ser borrado y usa su anomalía como válvula.",
+              "La Bóveda se mantiene; libera a los siete e inicia reformas."
+            ],
+            "cost_reveals": [
+              "El protagonista se vuelve institución. Cada ausencia prolongada debilita la provincia."
+            ]
+          },
+          {
+            "id": "soberano_sin_nombre",
+            "visible_choice": "Tomar el Registro y hacer que todos los nombres respondan.",
+            "hard_requirement": {"type": "all", "gates": [{"type": "meter", "key": "ledger_debt", "min": 3}, {"type": "flag", "key": "fled_valley_confirmed", "equals": false}]},
+            "base_difficulty": 18,
+            "success_reveals": [
+              "El protagonista absorbe autoridad sobre los nombres celestes.",
+              "Puede ordenar a la Marea retirarse y restaurar a los siete."
+            ],
+            "cost_reveals": [
+              "Cada decreto borra un recuerdo propio."
+            ]
+          },
+          {
+            "id": "fugitivo_degradado",
+            "visible_choice": "Huir del valle antes de que la Marea lo cierre.",
+            "hard_requirement": {"type": "flag", "key": "fled_valley_confirmed"},
+            "soft_requirements": [
+              {"type": "flag", "key": "secured_escape_routes"}
+            ],
+            "difficulty_by_soft_requirements_met": {"1": 9, "0": 15},
+            "base_difficulty": 15,
+            "success_reveals": [
+              "El protagonista sobrevive fuera del valle."
+            ],
+            "cost_reveals": [
+              "Lianshu queda librada a lo que el protagonista publicó o guardó en secreto."
+            ]
+          }
+        ]
+      },
+
+      "e_epilogo": {
+        "type": "resolution",
+        "epilogue_beats": [
+          {"movement": "la_mañana_siguiente", "gate": {"type": "flag", "key": "ending_nuevo_pacto"}, "text": "Nueve Campanas amanece con las calles llenas de gente que compara qué recuerdo perdió cada una."},
+          {"movement": "la_mañana_siguiente", "gate": {"type": "flag", "key": "ending_cielo_roto"}, "text": "La ciudad amanece sin el zumbido de fondo del Registro; algunos lo notan como un alivio, otros como un vacío."},
+          {"movement": "la_mañana_siguiente", "gate": {"type": "all", "gates": []}, "text": "Nueve Campanas amanece igual que siempre, con la diferencia exacta que dejaste."},
+
+          {"movement": "una_persona_afectada", "gate": {"type": "all", "gates": [{"type": "relationship", "key": "lian_suyin", "min": 2}, {"type": "flag", "key": "tao_stabilized"}]}, "text": "Suyin se presenta de nuevo a Tao, sin exigir que la recuerde."},
+          {"movement": "una_persona_afectada", "gate": {"type": "relationship", "key": "qiao_wen", "min": 1}, "text": "Qiao Wen entrega su campana rota al protagonista."},
+          {"movement": "una_persona_afectada", "gate": {"type": "all", "gates": []}, "text": "Suyin dejó el pincel reparado y una carta estrictamente factual sobre la mesa vacía."},
+
+          {"movement": "la_nueva_regla", "gate": {"type": "flag", "key": "ending_nuevo_pacto"}, "text": "La primera reunión para administrar la Bóveda ocurre en una plaza, no en el Pabellón."},
+          {"movement": "la_nueva_regla", "gate": {"type": "flag", "key": "ending_guardian_del_registro"}, "text": "Una nueva tablilla en blanco entra al Salón Quieto. No hay discurso."},
+          {"movement": "la_nueva_regla", "gate": {"type": "all", "gates": []}, "text": "Alguien tiene que decidir, mañana, quién administra lo que quedó del Registro."},
+
+          {"movement": "el_protagonista", "gate": {"type": "meter", "key": "ledger_debt", "min": 5}, "text": "El protagonista confunde, de vez en cuando, un recuerdo propio con uno ajeno."},
+          {"movement": "el_protagonista", "gate": {"type": "all", "gates": []}, "text": "El protagonista todavía puede nombrar, en voz alta, quién fue antes del río."},
+
+          {"movement": "la_tablilla", "gate": {"type": "flag", "key": "ending_nuevo_pacto"}, "text": "La tablilla acepta muchas caligrafías y ninguna ocupa el centro."},
+          {"movement": "la_tablilla", "gate": {"type": "flag", "key": "ending_portador_del_margen"}, "text": "Alguien vuelve a escribir el nombre terrenal del protagonista cada mañana."},
+          {"movement": "la_tablilla", "gate": {"type": "flag", "key": "ending_cielo_roto"}, "text": "La tablilla termina como madera para reparar una puerta."},
+          {"movement": "la_tablilla", "gate": {"type": "flag", "key": "ending_guardian_del_registro"}, "text": "La tablilla queda en la octava plaza, ahora ocupada."},
+          {"movement": "la_tablilla", "gate": {"type": "flag", "key": "ending_soberano_sin_nombre"}, "text": "Todas las tablillas se inclinan cuando el protagonista entra."},
+          {"movement": "la_tablilla", "gate": {"type": "flag", "key": "ending_fugitivo_degradado"}, "text": "La tablilla viaja río abajo sin sello y no vuelve."},
+          {"movement": "la_tablilla", "gate": {"type": "all", "gates": []}, "text": "La tablilla queda donde el protagonista la dejó: en blanco, pero ya no vacía."}
+        ]
+      }
+    }
+  },
+
+  "starting_character": {
+    "name": "Protagonista",
+    "level": 1,
+    "exp": 0,
+    "attributes": {"cuerpo": 1, "agudeza": 1, "espiritu": 1, "presencia": 1}
+  },
+
+  "seed": {
+    "narration": "Primero vuelve el frío.\n\nTenés la mejilla pegada a madera húmeda y algo duro apoyado sobre el pecho. La barca avanza sin remero. Cada golpe de agua contra el casco empuja olor a aceite, barro y crisantemos viejos por debajo de la tapa. Cuando intentás tragar, sentís tinta seca en los labios.\n\nEncima de vos suena una campana. No da la hora: cuenta. Siete golpes, una pausa, y un octavo que no llega.\n\nLa tablilla sobre tu pecho está en blanco.",
+    "choices": [
+      "Empujar la tapa antes de que la barca llegue a la compuerta",
+      "Leer con los dedos los restos del sello",
+      "Seguir el hueco entre el séptimo y el octavo golpe",
+      "Gritar tu nombre y exigir respuesta"
+    ]
+  }
+}

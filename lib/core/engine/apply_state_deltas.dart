@@ -1,5 +1,6 @@
 import '../state/character.dart';
 import '../world/meter_definition.dart';
+import '../world/resource_formula.dart';
 import 'exp_progression.dart';
 import 'rank_progression.dart';
 import 'state_delta.dart';
@@ -26,6 +27,7 @@ class ApplyStateDeltas {
     ExpProgression? progression,
     this.meterDefinitions = const {},
     this.rankProgression,
+    this.resourceFormulas = const {},
   }) : _progression = progression ?? const ExpProgression();
 
   final ExpProgression _progression;
@@ -33,6 +35,13 @@ class ApplyStateDeltas {
   /// World/campaign-declared bounds (and derived-meter markers) for the
   /// `meter` delta type. Rebuilt per world, same as [_progression].
   final Map<String, MeterDefinition> meterDefinitions;
+
+  /// World-declared formulas (e.g. `vitality: 8 + cuerpo*2`) used to cap a
+  /// `resource` delta at the character's actual ceiling — without this, a
+  /// generous "restore to full" delta (campaign-bible's "descansar recupera
+  /// toda la Vitalidad") would have no ceiling to restore *to*. A resource
+  /// with no declared formula keeps the old, uncapped-above behavior.
+  final Map<String, ResourceFormula> resourceFormulas;
 
   /// When set (campaign-bible worlds, §7.1), EXP accumulates as a running
   /// total and rank promotion is milestone-gated instead of the simpler
@@ -121,7 +130,9 @@ class ApplyStateDeltas {
       case StateDeltaType.resource:
         final change = _asInt(delta.value);
         if (change == null) return null;
-        final next = (c.resource(delta.key) + change).clamp(0, 1 << 30);
+        final formula = resourceFormulas[delta.key];
+        final max = formula != null ? formula.evaluate(c.attributes) : 1 << 30;
+        final next = (c.resource(delta.key) + change).clamp(0, max);
         return c.copyWith(resources: {...c.resources, delta.key: next});
 
       case StateDeltaType.meter:
