@@ -1,5 +1,6 @@
 import '../state/character.dart';
 import 'ending.dart';
+import 'extended_conflict.dart';
 import 'hub_activity.dart';
 import 'story_choice.dart';
 
@@ -45,6 +46,7 @@ final class FixedAnchorNode extends StoryNode {
     this.choices = const [],
     this.fixedReveals = const [],
     this.forbiddenReveals = const [],
+    this.extendedConflict,
   });
 
   final String narration;
@@ -55,6 +57,10 @@ final class FixedAnchorNode extends StoryNode {
 
   /// Facts the narrator must never reveal here yet (§19.1 `forbidden_reveals`).
   final List<String> forbiddenReveals;
+
+  /// When set, this set-piece resolves as an extended conflict (§6.12) —
+  /// e.g. "Coro en el campanario" — instead of a single check.
+  final ExtendedConflict? extendedConflict;
 
   /// The choices whose gate is currently satisfied, in authored order.
   List<StoryChoice> availableChoices(Character character) => [
@@ -69,6 +75,10 @@ final class FixedAnchorNode extends StoryNode {
       choices: _choicesFromJson(json['choices']),
       fixedReveals: _stringList(json['fixed_reveals']),
       forbiddenReveals: _stringList(json['forbidden_reveals']),
+      extendedConflict: json['extended_conflict'] is Map
+          ? ExtendedConflict.fromJson(
+              (json['extended_conflict'] as Map).cast<String, dynamic>())
+          : null,
     );
   }
 }

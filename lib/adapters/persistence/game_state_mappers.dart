@@ -83,6 +83,8 @@ Map<String, Object?>? resolutionToJson(ActionResolution? resolution) {
     'total': resolution.total,
     'isNatural20': resolution.isNatural20,
     'isNatural1': resolution.isNatural1,
+    'rollMode': resolution.rollMode.name,
+    'discardedRoll': resolution.discardedRoll,
   };
 }
 

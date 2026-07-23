@@ -81,6 +81,24 @@ void main() {
       final node = StoryNode.fromJson('beat_x', {'narration': 'x'});
       expect(node, isA<FixedAnchorNode>());
     });
+
+    test('parses an optional extended conflict (e.g. Coro en el campanario)', () {
+      final node = StoryNode.fromJson('c1_n03_coro_en_el_campanario', {
+        'type': 'fixed_anchor',
+        'extended_conflict': {
+          'successes_required': 2,
+          'failures_allowed': 2,
+        },
+      }) as FixedAnchorNode;
+      expect(node.extendedConflict, isNotNull);
+      expect(node.extendedConflict!.successesRequired, 2);
+    });
+
+    test('extendedConflict is null when the node has no set-piece', () {
+      final node =
+          StoryNode.fromJson('beat_x', {'type': 'fixed_anchor'}) as FixedAnchorNode;
+      expect(node.extendedConflict, isNull);
+    });
   });
 
   group('BoundedCorridorNode', () {
