@@ -15,6 +15,9 @@ class NarratorRequest {
     required this.resolution,
     this.recentTurns = const [],
     this.memoryDigest,
+    this.nodeFixedReveals = const [],
+    this.nodeForbiddenReveals = const [],
+    this.nodeGoal,
   });
 
   final World world;
@@ -31,6 +34,19 @@ class NarratorRequest {
   /// Medium-term memory: the ~150-word digest regenerated every few turns
   /// (CLAUDE.md §6, GDD §5.3). `null` until enough turns have accumulated.
   final String? memoryDigest;
+
+  /// Facts the current `StoryNode` requires the narrator to include (Fase 7's
+  /// `fixedReveals`/campaign-bible's "hechos, revelación"). Empty for a
+  /// freeform world with no curated node.
+  final List<String> nodeFixedReveals;
+
+  /// Facts the current `StoryNode` forbids the narrator from revealing yet.
+  final List<String> nodeForbiddenReveals;
+
+  /// The current `BoundedCorridorNode`'s single objective, when inside one —
+  /// keeps a generative corridor's free-text turns from drifting into new
+  /// milestones (campaign-bible §9.1/§18.8). `null` outside a corridor.
+  final String? nodeGoal;
 }
 
 /// The check a suggested choice would trigger if taken — shown to the UI so

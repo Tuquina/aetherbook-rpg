@@ -1,0 +1,31 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "aetherbook-web",
+      "runtimeExecutable": "docker",
+      "runtimeArgs": [
+        "run",
+        "--rm",
+        "-p",
+        "8080:8080",
+        "-v",
+        "G:/Documentos Fernando/Claude Code/Aetherbook-RPG:/app",
+        "-v",
+        "aetherbook_pubcache:/root/.pub-cache",
+        "-w",
+        "/app",
+        "ghcr.io/cirruslabs/flutter:stable",
+        "flutter",
+        "run",
+        "-d",
+        "web-server",
+        "--web-hostname",
+        "0.0.0.0",
+        "--web-port",
+        "8080"
+      ],
+      "port": 8080
+    }
+  ]
+}

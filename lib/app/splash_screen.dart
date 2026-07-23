@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'chargen_screen.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'game_controller.dart';
@@ -13,9 +14,14 @@ import 'widgets/atmosphere.dart';
 /// now (anonymous play happens transparently) — the affordance is here so it
 /// can light up later without a redesign.
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key, required this.controller});
+  const SplashScreen({super.key, required this.controller, this.worldSlug = 'xianxia'});
 
   final GameController controller;
+
+  /// Which world to load next — a curated world (one with chargen origins)
+  /// goes through [ChargenScreen] first; a freeform world (Fase 0 style)
+  /// goes straight to [GameScreen].
+  final String worldSlug;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -27,6 +33,7 @@ class _SplashScreenState extends State<SplashScreen>
     vsync: this,
     duration: const Duration(milliseconds: 4200),
   )..repeat();
+  bool _entering = false;
 
   @override
   void dispose() {
@@ -34,11 +41,23 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  void _begin() {
+  Future<void> _begin() async {
+    if (_entering) return;
+    setState(() => _entering = true);
+
+    final world = await widget.controller.loadWorldInfo(widget.worldSlug);
+    if (!mounted) return;
+
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: AetherMotion.slow,
-        pageBuilder: (_, _, _) => GameScreen(controller: widget.controller),
+        pageBuilder: (_, _, _) => world.origins.isNotEmpty
+            ? ChargenScreen(
+                controller: widget.controller,
+                worldSlug: widget.worldSlug,
+                world: world,
+              )
+            : GameScreen(controller: widget.controller, worldSlug: widget.worldSlug),
         transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
       ),

@@ -1,6 +1,7 @@
 import '../engine/action_resolution.dart';
 import '../engine/state_delta.dart';
 import '../state/character.dart';
+import 'checkable.dart';
 import 'gate.dart';
 import 'story_choice.dart' show ChoiceOutcome;
 
@@ -13,7 +14,7 @@ import 'story_choice.dart' show ChoiceOutcome;
 /// same [outcomeFor] fallback logic) — duplicated rather than shared because
 /// there are only these two call sites and the codebase prefers a few
 /// repeated lines over a premature shared abstraction.
-class HubActivity {
+class HubActivity implements Checkable {
   const HubActivity({
     required this.id,
     required this.label,
@@ -46,10 +47,12 @@ class HubActivity {
   /// activity alongside a checked one — campaign-bible's "requirement: X o
   /// tirada de Y" pattern, modeled as two `HubActivity` entries rather than
   /// a single conditional one).
+  @override
   final String? checkAttribute;
 
   /// The literal difficulty for this activity's check, or `null` when
   /// [checkAttribute] is also `null`.
+  @override
   final int? checkDifficulty;
 
   final ChoiceOutcome? onSuccess;
@@ -63,11 +66,13 @@ class HubActivity {
 
   bool isAvailableTo(Character character) => gate.isSatisfiedBy(character);
 
+  @override
   bool get requiresCheck => checkAttribute != null;
 
   /// The [ChoiceOutcome] this activity resolves to for [outcome] — same
   /// fallback chain as `StoryChoice.outcomeFor`. The fallback base carries no
   /// `targetNodeId` since an activity never advances the graph.
+  @override
   ChoiceOutcome outcomeFor(ActionOutcome outcome) {
     final base = ChoiceOutcome(effects: effects);
     return switch (outcome) {

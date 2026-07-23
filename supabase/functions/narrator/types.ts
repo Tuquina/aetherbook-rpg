@@ -46,6 +46,14 @@ export interface NarratorRequest {
   recentTurns?: string[];
   /** Medium-term memory: the ~150-word digest (CLAUDE.md §6, GDD §5.3). */
   memoryDigest?: string | null;
+  /** Facts the current StoryNode requires the narrator to include (Fase 7's
+   * `fixed_reveals`). Empty for a freeform world with no curated node. */
+  nodeFixedReveals?: string[];
+  /** Facts the current StoryNode forbids the narrator from revealing yet. */
+  nodeForbiddenReveals?: string[];
+  /** The current corridor's single objective, when inside a
+   * bounded_corridor node (campaign-bible §18.8). `null` otherwise. */
+  nodeGoal?: string | null;
 }
 
 /** A state delta as the narrator proposes it (campaign-bible §18.5/§19.3):

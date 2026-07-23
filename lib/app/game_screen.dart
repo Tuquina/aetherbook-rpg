@@ -14,9 +14,15 @@ import 'widgets/status_bar.dart';
 /// foot (GDD §9). Rebuilds from the [GameController] via [ListenableBuilder] —
 /// no extra state-mgmt package.
 class GameScreen extends StatefulWidget {
-  const GameScreen({super.key, required this.controller});
+  const GameScreen({super.key, required this.controller, this.worldSlug = 'xianxia'});
 
   final GameController controller;
+
+  /// Only used when the controller hasn't already been started elsewhere —
+  /// a curated world's [ChargenScreen] starts the session itself (with the
+  /// player's chargen input) before navigating here, so this screen must not
+  /// re-`start()` and discard that session.
+  final String worldSlug;
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -30,9 +36,10 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
-    widget.controller
-      ..addListener(_onControllerChange)
-      ..start('xianxia');
+    widget.controller.addListener(_onControllerChange);
+    if (!widget.controller.isReady) {
+      widget.controller.start(widget.worldSlug);
+    }
   }
 
   @override
@@ -234,6 +241,11 @@ class _ChoicesBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final busy = controller.isLoading;
+    // A curated (hybrid-campaign) world offers deterministic story
+    // choices/hub activities instead of the AI's suggested_choices — the
+    // free-action field stays available either way (campaign-bible §18.10:
+    // "la acción libre permanece siempre disponible").
+    final curated = controller.currentNode != null;
     return Container(
       padding: const EdgeInsets.fromLTRB(
           AetherSpace.lg, AetherSpace.md, AetherSpace.lg, AetherSpace.lg),
@@ -247,6 +259,7 @@ class _ChoicesBar extends StatelessWidget {
         child: AnimatedSize(
           duration: AetherMotion.base,
           curve: AetherMotion.standard,
+          alignment: Alignment.bottomCenter,
           child: busy
               ? const Padding(
                   padding: EdgeInsets.symmetric(vertical: AetherSpace.lg),
@@ -255,14 +268,51 @@ class _ChoicesBar extends StatelessWidget {
               : Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    for (final choice in controller.choices)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AetherSpace.md),
-                        child: ChoiceButton(
-                          label: choice,
-                          onTap: () => controller.choose(choice),
+                    // A state_hub can offer many activities/exits at once
+                    // (unlike a freeform AI turn, capped at 3 suggestions) —
+                    // bounded + scrollable so it never overflows the screen.
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.sizeOf(context).height * 0.4,
+                      ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (curated) ...[
+                              for (final choice in controller.availableStoryChoices)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(bottom: AetherSpace.md),
+                                  child: ChoiceButton(
+                                    label: choice.label,
+                                    onTap: () => controller.chooseStoryChoice(choice),
+                                  ),
+                                ),
+                              for (final activity in controller.availableActivities)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(bottom: AetherSpace.md),
+                                  child: ChoiceButton(
+                                    label: activity.label,
+                                    onTap: () =>
+                                        controller.chooseHubActivity(activity),
+                                  ),
+                                ),
+                            ] else
+                              for (final choice in controller.choices)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(bottom: AetherSpace.md),
+                                  child: ChoiceButton(
+                                    label: choice,
+                                    onTap: () => controller.choose(choice),
+                                  ),
+                                ),
+                          ],
                         ),
                       ),
+                    ),
                     const SizedBox(height: AetherSpace.xs),
                     FreeActionField(
                         controller: freeAction, onSubmit: onSubmitFree),
