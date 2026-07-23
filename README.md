@@ -15,7 +15,10 @@ Todo el toolchain (Flutter y Deno) corre **dentro de Docker** — no hace falta 
 ### Jugarlo (web)
 
 ```powershell
-.\tool\run-web.ps1
+.\tool\run-web.ps1        # PowerShell
+```
+```bash
+./tool/run-web.sh         # Git Bash / Linux / macOS
 ```
 
 La primera vez descarga la imagen de Flutter (~2 GB, una sola vez). Después abrí **http://localhost:8080** en el navegador.
