@@ -1,6 +1,7 @@
 import 'package:aetherbook/core/engine/apply_state_deltas.dart';
 import 'package:aetherbook/core/engine/state_delta.dart';
 import 'package:aetherbook/core/state/character.dart';
+import 'package:aetherbook/core/world/meter_definition.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -87,6 +88,71 @@ void main() {
       expect(result.rejected, hasLength(1));
       expect(result.character.exp, 120);
       expect(result.character.resource('qi'), 15);
+    });
+  });
+
+  group('ApplyStateDeltas — meter (campaign-bible named counters)', () {
+    test('applies a meter delta with no declared bounds', () {
+      final result = apply(base(), [
+        const StateDelta(type: StateDeltaType.meter, key: 'ledger_debt', value: 1),
+      ]);
+      expect(result.character.meter('ledger_debt'), 1);
+      expect(result.applied, hasLength(1));
+    });
+
+    test('clamps a bounded meter to its declared range (e.g. karma -3..3)', () {
+      final withBounds = const ApplyStateDeltas(
+        meterDefinitions: {'karma': MeterDefinition(min: -3, max: 3)},
+      );
+      final result = withBounds(base(), [
+        const StateDelta(type: StateDeltaType.meter, key: 'karma', value: 10),
+      ]);
+      expect(result.character.meter('karma'), 3);
+    });
+
+    test('rejects a delta targeting a derived meter (e.g. evidence_count)', () {
+      final withDerived = const ApplyStateDeltas(
+        meterDefinitions: {
+          'evidence_count': MeterDefinition(derivedFromFlags: ['evidence_a']),
+        },
+      );
+      final result = withDerived(base(), [
+        const StateDelta(
+          type: StateDeltaType.meter,
+          key: 'evidence_count',
+          value: 1,
+        ),
+      ]);
+      expect(result.rejected, hasLength(1));
+      expect(result.character.meter('evidence_count'), 0);
+    });
+
+    test('rejects a meter delta with a non-numeric value', () {
+      final result = apply(base(), [
+        const StateDelta(
+          type: StateDeltaType.meter,
+          key: 'ledger_debt',
+          value: 'mucho',
+        ),
+      ]);
+      expect(result.rejected, hasLength(1));
+    });
+
+    test('meter deltas accumulate across turns', () {
+      final withBounds = const ApplyStateDeltas(
+        meterDefinitions: {'celestial_pressure': MeterDefinition(min: 0, max: 6)},
+      );
+      var character = base();
+      for (var i = 0; i < 3; i++) {
+        character = withBounds(character, [
+          const StateDelta(
+            type: StateDeltaType.meter,
+            key: 'celestial_pressure',
+            value: 1,
+          ),
+        ]).character;
+      }
+      expect(character.meter('celestial_pressure'), 3);
     });
   });
 }

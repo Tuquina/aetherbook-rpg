@@ -1,4 +1,5 @@
 import '../state/character.dart';
+import '../world/meter_definition.dart';
 import 'exp_progression.dart';
 import 'state_delta.dart';
 
@@ -20,10 +21,16 @@ class DeltaApplication {
 /// only the valid ones. The AI proposes; the engine disposes (CLAUDE.md §2.3).
 /// Invalid or unknown deltas are rejected, never applied blindly.
 class ApplyStateDeltas {
-  const ApplyStateDeltas({ExpProgression? progression})
-      : _progression = progression ?? const ExpProgression();
+  const ApplyStateDeltas({
+    ExpProgression? progression,
+    this.meterDefinitions = const {},
+  }) : _progression = progression ?? const ExpProgression();
 
   final ExpProgression _progression;
+
+  /// World/campaign-declared bounds (and derived-meter markers) for the
+  /// `meter` delta type. Rebuilt per world, same as [_progression].
+  final Map<String, MeterDefinition> meterDefinitions;
 
   DeltaApplication call(Character character, List<StateDelta> deltas) {
     var current = character;
@@ -70,6 +77,18 @@ class ApplyStateDeltas {
         if (change == null) return null;
         final next = (c.resource(delta.key) + change).clamp(0, 1 << 30);
         return c.copyWith(resources: {...c.resources, delta.key: next});
+
+      case StateDeltaType.meter:
+        final change = _asInt(delta.value);
+        if (change == null) return null;
+        final definition = meterDefinitions[delta.key];
+        // A derived meter (e.g. evidence_count) only ever changes because the
+        // flags it counts changed — never by a direct delta (campaign-bible
+        // rule: "no se edita de forma independiente").
+        if (definition != null && definition.isDerived) return null;
+        final raw = c.meter(delta.key) + change;
+        final next = definition?.clamp(raw) ?? raw;
+        return c.copyWith(meters: {...c.meters, delta.key: next});
 
       case StateDeltaType.unknown:
         return null;

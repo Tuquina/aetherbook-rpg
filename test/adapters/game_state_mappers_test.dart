@@ -13,6 +13,7 @@ void main() {
         attributes: {'espiritu': 3, 'cuerpo': 4},
         resources: {'qi': 8},
         flags: {'conoció_al_anciano': true},
+        meters: {'karma': 1, 'ledger_debt': 2},
       );
 
       final row = characterToRow('session-1', character);
@@ -27,6 +28,7 @@ void main() {
       expect(restored.attributes, character.attributes);
       expect(restored.resources, character.resources);
       expect(restored.flags, character.flags);
+      expect(restored.meters, character.meters);
     });
 
     test('characterFromRow defaults missing jsonb maps to empty', () {
@@ -37,10 +39,12 @@ void main() {
         'attributes': null,
         'resources': null,
         'flags': null,
+        'meters': null,
       });
       expect(restored.attributes, isEmpty);
       expect(restored.resources, isEmpty);
       expect(restored.flags, isEmpty);
+      expect(restored.meters, isEmpty);
     });
   });
 
