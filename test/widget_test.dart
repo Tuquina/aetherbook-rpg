@@ -57,7 +57,8 @@ void main() {
 
     // The narration advanced and now reflects the chosen action.
     expect(find.textContaining('Meditar'), findsWidgets);
-    // A resolved-outcome chip is now visible.
-    expect(find.textContaining('vs 12'), findsOneWidget);
+    // The Fate Roll reveal is now on screen (2 + d20 10 = 12 vs 12 -> ÉXITO).
+    expect(find.textContaining('vs dificultad 12'), findsOneWidget);
+    expect(find.text('ÉXITO'), findsOneWidget);
   });
 }

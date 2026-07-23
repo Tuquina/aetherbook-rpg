@@ -1,44 +1,50 @@
 import 'package:flutter/material.dart';
 
-/// Minimal xianxia theming (CLAUDE.md §9 / GDD §9): ink-dark background, etheric
-/// gold accents, a serif face for narration. Per-world theming comes later; for
-/// Fase 0 this single mood is enough to make the world feel like a place.
-class AetherTheme {
-  static const Color ink = Color(0xFF14110F);
-  static const Color inkSoft = Color(0xFF1F1B18);
-  static const Color gold = Color(0xFFC9A24B);
-  static const Color goldSoft = Color(0xFFE7D6A6);
-  static const Color parchment = Color(0xFFEDE6D6);
+import 'design/tokens.dart';
+import 'design/typography.dart';
+
+export 'design/tokens.dart';
+export 'design/typography.dart';
+
+/// Builds the app's [ThemeData] from the design tokens ([AetherColors],
+/// [AetherType]). Widgets read colors/text from the tokens directly; this
+/// theme wires up the Material defaults (buttons, inputs, text selection) so
+/// stock widgets also inherit the Aether look.
+abstract final class AetherTheme {
+  // Convenience aliases so existing call sites (AetherTheme.gold, …) keep
+  // working while pointing at the token palette.
+  static const Color ink = AetherColors.ink;
+  static const Color inkSoft = AetherColors.surface;
+  static const Color gold = AetherColors.gold;
+  static const Color goldSoft = AetherColors.goldSoft;
+  static const Color parchment = AetherColors.parchment;
 
   static ThemeData get dark {
     final base = ThemeData.dark(useMaterial3: true);
     return base.copyWith(
-      scaffoldBackgroundColor: ink,
+      scaffoldBackgroundColor: AetherColors.ink,
       colorScheme: base.colorScheme.copyWith(
-        primary: gold,
-        secondary: goldSoft,
-        surface: inkSoft,
+        primary: AetherColors.gold,
+        secondary: AetherColors.goldBright,
+        surface: AetherColors.surface,
+        onSurface: AetherColors.parchment,
+        error: AetherColors.failure,
       ),
       textTheme: base.textTheme.copyWith(
-        // Narration: serif, generous line height, easy to read.
-        bodyLarge: const TextStyle(
-          fontFamily: 'Georgia',
-          fontSize: 19,
-          height: 1.6,
-          color: parchment,
-        ),
-        titleLarge: const TextStyle(
-          fontFamily: 'Georgia',
-          fontWeight: FontWeight.w600,
-          color: goldSoft,
-          letterSpacing: 0.5,
-        ),
-        labelLarge: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: parchment,
-        ),
+        displaySmall: AetherType.display,
+        titleLarge: AetherType.title,
+        bodyLarge: AetherType.narration,
+        bodyMedium: AetherType.body,
+        labelLarge: AetherType.label,
       ),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: AetherColors.gold,
+        selectionColor: AetherColors.goldGlow,
+        selectionHandleColor: AetherColors.gold,
+      ),
+      splashColor: AetherColors.goldGlow,
+      highlightColor: AetherColors.goldGlow,
+      dividerColor: AetherColors.hairline,
     );
   }
 }
