@@ -8,6 +8,40 @@ Aetherbook es un "elige tu propia aventura" evolucionado: un *Game Master* de IA
 
 ---
 
+## Cómo correrlo y probarlo en local
+
+Todo el toolchain (Flutter y Deno) corre **dentro de Docker** — no hace falta instalar el SDK de Flutter ni de Deno en tu máquina. Único requisito: **Docker Desktop corriendo**.
+
+### Jugarlo (web)
+
+```powershell
+.\tool\run-web.ps1
+```
+
+La primera vez descarga la imagen de Flutter (~2 GB, una sola vez). Después abrí **http://localhost:8080** en el navegador.
+
+**Para probarlo en el celular** (el juego es móvil-first): buscá la IP de tu PC en la red local (`ipconfig` → IPv4, algo como `192.168.1.40`) y entrá desde el navegador del teléfono a `http://<esa-ip>:8080`. En iPhone, Safari → *Compartir → Agregar a inicio* para que se sienta como una app.
+
+Por defecto usa el **`FakeNarratorAdapter`** ([lib/main.dart](lib/main.dart)): JSON fijo, sin red, sin costo. El narrador real (Gemini → Groq) ya existe como Edge Function desplegada y funcionando, pero todavía no está conectado al cliente — eso es un paso deliberado, para no gastar cuota mientras iteramos la UI/UX.
+
+### Correr los tests
+
+```powershell
+# Dominio + UI (Dart/Flutter)
+.\tool\flutter.ps1 test
+.\tool\flutter.ps1 analyze
+
+# Edge Function del narrador (Deno/TypeScript)
+.\tool\deno.ps1 test --allow-net --allow-env supabase/functions/narrator/
+.\tool\deno.ps1 lint supabase/functions/narrator/
+```
+
+En Git Bash / Linux / macOS, usá los equivalentes `.sh`: `./tool/flutter.sh test`, `./tool/deno.sh test --allow-net --allow-env supabase/functions/narrator/`.
+
+Ningún test toca red real ni gasta cuota de IA: todo corre contra fakes/mocks (`FakeNarratorAdapter` en Dart, `fetch` mockeado en los tests de Deno).
+
+---
+
 ## Qué lo hace distinto
 
 La mayoría de los "juegos con IA" son un chat sin memoria ni reglas. Acá el motor separa claramente:
@@ -70,8 +104,8 @@ Regla de dependencias: **hacia adentro** (`adapters` → `ports` → `core`). El
 
 ## Roadmap
 
-- **Fase 0 — Prueba de concepto** *(actual)*: un mundo (Xianxia), modo freeform, loop mínimo acción → resolución → narración JSON → render. Sin auth, sin imágenes.
-- **Fase 1 — MVP jugable**: estado persistente en Supabase, atributos/EXP/inventario reales, fallback Gemini→Groq, memoria de tres niveles, primera campaña híbrida completa.
+- **Fase 0 — Prueba de concepto** *(completa)*: un mundo (Xianxia), modo freeform, loop mínimo acción → resolución → narración JSON → render, `FakeNarratorAdapter`. Sin auth, sin imágenes.
+- **Fase 1 — MVP jugable** *(en curso)*: ✅ narrador real desplegado (`GeminiNarratorAdapter` con structured output + `GroqNarratorAdapter` de fallback, orquestados por `FallbackNarratorAdapter`, detrás de una Edge Function). Falta: estado persistente en Supabase + Auth, inventario real, memoria de tres niveles, primera campaña híbrida completa.
 - **Fase 2 — Contenido y mundos**: los 4 mundos con theming propio, más campañas, generación de imágenes.
 - **Fase 3 — Pulido y profundidad**: consistencia de personaje en imágenes, NPCs con memoria, rebobinar partidas, observabilidad.
 - **Fase 4 — Distribución**: App Store / Play Store + build web, compartir historias generadas.
@@ -92,7 +126,7 @@ Detalle completo en [`CLAUDE.md`](CLAUDE.md).
 
 ## Estado del proyecto
 
-🚧 En diseño / Fase 0. Proyecto personal, desarrollado con [Claude Code](https://claude.com/claude-code).
+🚧 Fase 1 en curso (narrador real ya desplegado). Proyecto personal, desarrollado con [Claude Code](https://claude.com/claude-code).
 
 ## Licencia
 
