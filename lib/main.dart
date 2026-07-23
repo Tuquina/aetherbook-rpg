@@ -69,7 +69,7 @@ class AetherbookApp extends StatelessWidget {
       title: 'Aetherbook',
       debugShowCheckedModeBanner: false,
       theme: AetherTheme.dark,
-      home: SplashScreen(controller: controller, worldSlug: 'xianxia_lianshu'),
+      home: SplashScreen(controller: controller),
     );
   }
 }

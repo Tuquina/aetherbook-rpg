@@ -7,11 +7,12 @@ import 'design/typography.dart';
 import 'game_controller.dart';
 import 'game_screen.dart';
 import 'widgets/atmosphere.dart';
+import 'world_select_screen.dart';
 
 /// Structured character creation (campaign-bible §5): name, origin, the free
 /// `+1` point, vow and an optional personal item — meant to take under three
 /// minutes. Only shown for a world that declares chargen origins; a world
-/// without them (Fase 0 style) skips straight from [SplashScreen] to
+/// without them (Fase 0 style) skips straight from [WorldSelectScreen] to
 /// [GameScreen] with `world.startingCharacter`.
 class ChargenScreen extends StatefulWidget {
   const ChargenScreen({
@@ -100,6 +101,26 @@ class _ChargenScreenState extends State<ChargenScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(AetherSpace.xl),
                 children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      onPressed: () => Navigator.of(context).pushReplacement(
+                        PageRouteBuilder(
+                          transitionDuration: AetherMotion.slow,
+                          pageBuilder: (_, _, _) =>
+                              WorldSelectScreen(controller: widget.controller),
+                          transitionsBuilder: (_, anim, _, child) =>
+                              FadeTransition(opacity: anim, child: child),
+                        ),
+                      ),
+                      tooltip: 'Volver a las historias',
+                      icon: const Icon(Icons.arrow_back_rounded,
+                          color: AetherColors.goldSoft, size: 22),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ),
+                  const SizedBox(height: AetherSpace.md),
                   Text(world.name, style: AetherType.display),
                   const SizedBox(height: AetherSpace.xs),
                   Text('Creá tu personaje', style: AetherType.title),
