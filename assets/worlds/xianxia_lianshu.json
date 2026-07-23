@@ -859,7 +859,7 @@
           {
             "label": "Confirmar: huir del valle",
             "target": "c5_n03_ritual_final",
-            "effects": [{"type": "flag", "key": "fled_valley_confirmed", "value": true}]
+            "effects": [{"type": "flag", "key": "fled_valley_confirmed", "value": true}, {"type": "flag", "key": "iniciar_ritual_final", "value": true}]
           },
           {
             "label": "No. Quedarme y enfrentar esto.",
@@ -1098,22 +1098,24 @@
           {
             "label": "Confrontar a Qiao con pruebas y honor",
             "target": "c5_n03_ritual_final",
+            "effects": [{"type": "flag", "key": "iniciar_ritual_final", "value": true}],
             "check_attribute": "presencia",
             "check_difficulty": 15,
-            "on_success": {"effects": [{"type": "relationship", "key": "qiao_wen", "value": 1}]}
+            "on_success": {"effects": [{"type": "relationship", "key": "qiao_wen", "value": 1}, {"type": "flag", "key": "iniciar_ritual_final", "value": true}]}
           },
           {
             "label": "Dejar pasar en silencio (Qiao ya confía en vos)",
             "target": "c5_n03_ritual_final",
-            "gate": {"type": "relationship", "key": "qiao_wen", "min": 1}
+            "gate": {"type": "relationship", "key": "qiao_wen", "min": 1},
+            "effects": [{"type": "flag", "key": "iniciar_ritual_final", "value": true}]
           },
           {
             "label": "Enfrentar a Qiao en combate",
             "target": "c5_n03_ritual_final",
             "check_attribute": "cuerpo",
             "check_difficulty": 15,
-            "on_success": {"effects": [{"type": "flag", "key": "qiao_defeated", "value": true}]},
-            "on_failure": {"effects": [{"type": "resource", "key": "vitality", "value": -3}]}
+            "on_success": {"effects": [{"type": "flag", "key": "qiao_defeated", "value": true}, {"type": "flag", "key": "iniciar_ritual_final", "value": true}]},
+            "on_failure": {"effects": [{"type": "resource", "key": "vitality", "value": -3}, {"type": "flag", "key": "iniciar_ritual_final", "value": true}]}
           }
         ]
       },
