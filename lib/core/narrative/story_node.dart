@@ -1,6 +1,8 @@
 import '../state/character.dart';
 import 'ending.dart';
+import 'epilogue_beat.dart';
 import 'extended_conflict.dart';
+import 'final_technique_rule.dart';
 import 'hub_activity.dart';
 import 'story_choice.dart';
 
@@ -183,9 +185,23 @@ final class StateHubNode extends StoryNode {
 /// requirements and a difficulty that scales with how many soft
 /// requirements are met (§16).
 final class ResolutionNode extends StoryNode {
-  const ResolutionNode({required super.id, this.endings = const []});
+  const ResolutionNode({
+    required super.id,
+    this.endings = const [],
+    this.epilogueBeats = const [],
+    this.finalTechniqueRules = const [],
+  });
 
   final List<Ending> endings;
+
+  /// Conditional epilogue beats (campaign-bible §16.8), grouped by
+  /// `movement` — used by the pure epilogue node (`e_epilogo`), which offers
+  /// no endings of its own.
+  final List<EpilogueBeat> epilogueBeats;
+
+  /// Priority rules for which technique to grant on entering the ritual
+  /// (§7.5) — used by `c5_n03_ritual_final`, empty everywhere else.
+  final List<FinalTechniqueRule> finalTechniqueRules;
 
   /// Endings whose hard requirement is currently satisfied. Soft
   /// requirements only affect [Ending.difficultyFor], never availability.
@@ -200,6 +216,14 @@ final class ResolutionNode extends StoryNode {
       endings: [
         for (final e in (json['endings'] as List? ?? const []))
           Ending.fromJson((e as Map).cast<String, dynamic>()),
+      ],
+      epilogueBeats: [
+        for (final b in (json['epilogue_beats'] as List? ?? const []))
+          EpilogueBeat.fromJson((b as Map).cast<String, dynamic>()),
+      ],
+      finalTechniqueRules: [
+        for (final r in (json['final_technique_rules'] as List? ?? const []))
+          FinalTechniqueRule.fromJson((r as Map).cast<String, dynamic>()),
       ],
     );
   }

@@ -158,6 +158,56 @@ void main() {
     });
   });
 
+  group('World story graph, npcs and techniques', () {
+    test('parses a story graph and resolves its start node', () {
+      final json = baseWorldJson()
+        ..['graph'] = {
+          'start_node': 'p1_barca_funeraria',
+          'nodes': {
+            'p1_barca_funeraria': {'narration': 'Primero vuelve el frío.'},
+          },
+        };
+      final world = World.fromJson(json);
+      expect(world.storyGraph, isNotNull);
+      expect(world.storyGraph!.startNodeId, 'p1_barca_funeraria');
+    });
+
+    test('storyGraph is null when the world declares no graph', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(world.storyGraph, isNull);
+    });
+
+    test('parses npcs and finds them by id', () {
+      final json = baseWorldJson()
+        ..['npcs'] = [
+          {'id': 'lian_suyin', 'display_name': 'Lian Suyin', 'aliases': ['Suyin']},
+        ];
+      final world = World.fromJson(json);
+      expect(world.npcs, hasLength(1));
+      expect(world.npcById('lian_suyin').displayName, 'Lian Suyin');
+    });
+
+    test('npcById throws for an unknown id', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(() => world.npcById('no_existe'), throwsArgumentError);
+    });
+
+    test('parses techniques and finds them by id', () {
+      final json = baseWorldJson()
+        ..['techniques'] = [
+          {'id': 'paso_entre_trazos', 'cost_qi': 1, 'primary_attribute': 'agudeza'},
+        ];
+      final world = World.fromJson(json);
+      expect(world.techniques, hasLength(1));
+      expect(world.techniqueById('paso_entre_trazos').costQi, 1);
+    });
+
+    test('techniqueById throws for an unknown id', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(() => world.techniqueById('no_existe'), throwsArgumentError);
+    });
+  });
+
   group('World opponents', () {
     test('parses opponents and finds them by id', () {
       final json = baseWorldJson()

@@ -7,14 +7,15 @@ import 'infer_action_attribute.dart';
 /// `InferActionAttribute` (Fase 1): keyword-vote per world, in code — the AI
 /// never decides this, whether or not it also happens to narrate the result.
 ///
-/// Two of the five fields are only partially solved here, deliberately:
-/// - [CanonCompatibility.needsReframing] isn't inferred — telling "this needs
-///   reframing" apart from "this is invalid" requires narrative judgement
-///   this deterministic classifier doesn't have. Only the two mechanical
-///   cases are covered: a self-granting attempt is `invalid`, everything else
-///   is `valid`.
-/// - `targetId` is always `null` — resolving it needs a per-node list of
-///   known NPCs/objects, which arrives with real content (Fase 7).
+/// One of the five fields is only partially solved here, deliberately:
+/// [CanonCompatibility.needsReframing] isn't inferred — telling "this needs
+/// reframing" apart from "this is invalid" requires narrative judgement this
+/// deterministic classifier doesn't have. Only the two mechanical cases are
+/// covered: a self-granting attempt is `invalid`, everything else is `valid`.
+///
+/// `targetId` resolves via [knownNpcAliases] (campaign content, Fase 7's
+/// `World.npcs`) the same keyword-vote way as everything else — `null` when
+/// nothing matches, same as an undeclared world.
 class ClassifyFreeAction {
   const ClassifyFreeAction({
     this.inferAttribute = const InferActionAttribute(),
@@ -29,6 +30,7 @@ class ClassifyFreeAction {
     Map<String, List<String>> intentKeywords = const {},
     Map<String, List<String>> riskKeywords = const {},
     List<String> selfGrantPatterns = const [],
+    Map<String, List<String>> knownNpcAliases = const {},
   }) {
     final normalized = action.toLowerCase();
 
@@ -44,6 +46,7 @@ class ClassifyFreeAction {
     return FreeActionClassification(
       intent: _classifyIntent(normalized, intentKeywords),
       attributeKey: attributeKey,
+      targetId: _classifyTarget(normalized, knownNpcAliases),
       risk: _classifyRisk(normalized, riskKeywords),
       canonCompatibility:
           isSelfGrant ? CanonCompatibility.invalid : CanonCompatibility.valid,
@@ -68,6 +71,24 @@ class ClassifyFreeAction {
       }
     }
     return best ?? ActionIntent.investigate;
+  }
+
+  String? _classifyTarget(
+    String normalized,
+    Map<String, List<String>> knownNpcAliases,
+  ) {
+    String? best;
+    var bestScore = 0;
+    for (final entry in knownNpcAliases.entries) {
+      final score = entry.value
+          .where((alias) => normalized.contains(alias.toLowerCase()))
+          .length;
+      if (score > bestScore) {
+        bestScore = score;
+        best = entry.key;
+      }
+    }
+    return best;
   }
 
   RiskLevel _classifyRisk(
