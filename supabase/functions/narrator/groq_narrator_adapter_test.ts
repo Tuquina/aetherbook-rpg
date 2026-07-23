@@ -40,9 +40,12 @@ function groqResponse(content: string): Response {
 }
 
 const VALID_JSON =
-  '{"narration":"Meditás en calma.","suggested_choices":["Seguir"],' +
-  '"state_deltas":[{"type":"exp","key":"exp","value":50}],' +
-  '"image_prompt":"un monje","tone":"sereno"}';
+  '{"narration":"Meditás en calma.",' +
+  '"suggested_choices":[{"id":"seguir","label":"Seguir"}],' +
+  '"proposed_state_deltas":[{"type":"exp","key":"exp","value":50,' +
+  '"operation":"increment","reason":"meditación exitosa"}],' +
+  '"image_prompt":"un monje","tone":"sereno",' +
+  '"memory_facts":[],"node_status":"active"}';
 
 Deno.test("parses a valid JSON-mode reply on the first try", async () => {
   const adapter = new GroqNarratorAdapter({

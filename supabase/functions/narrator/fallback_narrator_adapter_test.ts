@@ -29,9 +29,11 @@ function fakeResponse(narration: string): NarratorResponse {
   return {
     narration,
     suggested_choices: [],
-    state_deltas: [],
+    proposed_state_deltas: [],
     image_prompt: "",
     tone: "",
+    memory_facts: [],
+    node_status: "active",
   };
 }
 

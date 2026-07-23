@@ -4,7 +4,12 @@
 // through this, so the same parsing rules apply everywhere, including the
 // retry-of-repair path.
 
-import type { NarratorResponse, StateDeltaWire } from "./types.ts";
+import type {
+  ExpectedCheckWire,
+  NarratorResponse,
+  StateDeltaWire,
+  SuggestedChoiceWire,
+} from "./types.ts";
 
 export class NarratorParseError extends Error {
   constructor(message: string, readonly rawOutput: string) {
@@ -37,10 +42,12 @@ export function parseNarratorJson(raw: string): NarratorResponse {
 
   return {
     narration: obj.narration,
-    suggested_choices: stringList(obj.suggested_choices),
-    state_deltas: deltas(obj.state_deltas),
+    suggested_choices: choices(obj.suggested_choices),
+    proposed_state_deltas: deltas(obj.proposed_state_deltas),
     image_prompt: typeof obj.image_prompt === "string" ? obj.image_prompt : "",
     tone: typeof obj.tone === "string" ? obj.tone : "",
+    memory_facts: stringList(obj.memory_facts),
+    node_status: obj.node_status === "ready_to_exit" ? "ready_to_exit" : "active",
   };
 }
 
@@ -69,6 +76,36 @@ function stringList(value: unknown): string[] {
   return [];
 }
 
+function choices(value: unknown): SuggestedChoiceWire[] {
+  if (!Array.isArray(value)) return [];
+  const result: SuggestedChoiceWire[] = [];
+  for (const item of value) {
+    if (item && typeof item === "object") {
+      const rec = item as Record<string, unknown>;
+      if (typeof rec.label === "string") {
+        result.push({
+          id: typeof rec.id === "string" ? rec.id : rec.label,
+          label: rec.label,
+          intent: typeof rec.intent === "string" ? rec.intent : undefined,
+          expected_check: expectedCheck(rec.expected_check),
+        });
+      }
+    }
+  }
+  return result;
+}
+
+function expectedCheck(value: unknown): ExpectedCheckWire | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const rec = value as Record<string, unknown>;
+  if (typeof rec.attribute !== "string") return undefined;
+  return {
+    attribute: rec.attribute,
+    difficulty_id:
+      typeof rec.difficulty_id === "string" ? rec.difficulty_id : undefined,
+  };
+}
+
 function deltas(value: unknown): StateDeltaWire[] {
   if (!Array.isArray(value)) return [];
   const result: StateDeltaWire[] = [];
@@ -76,7 +113,13 @@ function deltas(value: unknown): StateDeltaWire[] {
     if (item && typeof item === "object") {
       const rec = item as Record<string, unknown>;
       if (typeof rec.type === "string" && typeof rec.key === "string") {
-        result.push({ type: rec.type, key: rec.key, value: rec.value });
+        result.push({
+          type: rec.type,
+          key: rec.key,
+          value: rec.value,
+          operation: typeof rec.operation === "string" ? rec.operation : undefined,
+          reason: typeof rec.reason === "string" ? rec.reason : undefined,
+        });
       }
     }
   }

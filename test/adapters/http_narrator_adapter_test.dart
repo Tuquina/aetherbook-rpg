@@ -33,9 +33,12 @@ const _world = World(
 );
 
 const _validResponseJson =
-    '{"narration":"Meditás en calma.","suggested_choices":["Seguir"],'
-    '"state_deltas":[{"type":"exp","key":"exp","value":50}],'
-    '"image_prompt":"un monje","tone":"sereno"}';
+    '{"narration":"Meditás en calma.",'
+    '"suggested_choices":[{"id":"seguir","label":"Seguir"}],'
+    '"proposed_state_deltas":[{"type":"exp","key":"exp","value":50,'
+    '"operation":"increment","reason":"meditación exitosa"}],'
+    '"image_prompt":"un monje","tone":"sereno",'
+    '"memory_facts":[],"node_status":"active"}';
 
 void main() {
   final endpoint = Uri.parse('https://example.supabase.co/functions/v1/narrator');

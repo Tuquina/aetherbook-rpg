@@ -48,19 +48,41 @@ export interface NarratorRequest {
   memoryDigest?: string | null;
 }
 
+/** A state delta as the narrator proposes it (campaign-bible §18.5/§19.3):
+ * the engine still validates `operation`/value bounds before applying it —
+ * see the Dart `ProposedStateDelta.toStateDelta`. */
 export interface StateDeltaWire {
   type: string;
   key: string;
   value: unknown;
+  operation?: string;
+  reason?: string;
 }
 
-/** The structured output contract (CLAUDE.md §5), wire format (snake_case). */
+export interface ExpectedCheckWire {
+  attribute: string;
+  difficulty_id?: string;
+}
+
+/** A single suggested choice (campaign-bible §18.5): a stable `id` for
+ * analytics (§19.4), plus what the narrator believes it would resolve as. */
+export interface SuggestedChoiceWire {
+  id: string;
+  label: string;
+  intent?: string;
+  expected_check?: ExpectedCheckWire;
+}
+
+/** The structured output contract (campaign-bible §18.5), wire format
+ * (snake_case). */
 export interface NarratorResponse {
   narration: string;
-  suggested_choices: string[];
-  state_deltas: StateDeltaWire[];
+  suggested_choices: SuggestedChoiceWire[];
+  proposed_state_deltas: StateDeltaWire[];
   image_prompt: string;
   tone: string;
+  memory_facts: string[];
+  node_status: "active" | "ready_to_exit";
 }
 
 /** A single narrator provider (Gemini, Groq, …). One adapter per file. */

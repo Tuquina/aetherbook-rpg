@@ -1,6 +1,7 @@
 import 'package:aetherbook/adapters/narrator/fake_narrator_adapter.dart';
 import 'package:aetherbook/adapters/narrator/narrator_json_parser.dart';
 import 'package:aetherbook/core/engine/action_resolution.dart';
+import 'package:aetherbook/core/engine/free_action_classification.dart';
 import 'package:aetherbook/core/engine/state_delta.dart';
 import 'package:aetherbook/core/state/character.dart';
 import 'package:aetherbook/core/world/world.dart';
@@ -45,14 +46,31 @@ ActionResolution _resolution(ActionOutcome outcome) => ActionResolution(
 void main() {
   group('parseNarratorJson (tolerant parser)', () {
     test('parses a clean JSON object', () {
-      const raw = '{"narration":"Hola","suggested_choices":["A","B"],'
-          '"state_deltas":[{"type":"exp","key":"exp","value":10}],'
-          '"image_prompt":"algo","tone":"tenso"}';
+      const raw = '{"narration":"Hola",'
+          '"suggested_choices":[{"id":"a","label":"A"},{"id":"b","label":"B"}],'
+          '"proposed_state_deltas":[{"type":"exp","key":"exp","value":10,'
+          '"operation":"increment","reason":"porque sí"}],'
+          '"image_prompt":"algo","tone":"tenso",'
+          '"memory_facts":["prometió algo"],"node_status":"ready_to_exit"}';
       final r = parseNarratorJson(raw);
       expect(r.narration, 'Hola');
-      expect(r.suggestedChoices, ['A', 'B']);
+      expect(r.suggestedChoices.map((c) => c.label), ['A', 'B']);
       expect(r.stateDeltas.single.type, StateDeltaType.exp);
+      expect(r.stateDeltas.single.reason, 'porque sí');
       expect(r.tone, 'tenso');
+      expect(r.memoryFacts, ['prometió algo']);
+      expect(r.nodeStatus, NodeStatus.readyToExit);
+    });
+
+    test('parses a choice with intent and expected_check', () {
+      const raw = '{"narration":"x","suggested_choices":[{"id":"c",'
+          '"label":"Investigar","intent":"investigate",'
+          '"expected_check":{"attribute":"agudeza","difficulty_id":"standard"}}]}';
+      final r = parseNarratorJson(raw);
+      final choice = r.suggestedChoices.single;
+      expect(choice.intent, ActionIntent.investigate);
+      expect(choice.expectedCheck!.attribute, 'agudeza');
+      expect(choice.expectedCheck!.difficultyId, 'standard');
     });
 
     test('strips ```json fences', () {
@@ -69,10 +87,16 @@ void main() {
     });
 
     test('maps unrecognised delta types to unknown', () {
-      const raw = '{"narration":"x","state_deltas":'
+      const raw = '{"narration":"x","proposed_state_deltas":'
           '[{"type":"teleport","key":"k","value":1}]}';
       final r = parseNarratorJson(raw);
       expect(r.stateDeltas.single.type, StateDeltaType.unknown);
+    });
+
+    test('defaults node_status to active and memory_facts to empty', () {
+      final r = parseNarratorJson('{"narration":"x"}');
+      expect(r.nodeStatus, NodeStatus.active);
+      expect(r.memoryFacts, isEmpty);
     });
 
     test('throws on broken JSON', () {
@@ -141,6 +165,11 @@ void main() {
       expect(
         r.stateDeltas.any((d) => d.type == StateDeltaType.exp),
         isTrue,
+      );
+      expect(
+        r.stateDeltas.every((d) => d.toStateDelta() != null),
+        isTrue,
+        reason: 'every canned delta declares a supported operation',
       );
     });
   });
