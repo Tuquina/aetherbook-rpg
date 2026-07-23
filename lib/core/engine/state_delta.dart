@@ -1,6 +1,6 @@
 /// The kinds of state change the narrator may propose. Anything the parser
 /// does not recognise maps to [unknown] and is rejected by the engine.
-enum StateDeltaType { flag, exp, resource, unknown }
+enum StateDeltaType { flag, exp, resource, meter, unknown }
 
 /// A single proposed change to game state, as suggested by the narrator
 /// (CLAUDE.md §5). These are **proposals**: the engine validates them before
@@ -24,6 +24,8 @@ class StateDelta {
         return StateDeltaType.exp;
       case 'resource':
         return StateDeltaType.resource;
+      case 'meter':
+        return StateDeltaType.meter;
       default:
         return StateDeltaType.unknown;
     }

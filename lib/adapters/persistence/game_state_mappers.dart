@@ -16,6 +16,7 @@ Map<String, Object?> characterToRow(String sessionId, Character character) {
     'attributes': character.attributes,
     'resources': character.resources,
     'flags': character.flags,
+    'meters': character.meters,
   };
 }
 
@@ -27,6 +28,7 @@ Character characterFromRow(Map<String, dynamic> row) {
     attributes: _intMap(row['attributes']),
     resources: _intMap(row['resources']),
     flags: _boolMap(row['flags']),
+    meters: _intMap(row['meters']),
   );
 }
 

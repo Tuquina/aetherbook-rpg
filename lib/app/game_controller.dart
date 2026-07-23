@@ -101,6 +101,7 @@ class GameController extends ChangeNotifier {
       _applyDeltas = ApplyStateDeltas(
         progression:
             ExpProgression(baseExpPerLevel: world.progression.baseExpPerLevel),
+        meterDefinitions: world.meterDefinitions,
       );
 
       final persistence = _persistence;
