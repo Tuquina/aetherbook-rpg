@@ -25,6 +25,8 @@ La primera vez descarga la imagen de Flutter (~2 GB, una sola vez). Después abr
 
 **Para probarlo en el celular** (el juego es móvil-first): buscá la IP de tu PC en la red local (`ipconfig` → IPv4, algo como `192.168.1.40`) y entrá desde el navegador del teléfono a `http://<esa-ip>:8080`. En iPhone, Safari → *Compartir → Agregar a inicio* para que se sienta como una app.
 
+Al abrir la app vas a ver un **menú para elegir historia**: hoy hay dos — "Los nombres que devora el cielo" (campaña híbrida curada, con creación de personaje) y "El Sendero del Qi" (modo libre, sin chargen). Dentro de una partida, la flecha arriba a la izquierda vuelve al menú sin perder el progreso (la misma sesión sigue en memoria; volver a entrar a la misma historia la retoma donde quedó).
+
 Por defecto usa el **`FakeNarratorAdapter`** ([lib/main.dart](lib/main.dart)): JSON fijo, sin red, sin costo. El narrador real (Gemini → Groq) ya existe como Edge Function desplegada y funcionando, pero todavía no está conectado al cliente — eso es un paso deliberado, para no gastar cuota mientras iteramos la UI/UX.
 
 ### Correr los tests
@@ -60,7 +62,9 @@ Eso elimina el problema clásico de que "el modelo se olvida", inventa ítems o 
 2. **Historia pre-armada** — campañas escritas a mano, con ramas fijas y calidad garantizada.
 3. **Híbrido** *(modo por defecto)* — un esqueleto de hitos pre-escritos + relleno generativo dinámico entre ellos. Coherencia de una historia curada, libertad de una generada.
 
-**Mundos iniciales (5):** Isekai, Xianxia (cultivo), Superhéroes, Cyberpunk, Post-apocalíptico. Isekai y Xianxia son mundos distintos — comparten la premisa de "otro mundo" pero no el género. Cada mundo re-etiqueta el mismo sistema base de atributos y progresión.
+Hoy hay una campaña híbrida real jugando este tercer modo: **"Los nombres que devora el cielo"** (`assets/worlds/xianxia_lianshu.json`), con creación de personaje estructurada, un grafo de 19 nodos (hitos fijos, corredores acotados, hubs de actividades y resoluciones), conflictos extendidos y progresión por rango con hitos. Su vertical slice recomendado (apertura → corredor → hub → hito con conflicto) es jugable de punta a punta. El resto del grafo ya está cargado como contenido pero todavía no fue ejercitado turno a turno en la UI.
+
+**Mundos iniciales (5, según el GDD):** Isekai, Xianxia (cultivo), Superhéroes, Cyberpunk, Post-apocalíptico. Isekai y Xianxia son mundos distintos — comparten la premisa de "otro mundo" pero no el género. Por ahora solo Xianxia tiene contenido: un mundo freeform simple (`xianxia.json`, el de la prueba de concepto original) y la campaña híbrida de arriba. Los otros 4 mundos siguen siendo diseño, no código.
 
 ## Pilares de diseño
 
@@ -108,8 +112,8 @@ Regla de dependencias: **hacia adentro** (`adapters` → `ports` → `core`). El
 ## Roadmap
 
 - **Fase 0 — Prueba de concepto** *(completa)*: un mundo (Xianxia), modo freeform, loop mínimo acción → resolución → narración JSON → render, `FakeNarratorAdapter`. Sin auth, sin imágenes.
-- **Fase 1 — MVP jugable** *(en curso)*: ✅ narrador real (`GeminiNarratorAdapter` + `GroqNarratorAdapter` de fallback vía `FallbackNarratorAdapter`), ✅ persistencia real en Supabase + Auth anónimo (RLS por sesión), ✅ memoria de tres niveles (diario resumido vía Groq, Edge Function `memory-digest`). Falta: inventario real, grafo de nodos para campañas curadas/híbridas, primera campaña híbrida completa.
-- **Fase 2 — Contenido y mundos**: los 5 mundos (Isekai, Xianxia, Superhéroes, Cyberpunk, Post-apocalíptico) con theming propio, más campañas, generación de imágenes.
+- **Fase 1 — MVP jugable** *(en curso)*: ✅ narrador real desplegado (`GeminiNarratorAdapter` + `GroqNarratorAdapter` de fallback vía `FallbackNarratorAdapter`, cliente sigue en `FakeNarratorAdapter` por costo mientras se itera UI/UX), ✅ persistencia real en Supabase + Auth anónimo (RLS por sesión), ✅ memoria de tres niveles (diario resumido vía Groq, Edge Function `memory-digest`), ✅ motor del modo híbrido completo (`core/narrative`: hitos fijos, corredores acotados, hubs de actividades, resoluciones; conflictos extendidos; combate por guard; chargen estructurado; progresión por rango con hitos), ✅ una campaña híbrida real cargada (`xianxia_lianshu.json`, "Los nombres que devora el cielo") con su vertical slice jugable de punta a punta, ✅ menú inicial para elegir historia y navegación de vuelta dentro de una partida. Falta: cablear el resto del grafo de esa campaña (finales, epílogo, técnicas por rango), reemplazar el inferidor de atributo por keyword por el clasificador de acción libre ya construido (`ClassifyFreeAction`), persistir la posición dentro del grafo (hoy solo vive en memoria), inventario real.
+- **Fase 2 — Contenido y mundos**: los otros 4 mundos (Isekai, Superhéroes, Cyberpunk, Post-apocalíptico) con theming propio, más campañas, generación de imágenes.
 - **Fase 3 — Pulido y profundidad**: consistencia de personaje en imágenes, NPCs con memoria, rebobinar partidas, observabilidad.
 - **Fase 4 — Distribución**: App Store / Play Store + build web, compartir historias generadas.
 
@@ -129,7 +133,7 @@ Detalle completo en [`CLAUDE.md`](CLAUDE.md).
 
 ## Estado del proyecto
 
-🚧 Fase 1 en curso (narrador real ya desplegado). Proyecto personal, desarrollado con [Claude Code](https://claude.com/claude-code).
+🚧 Fase 1 en curso — motor híbrido completo y una campaña real jugable en su vertical slice; narrador real desplegado pero el cliente aún juega con `FakeNarratorAdapter`. Proyecto personal, desarrollado con [Claude Code](https://claude.com/claude-code).
 
 ## Licencia
 
