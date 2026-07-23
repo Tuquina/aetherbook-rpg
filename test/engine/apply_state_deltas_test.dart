@@ -129,6 +129,39 @@ void main() {
       expect(result.character.meter('evidence_count'), 0);
     });
 
+    test('syncs a derived meter onto the character when its flags change', () {
+      final withDerived = const ApplyStateDeltas(
+        meterDefinitions: {
+          'evidence_count': MeterDefinition(
+            derivedFromFlags: ['evidence_a', 'evidence_b'],
+          ),
+        },
+      );
+      final result = withDerived(base(), [
+        const StateDelta(type: StateDeltaType.flag, key: 'evidence_a', value: true),
+      ]);
+      // Gate.MinMeterGate reads this directly off the character — no World
+      // needed — precisely because this sync keeps it correct.
+      expect(result.character.meter('evidence_count'), 1);
+    });
+
+    test('a derived meter stays in sync across turns as more flags land', () {
+      final withDerived = const ApplyStateDeltas(
+        meterDefinitions: {
+          'evidence_count': MeterDefinition(
+            derivedFromFlags: ['evidence_a', 'evidence_b'],
+          ),
+        },
+      );
+      final afterFirst = withDerived(base(), [
+        const StateDelta(type: StateDeltaType.flag, key: 'evidence_a', value: true),
+      ]).character;
+      final afterSecond = withDerived(afterFirst, [
+        const StateDelta(type: StateDeltaType.flag, key: 'evidence_b', value: true),
+      ]).character;
+      expect(afterSecond.meter('evidence_count'), 2);
+    });
+
     test('rejects a meter delta with a non-numeric value', () {
       final result = apply(base(), [
         const StateDelta(

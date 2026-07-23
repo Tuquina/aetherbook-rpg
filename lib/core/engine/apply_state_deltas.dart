@@ -71,6 +71,22 @@ class ApplyStateDeltas {
       current = current.copyWith(level: result.level);
     }
 
+    // Keep derived meters (e.g. `evidence_count`) synced onto the character
+    // once per turn, from whatever flags just changed. This is engine-owned
+    // synchronization, not a delta — `Gate`/`MinMeterGate` can then read a
+    // derived meter with a plain `character.meter(key)`, without needing the
+    // `World`/`MeterDefinition` that computed it.
+    if (meterDefinitions.isNotEmpty) {
+      final derived = {
+        for (final entry in meterDefinitions.entries)
+          if (entry.value.isDerived)
+            entry.key: entry.value.resolve(current, entry.key),
+      };
+      if (derived.isNotEmpty) {
+        current = current.copyWith(meters: {...current.meters, ...derived});
+      }
+    }
+
     return DeltaApplication(
       character: current,
       applied: applied,

@@ -1,4 +1,5 @@
 import 'package:aetherbook/core/narrative/story_graph.dart';
+import 'package:aetherbook/core/narrative/story_node.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -18,8 +19,8 @@ void main() {
       });
 
       expect(graph.startNodeId, 'beat_1');
-      expect(graph.startNode.narration, 'Inicio');
-      expect(graph.nodeById('beat_2').narration, 'Fin');
+      expect((graph.startNode as FixedAnchorNode).narration, 'Inicio');
+      expect((graph.nodeById('beat_2') as FixedAnchorNode).narration, 'Fin');
     });
 
     test('is a graph, not a tree: two nodes can target the same node', () {
@@ -40,8 +41,10 @@ void main() {
         },
       });
 
-      final fromA = graph.nodeById('a').choices.single.targetNodeId;
-      final fromB = graph.nodeById('b').choices.single.targetNodeId;
+      final fromA =
+          (graph.nodeById('a') as FixedAnchorNode).choices.single.targetNodeId;
+      final fromB =
+          (graph.nodeById('b') as FixedAnchorNode).choices.single.targetNodeId;
       expect(fromA, 'c');
       expect(fromB, 'c');
       expect(graph.nodeById(fromA), same(graph.nodeById(fromB)));
@@ -57,6 +60,30 @@ void main() {
         },
       });
       expect(() => graph.nodeById('missing'), throwsArgumentError);
+    });
+  });
+
+  group('StoryGraph.fromJson with mixed node types', () {
+    test('dispatches each node to its declared type', () {
+      final graph = StoryGraph.fromJson({
+        'start_node': 'p0',
+        'nodes': {
+          'p0': {'type': 'fixed_anchor', 'narration': 'Inicio'},
+          'corridor': {
+            'type': 'bounded_corridor',
+            'goal': 'g',
+            'turn_budget': 3,
+            'fallback_exit': 'p0',
+          },
+          'hub': {'type': 'state_hub'},
+          'ritual': {'type': 'resolution'},
+        },
+      });
+
+      expect(graph.nodeById('p0'), isA<FixedAnchorNode>());
+      expect(graph.nodeById('corridor'), isA<BoundedCorridorNode>());
+      expect(graph.nodeById('hub'), isA<StateHubNode>());
+      expect(graph.nodeById('ritual'), isA<ResolutionNode>());
     });
   });
 }

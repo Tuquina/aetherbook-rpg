@@ -7,6 +7,7 @@ Character _character({
   Map<String, int> attributes = const {},
   Map<String, int> resources = const {},
   Map<String, bool> flags = const {},
+  Map<String, int> meters = const {},
 }) {
   return Character(
     name: 'Discípulo',
@@ -15,6 +16,7 @@ Character _character({
     attributes: attributes,
     resources: resources,
     flags: flags,
+    meters: meters,
   );
 }
 
@@ -67,6 +69,12 @@ void main() {
       expect(gate.isSatisfiedBy(_character(resources: {'qi': 9})), isFalse);
       expect(gate.isSatisfiedBy(_character(resources: {'qi': 10})), isTrue);
     });
+
+    test('meter gate checks the named meter (e.g. evidence_count)', () {
+      const gate = MinMeterGate('evidence_count', 3);
+      expect(gate.isSatisfiedBy(_character(meters: {'evidence_count': 2})), isFalse);
+      expect(gate.isSatisfiedBy(_character(meters: {'evidence_count': 3})), isTrue);
+    });
   });
 
   group('AllOfGate / AnyOfGate', () {
@@ -99,6 +107,10 @@ void main() {
       expect(
         Gate.fromJson({'type': 'resource', 'key': 'qi', 'min': 2}),
         isA<MinResourceGate>(),
+      );
+      expect(
+        Gate.fromJson({'type': 'meter', 'key': 'evidence_count', 'min': 2}),
+        isA<MinMeterGate>(),
       );
     });
 
