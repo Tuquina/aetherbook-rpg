@@ -9,6 +9,7 @@ import '../core/engine/apply_state_deltas.dart';
 import '../core/engine/dice.dart';
 import '../core/engine/exp_progression.dart';
 import '../core/engine/infer_action_attribute.dart';
+import '../core/engine/rank_progression.dart';
 import '../core/engine/resolve_player_action.dart';
 import '../core/state/character.dart';
 import '../core/state/game_session.dart';
@@ -102,6 +103,8 @@ class GameController extends ChangeNotifier {
         progression:
             ExpProgression(baseExpPerLevel: world.progression.baseExpPerLevel),
         meterDefinitions: world.meterDefinitions,
+        rankProgression:
+            world.ranks.isEmpty ? null : RankProgression(world.ranks),
       );
 
       final persistence = _persistence;
