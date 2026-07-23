@@ -16,11 +16,16 @@ class StatusBar extends StatelessWidget {
     required this.world,
     required this.character,
     required this.onOpenCodex,
+    this.onBack,
   });
 
   final World world;
   final Character character;
   final VoidCallback onOpenCodex;
+
+  /// Returns to the story menu, keeping this session in memory (picking the
+  /// same story again resumes it). `null` hides the back affordance.
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +47,13 @@ class StatusBar extends StatelessWidget {
         children: [
           Row(
             children: [
+              if (onBack != null)
+                IconButton(
+                  onPressed: onBack,
+                  tooltip: 'Volver a las historias',
+                  icon: const Icon(Icons.arrow_back_rounded,
+                      color: AetherColors.goldSoft, size: 22),
+                ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

@@ -2,26 +2,21 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import 'chargen_screen.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'game_controller.dart';
-import 'game_screen.dart';
 import 'widgets/atmosphere.dart';
+import 'world_select_screen.dart';
 
 /// The entry screen: an animated tome, the wordmark, and the way in. A moment
 /// of arrival before the world opens (GDD §9). Account sign-in is stubbed for
 /// now (anonymous play happens transparently) — the affordance is here so it
-/// can light up later without a redesign.
+/// can light up later without a redesign. "Comenzar" leads to
+/// [WorldSelectScreen], where the player picks which story to enter.
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key, required this.controller, this.worldSlug = 'xianxia'});
+  const SplashScreen({super.key, required this.controller});
 
   final GameController controller;
-
-  /// Which world to load next — a curated world (one with chargen origins)
-  /// goes through [ChargenScreen] first; a freeform world (Fase 0 style)
-  /// goes straight to [GameScreen].
-  final String worldSlug;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -33,7 +28,6 @@ class _SplashScreenState extends State<SplashScreen>
     vsync: this,
     duration: const Duration(milliseconds: 4200),
   )..repeat();
-  bool _entering = false;
 
   @override
   void dispose() {
@@ -41,23 +35,11 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  Future<void> _begin() async {
-    if (_entering) return;
-    setState(() => _entering = true);
-
-    final world = await widget.controller.loadWorldInfo(widget.worldSlug);
-    if (!mounted) return;
-
+  void _begin() {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: AetherMotion.slow,
-        pageBuilder: (_, _, _) => world.origins.isNotEmpty
-            ? ChargenScreen(
-                controller: widget.controller,
-                worldSlug: widget.worldSlug,
-                world: world,
-              )
-            : GameScreen(controller: widget.controller, worldSlug: widget.worldSlug),
+        pageBuilder: (_, _, _) => WorldSelectScreen(controller: widget.controller),
         transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
       ),

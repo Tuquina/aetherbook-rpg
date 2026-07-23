@@ -8,6 +8,7 @@ import 'widgets/atmosphere.dart';
 import 'widgets/choice_button.dart';
 import 'widgets/fate_roll.dart';
 import 'widgets/status_bar.dart';
+import 'world_select_screen.dart';
 
 /// The single play screen: an atmospheric backdrop, the status bar up top, the
 /// narration (with the Fate Roll reveal) in the middle, and the choices at the
@@ -105,6 +106,15 @@ class _GameScreenState extends State<GameScreen> {
                       character: c.character!,
                       onOpenCodex: () =>
                           Navigator.of(context).push(CodexScreen.route()),
+                      onBack: () => Navigator.of(context).pushReplacement(
+                        PageRouteBuilder(
+                          transitionDuration: AetherMotion.slow,
+                          pageBuilder: (_, _, _) =>
+                              WorldSelectScreen(controller: c),
+                          transitionsBuilder: (_, anim, _, child) =>
+                              FadeTransition(opacity: anim, child: child),
+                        ),
+                      ),
                     ),
                     Expanded(
                       child: _NarrationView(controller: c, scroll: _scroll),
