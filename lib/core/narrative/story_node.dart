@@ -3,6 +3,7 @@ import 'ending.dart';
 import 'epilogue_beat.dart';
 import 'extended_conflict.dart';
 import 'final_technique_rule.dart';
+import 'gate.dart';
 import 'hub_activity.dart';
 import 'story_choice.dart';
 
@@ -49,6 +50,7 @@ final class FixedAnchorNode extends StoryNode {
     this.fixedReveals = const [],
     this.forbiddenReveals = const [],
     this.extendedConflict,
+    this.conditionalInserts = const [],
   });
 
   final String narration;
@@ -64,10 +66,24 @@ final class FixedAnchorNode extends StoryNode {
   /// e.g. "Coro en el campanario" — instead of a single check.
   final ExtendedConflict? extendedConflict;
 
+  /// Literal text blocks appended after [narration] when their gate is
+  /// satisfied (curated-content contract §25.2 `conditional_inserts`) — e.g.
+  /// a line that only appears if a companion is present. Every satisfied
+  /// insert is shown, in authored order (unlike [Ending.bodyBeats], these
+  /// aren't mutually exclusive alternatives for one slot).
+  final List<ConditionalInsert> conditionalInserts;
+
   /// The choices whose gate is currently satisfied, in authored order.
   List<StoryChoice> availableChoices(Character character) => [
         for (final choice in choices)
           if (choice.isAvailableTo(character)) choice,
+      ];
+
+  /// [conditionalInserts] whose gate [character] satisfies, in authored
+  /// order.
+  List<String> satisfiedInserts(Character character) => [
+        for (final insert in conditionalInserts)
+          if (insert.gate.isSatisfiedBy(character)) insert.text,
       ];
 
   factory FixedAnchorNode.fromJson(String id, Map<String, dynamic> json) {
@@ -81,8 +97,33 @@ final class FixedAnchorNode extends StoryNode {
           ? ExtendedConflict.fromJson(
               (json['extended_conflict'] as Map).cast<String, dynamic>())
           : null,
+      conditionalInserts: _insertsFromJson(json['conditional_inserts']),
     );
   }
+}
+
+/// One literal text block from [FixedAnchorNode.conditionalInserts]: shown
+/// only if [gate] is satisfied.
+class ConditionalInsert {
+  const ConditionalInsert({required this.text, this.gate = const AlwaysGate()});
+
+  final String text;
+  final Gate gate;
+
+  factory ConditionalInsert.fromJson(Map<String, dynamic> json) {
+    return ConditionalInsert(
+      text: json['text'] as String,
+      gate: Gate.fromJson((json['gate'] as Map?)?.cast<String, dynamic>()),
+    );
+  }
+}
+
+List<ConditionalInsert> _insertsFromJson(Object? value) {
+  if (value is! List) return const [];
+  return [
+    for (final item in value)
+      ConditionalInsert.fromJson((item as Map).cast<String, dynamic>()),
+  ];
 }
 
 /// A goal-bounded stretch of freeform play (§9.1, §18.8): the human sets the

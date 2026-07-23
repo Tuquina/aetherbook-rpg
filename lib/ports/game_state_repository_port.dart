@@ -1,4 +1,5 @@
 import '../core/engine/action_resolution.dart';
+import '../core/narrative/extended_conflict.dart';
 import '../core/state/character.dart';
 import '../core/state/game_session.dart';
 
@@ -43,5 +44,18 @@ abstract class GameStateRepositoryPort {
     required String sessionId,
     required int upToTurn,
     required String summaryText,
+  });
+
+  /// Persists the player's current position in the world's `StoryGraph` —
+  /// `currentNodeId`, `corridorTurnsUsed` and `extendedConflictProgress` —
+  /// so a curated/hybrid session survives closing the app instead of
+  /// restarting at `StoryGraph.startNodeId` on resume (CLAUDE.md §11).
+  /// [currentNodeId]/[extendedConflictProgress] `null` clears that column.
+  /// A no-op for freeform worlds, which never set [currentNodeId].
+  Future<void> saveGraphPosition({
+    required String sessionId,
+    String? currentNodeId,
+    required int corridorTurnsUsed,
+    ExtendedConflictProgress? extendedConflictProgress,
   });
 }

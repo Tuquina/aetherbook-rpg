@@ -6,14 +6,12 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:aetherbook/core/engine/state_delta.dart';
-import 'package:aetherbook/core/narrative/hub_activity.dart';
-import 'package:aetherbook/core/narrative/story_choice.dart';
-import 'package:aetherbook/core/narrative/story_graph.dart';
 import 'package:aetherbook/core/narrative/story_node.dart';
 import 'package:aetherbook/core/state/character.dart';
 import 'package:aetherbook/core/world/world.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../support/story_graph_test_helpers.dart';
 
 World _loadWorld() {
   final raw =
@@ -45,78 +43,6 @@ const _expectedNodeTypes = <String, Type>{
   'c5_n03_ritual_final': ResolutionNode,
   'e_epilogo': ResolutionNode,
 };
-
-/// Every node id reachable from [graph]'s start node, following choices,
-/// hub exits and corridor fallback exits — a resolution node is terminal.
-Set<String> _reachableFrom(StoryGraph graph) {
-  final visited = <String>{};
-  final queue = [graph.startNodeId];
-  while (queue.isNotEmpty) {
-    final id = queue.removeLast();
-    if (!visited.add(id)) continue;
-    final node = graph.nodeById(id);
-    final next = switch (node) {
-      FixedAnchorNode(:final choices) => choices.map((c) => c.targetNodeId),
-      BoundedCorridorNode(:final choices, :final fallbackExitNodeId) => [
-          ...choices.map((c) => c.targetNodeId),
-          fallbackExitNodeId,
-        ],
-      StateHubNode(:final exits) => exits.map((e) => e.targetNodeId),
-      ResolutionNode() => const <String>[],
-    };
-    queue.addAll(next);
-  }
-  return visited;
-}
-
-/// Every flag key set `true` by any effect anywhere in the graph — across a
-/// choice/activity's base effects and every one of its `onSuccess`/
-/// `onCriticalSuccess`/`onFailure` branches. Used to catch a milestone flag
-/// (or any other flag a Gate depends on) that's declared but never actually
-/// reachable through the content.
-Set<String> _allTrueFlagKeysSet(StoryGraph graph) {
-  final keys = <String>{};
-  void collect(Iterable<StateDelta> effects) {
-    for (final delta in effects) {
-      if (delta.type == StateDeltaType.flag && delta.value == true) {
-        keys.add(delta.key);
-      }
-    }
-  }
-
-  void collectChoice(StoryChoice choice) {
-    collect(choice.effects);
-    if (choice.onSuccess != null) collect(choice.onSuccess!.effects);
-    if (choice.onCriticalSuccess != null) {
-      collect(choice.onCriticalSuccess!.effects);
-    }
-    if (choice.onFailure != null) collect(choice.onFailure!.effects);
-  }
-
-  void collectActivity(HubActivity activity) {
-    collect(activity.effects);
-    if (activity.onSuccess != null) collect(activity.onSuccess!.effects);
-    if (activity.onCriticalSuccess != null) {
-      collect(activity.onCriticalSuccess!.effects);
-    }
-    if (activity.onFailure != null) collect(activity.onFailure!.effects);
-  }
-
-  for (final node in graph.nodes.values) {
-    switch (node) {
-      case FixedAnchorNode(:final choices):
-        choices.forEach(collectChoice);
-      case BoundedCorridorNode(:final choices):
-        choices.forEach(collectChoice);
-      case StateHubNode(:final activities, :final exits):
-        activities.forEach(collectActivity);
-        exits.forEach(collectChoice);
-      case ResolutionNode():
-        break;
-    }
-  }
-  return keys;
-}
 
 void main() {
   group('xianxia_lianshu.json — root config', () {
@@ -218,7 +144,7 @@ void main() {
     test('every node reaches the ritual (campaign-bible §22.1); the epilogue '
         'is reached procedurally after resolution, not via a graph edge', () {
       final graph = _loadWorld().storyGraph!;
-      final reachable = _reachableFrom(graph);
+      final reachable = reachableFrom(graph);
       final expectedExceptEpilogue = {..._expectedNodeTypes.keys}
         ..remove('e_epilogo');
       expect(reachable, unorderedEquals(expectedExceptEpilogue));
@@ -226,7 +152,7 @@ void main() {
 
     test('every rank\'s milestone_flag is actually set somewhere in the graph', () {
       final world = _loadWorld();
-      final setFlags = _allTrueFlagKeysSet(world.storyGraph!);
+      final setFlags = allTrueFlagKeysSet(world.storyGraph!);
       for (final rank in world.ranks) {
         final milestone = rank.milestoneFlag;
         if (milestone == null) continue;

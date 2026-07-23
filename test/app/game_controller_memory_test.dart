@@ -2,6 +2,7 @@ import 'package:aetherbook/adapters/narrator/fake_narrator_adapter.dart';
 import 'package:aetherbook/app/game_controller.dart';
 import 'package:aetherbook/core/engine/action_resolution.dart';
 import 'package:aetherbook/core/engine/dice.dart';
+import 'package:aetherbook/core/narrative/extended_conflict.dart';
 import 'package:aetherbook/core/state/character.dart';
 import 'package:aetherbook/core/state/game_session.dart';
 import 'package:aetherbook/core/world/world.dart';
@@ -96,6 +97,14 @@ class _FakeGameStateRepository implements GameStateRepositoryPort {
     savedDigestUpToTurn.add(upToTurn);
     savedDigestSummaries.add(summaryText);
   }
+
+  @override
+  Future<void> saveGraphPosition({
+    required String sessionId,
+    String? currentNodeId,
+    required int corridorTurnsUsed,
+    ExtendedConflictProgress? extendedConflictProgress,
+  }) async {}
 }
 
 void main() {

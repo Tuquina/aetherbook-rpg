@@ -20,12 +20,15 @@ class HubActivity implements Checkable {
     required this.label,
     this.gate = const AlwaysGate(),
     this.effects = const [],
+    this.resultText,
     this.repeatable = true,
     this.checkAttribute,
     this.checkDifficulty,
     this.onSuccess,
     this.onCriticalSuccess,
     this.onFailure,
+    this.advantageWhen,
+    this.disadvantageWhen,
   });
 
   final String id;
@@ -35,6 +38,10 @@ class HubActivity implements Checkable {
   /// Deterministic effects applied when this activity is done — validated
   /// through the same `ApplyStateDeltas` as everything else (CLAUDE.md §2.3).
   final List<StateDelta> effects;
+
+  /// Authored prose for an **unconditional** activity (no check) — mirrors
+  /// `StoryChoice.resultText`.
+  final String? resultText;
 
   /// Whether this can be done more than once (e.g. "descansar") vs. a
   /// one-time discovery (e.g. "examinar la tablilla"). Enforcing "only
@@ -64,6 +71,12 @@ class HubActivity implements Checkable {
   /// activity never advances the graph) when unset.
   final ChoiceOutcome? onFailure;
 
+  @override
+  final Gate? advantageWhen;
+
+  @override
+  final Gate? disadvantageWhen;
+
   bool isAvailableTo(Character character) => gate.isSatisfiedBy(character);
 
   @override
@@ -74,7 +87,7 @@ class HubActivity implements Checkable {
   /// `targetNodeId` since an activity never advances the graph.
   @override
   ChoiceOutcome outcomeFor(ActionOutcome outcome) {
-    final base = ChoiceOutcome(effects: effects);
+    final base = ChoiceOutcome(effects: effects, resultText: resultText);
     return switch (outcome) {
       ActionOutcome.criticalSuccess => onCriticalSuccess ?? onSuccess ?? base,
       ActionOutcome.success => onSuccess ?? base,
@@ -88,12 +101,19 @@ class HubActivity implements Checkable {
       label: json['label'] as String,
       gate: Gate.fromJson((json['gate'] as Map?)?.cast<String, dynamic>()),
       effects: _effectsFromJson(json['effects']),
+      resultText: json['result_text'] as String?,
       repeatable: json['repeatable'] as bool? ?? true,
       checkAttribute: json['check_attribute'] as String?,
       checkDifficulty: (json['check_difficulty'] as num?)?.toInt(),
       onSuccess: _outcomeFromJson(json['on_success']),
       onCriticalSuccess: _outcomeFromJson(json['on_critical_success']),
       onFailure: _outcomeFromJson(json['on_failure']),
+      advantageWhen: json['advantage_when'] is Map
+          ? Gate.fromJson((json['advantage_when'] as Map).cast<String, dynamic>())
+          : null,
+      disadvantageWhen: json['disadvantage_when'] is Map
+          ? Gate.fromJson((json['disadvantage_when'] as Map).cast<String, dynamic>())
+          : null,
     );
   }
 
@@ -105,6 +125,7 @@ class HubActivity implements Checkable {
           type: StateDelta.typeFromString((item as Map)['type'] as String),
           key: item['key'] as String,
           value: item['value'],
+          operation: item['operation'] as String?,
         ),
     ];
   }

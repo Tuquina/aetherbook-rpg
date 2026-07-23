@@ -29,14 +29,34 @@ abstract class Gate {
           (json['min'] as num).toInt(),
         );
       case 'meter':
+        if (json.containsKey('max')) {
+          return MaxMeterGate(
+            json['key'] as String,
+            (json['max'] as num).toInt(),
+          );
+        }
         return MinMeterGate(
           json['key'] as String,
           (json['min'] as num).toInt(),
         );
       case 'relationship':
+        if (json.containsKey('max')) {
+          return MaxRelationshipGate(
+            json['key'] as String,
+            (json['max'] as num).toInt(),
+          );
+        }
         return MinRelationshipGate(
           json['key'] as String,
           (json['min'] as num).toInt(),
+        );
+      case 'var':
+        return VarGate(json['key'] as String, json['equals'] as String);
+      case 'list':
+        return ListContainsGate(
+          json['key'] as String,
+          json['value'] as String,
+          json['equals'] as bool? ?? true,
         );
       case 'all':
         return AllOfGate([
@@ -122,6 +142,19 @@ class MinMeterGate extends Gate {
   bool isSatisfiedBy(Character character) => character.meter(key) >= minValue;
 }
 
+/// Requires a named meter to be at most [maxValue] — the upper-bound twin of
+/// [MinMeterGate], needed by curated content phrased as a ceiling (e.g.
+/// "Infección < 3", modeled as `max: 2`).
+class MaxMeterGate extends Gate {
+  const MaxMeterGate(this.key, this.maxValue);
+
+  final String key;
+  final int maxValue;
+
+  @override
+  bool isSatisfiedBy(Character character) => character.meter(key) <= maxValue;
+}
+
 /// Requires a per-NPC relationship (karma, celestial_pressure sit on
 /// [MinMeterGate]; this is specifically `character.relationships`) to be at
 /// least [minValue] — e.g. gating a final technique on a deep bond with an
@@ -135,6 +168,53 @@ class MinRelationshipGate extends Gate {
   @override
   bool isSatisfiedBy(Character character) =>
       character.relationship(key) >= minValue;
+}
+
+/// Requires a per-NPC relationship to be at most [maxValue] — the
+/// upper-bound twin of [MinRelationshipGate], used to make a "high
+/// relationship" branch and its "otherwise" counterpart mutually exclusive
+/// (e.g. an option that only stings when the bond is already close).
+class MaxRelationshipGate extends Gate {
+  const MaxRelationshipGate(this.key, this.maxValue);
+
+  final String key;
+  final int maxValue;
+
+  @override
+  bool isSatisfiedBy(Character character) =>
+      character.relationship(key) <= maxValue;
+}
+
+/// Requires a named free-form var (`character.vars[key]`, see
+/// `Character.vars`) to equal [equals] — e.g. gating content on which
+/// chargen origin/vow was picked (`CreateCharacter` mirrors both into
+/// `vars['origin_id']`/`vars['vow_id']`) or on a curated policy choice like
+/// `vars['passenger_policy']`. One generic mechanism instead of a dedicated
+/// gate per enum-like concept.
+class VarGate extends Gate {
+  const VarGate(this.key, this.equals);
+
+  final String key;
+  final String equals;
+
+  @override
+  bool isSatisfiedBy(Character character) => character.varValue(key) == equals;
+}
+
+/// Requires a named string list (`character.lists[key]`, see `Character.
+/// lists`) to contain (or, with [expected] `false`, not contain) [value] —
+/// e.g. gating a choice on carrying a specific inventory item:
+/// `{"type": "list", "key": "inventory", "value": "fusible_industrial"}`.
+class ListContainsGate extends Gate {
+  const ListContainsGate(this.key, this.value, [this.expected = true]);
+
+  final String key;
+  final String value;
+  final bool expected;
+
+  @override
+  bool isSatisfiedBy(Character character) =>
+      character.list(key).contains(value) == expected;
 }
 
 /// Composite: satisfied only if every sub-[gates] is satisfied.

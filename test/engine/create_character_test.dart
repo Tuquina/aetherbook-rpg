@@ -128,6 +128,21 @@ void main() {
       expect(character.meters.containsKey('evidence_count'), isFalse);
     });
 
+    test('mirrors the chosen origin/vow ids into vars for VarGate-based content', () {
+      final world = _lianshuLikeWorld();
+      final character = create(
+        world,
+        const CreateCharacterInput(
+          name: 'Yuan',
+          originId: 'discipulo_expulsado',
+          freeAttributePoint: 'agudeza',
+          vowId: 'saber_por_que',
+        ),
+      );
+      expect(character.varValue('origin_id'), 'discipulo_expulsado');
+      expect(character.varValue('vow_id'), 'saber_por_que');
+    });
+
     test('records the origin, its tag, the vow, and the personal item', () {
       final world = _lianshuLikeWorld();
       final character = create(
@@ -222,6 +237,22 @@ void main() {
         ),
         throwsArgumentError,
       );
+    });
+
+    test('a null freeAttributePoint skips the free-point step entirely (fixed-build origins)', () {
+      final world = _lianshuLikeWorld();
+      final character = create(
+        world,
+        const CreateCharacterInput(
+          name: 'Yuan',
+          originId: 'discipulo_expulsado',
+          vowId: 'nadie_me_posee',
+        ),
+      );
+      expect(character.attribute('cuerpo'), 3); // from origin, untouched
+      expect(character.attribute('espiritu'), 2); // from origin, untouched
+      expect(character.attribute('agudeza'), 1); // baseline, no free point applied
+      expect(character.attribute('presencia'), 1); // baseline, no free point applied
     });
 
     test('throws when the free point targets an attribute the world does not declare', () {

@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/engine/action_resolution.dart';
+import '../../core/narrative/extended_conflict.dart';
 import '../../core/state/character.dart';
 import '../../core/state/game_session.dart';
 import '../../ports/game_state_repository_port.dart';
@@ -50,6 +51,10 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
       worldSlug: worldSlug,
       character: characterFromRow(characterRow),
       turns: [for (final row in turnRows) turnFromRow(row)],
+      currentNodeId: sessionRow['current_node_id'] as String?,
+      corridorTurnsUsed: (sessionRow['corridor_turns_used'] as num?)?.toInt() ?? 0,
+      extendedConflictProgress:
+          extendedConflictProgressFromRow(sessionRow['extended_conflict_progress']),
     );
   }
 
@@ -114,6 +119,23 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
             suggestedChoices: suggestedChoices,
           ),
         );
+  }
+
+  @override
+  Future<void> saveGraphPosition({
+    required String sessionId,
+    String? currentNodeId,
+    required int corridorTurnsUsed,
+    ExtendedConflictProgress? extendedConflictProgress,
+  }) async {
+    await _client
+        .from('game_sessions')
+        .update(graphPositionToRow(
+          currentNodeId: currentNodeId,
+          corridorTurnsUsed: corridorTurnsUsed,
+          extendedConflictProgress: extendedConflictProgress,
+        ))
+        .eq('id', sessionId);
   }
 
   @override

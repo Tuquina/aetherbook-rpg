@@ -29,3 +29,36 @@ class EpilogueBeat {
     );
   }
 }
+
+/// Assembles [beats] into ordered prose for [character]: groups by
+/// [EpilogueBeat.movement] (preserving each movement's first appearance
+/// order), and within a movement picks the *first* beat whose gate is
+/// satisfied — the same "first satisfied variant per slot" rule the
+/// campaign-bible epilogue/ending sections describe. A movement with no
+/// satisfied beat contributes nothing (content authors are expected to
+/// always include an `AlwaysGate` catch-all per movement — content tests
+/// enforce that, this function stays permissive).
+List<String> assembleEpilogueBeats(
+  List<EpilogueBeat> beats,
+  Character character,
+) {
+  final movementOrder = <String>[];
+  final byMovement = <String, List<EpilogueBeat>>{};
+  for (final beat in beats) {
+    if (!byMovement.containsKey(beat.movement)) {
+      movementOrder.add(beat.movement);
+    }
+    (byMovement[beat.movement] ??= []).add(beat);
+  }
+
+  final result = <String>[];
+  for (final movement in movementOrder) {
+    for (final beat in byMovement[movement]!) {
+      if (beat.isSatisfiedBy(character)) {
+        result.add(beat.text);
+        break;
+      }
+    }
+  }
+  return result;
+}

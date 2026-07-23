@@ -1,8 +1,10 @@
+import 'package:aetherbook/core/engine/action_resolution.dart';
 import 'package:aetherbook/core/engine/dice.dart';
 import 'package:aetherbook/core/engine/resolve_player_action.dart';
 import 'package:aetherbook/core/engine/resolve_story_choice.dart';
 import 'package:aetherbook/core/engine/state_delta.dart';
 import 'package:aetherbook/core/narrative/extended_conflict.dart';
+import 'package:aetherbook/core/narrative/gate.dart';
 import 'package:aetherbook/core/narrative/story_choice.dart';
 import 'package:aetherbook/core/state/character.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -159,6 +161,72 @@ void main() {
 
       // Repeating "cuerpo" applies the -2 penalty: 2 + 11 - 2 = 11 < DC12.
       expect(repeated.actionResolution!.isSuccess, isFalse);
+    });
+  });
+
+  group('ResolveStoryChoice — advantage/disadvantage (campaign-bible §6.5/§25.4)', () {
+    test('rolls with advantage when advantageWhen is satisfied', () {
+      // Two dice: 5 (discarded) then 18 (kept, the higher face).
+      final resolve = ResolveStoryChoice(ResolvePlayerAction(SequenceDice([5, 18])));
+      const choice = StoryChoice(
+        label: 'Con ayuda de Saúl',
+        targetNodeId: 'next',
+        checkAttribute: 'tecnica',
+        checkDifficulty: 15,
+        advantageWhen: FlagGate('team_has_saul'),
+      );
+      final result = resolve(
+        choice: choice,
+        character: _character(attributes: {'tecnica': 0}).copyWith(
+          flags: {'team_has_saul': true},
+        ),
+      );
+      expect(result.actionResolution!.rollMode, RollMode.advantage);
+      expect(result.actionResolution!.roll, 18);
+    });
+
+    test('advantageWhen unsatisfied rolls normally (single die)', () {
+      final resolve = ResolveStoryChoice(ResolvePlayerAction(SequenceDice([5, 18])));
+      const choice = StoryChoice(
+        label: 'Solo',
+        targetNodeId: 'next',
+        checkAttribute: 'tecnica',
+        checkDifficulty: 15,
+        advantageWhen: FlagGate('team_has_saul'),
+      );
+      final result = resolve(choice: choice, character: _character(attributes: {'tecnica': 0}));
+      expect(result.actionResolution!.rollMode, RollMode.normal);
+      expect(result.actionResolution!.roll, 5);
+    });
+
+    test('an unconditional disadvantage ("[Tirada con desventaja]") uses AllOfGate([])', () {
+      // Two dice: 18 then 5 -> disadvantage keeps the lower, 5.
+      final resolve = ResolveStoryChoice(ResolvePlayerAction(SequenceDice([18, 5])));
+      const choice = StoryChoice(
+        label: 'Buscar el otro frente ya alertado',
+        targetNodeId: 'next',
+        checkAttribute: 'instinto',
+        checkDifficulty: 12,
+        disadvantageWhen: AllOfGate([]),
+      );
+      final result = resolve(choice: choice, character: _character(attributes: {'instinto': 0}));
+      expect(result.actionResolution!.rollMode, RollMode.disadvantage);
+      expect(result.actionResolution!.roll, 5);
+    });
+
+    test('advantage and disadvantage both satisfied cancel out to a normal roll', () {
+      final resolve = ResolveStoryChoice(ResolvePlayerAction(SequenceDice([9])));
+      const choice = StoryChoice(
+        label: 'x',
+        targetNodeId: 'next',
+        checkAttribute: 'instinto',
+        checkDifficulty: 12,
+        advantageWhen: AllOfGate([]),
+        disadvantageWhen: AllOfGate([]),
+      );
+      final result = resolve(choice: choice, character: _character(attributes: {'instinto': 0}));
+      expect(result.actionResolution!.rollMode, RollMode.normal);
+      expect(result.actionResolution!.roll, 9);
     });
   });
 }

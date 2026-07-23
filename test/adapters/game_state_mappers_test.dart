@@ -1,5 +1,6 @@
 import 'package:aetherbook/adapters/persistence/game_state_mappers.dart';
 import 'package:aetherbook/core/engine/action_resolution.dart';
+import 'package:aetherbook/core/narrative/extended_conflict.dart';
 import 'package:aetherbook/core/state/character.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -14,6 +15,12 @@ void main() {
         resources: {'qi': 8},
         flags: {'conoció_al_anciano': true},
         meters: {'karma': 1, 'ledger_debt': 2},
+        relationships: {'abril': 2, 'ramiro': -1},
+        lists: {
+          'inventory': ['llave_maestra_ferroviaria', 'radio_portatil'],
+          'selected_passengers': ['abril'],
+        },
+        vars: {'passenger_policy': 'vulnerables_primero'},
         originId: 'discipulo_expulsado',
         originTagId: 'disciplina_de_secta',
         vowId: 'nadie_me_posee',
@@ -33,6 +40,9 @@ void main() {
       expect(restored.resources, character.resources);
       expect(restored.flags, character.flags);
       expect(restored.meters, character.meters);
+      expect(restored.relationships, character.relationships);
+      expect(restored.lists, character.lists);
+      expect(restored.vars, character.vars);
       expect(restored.originId, character.originId);
       expect(restored.originTagId, character.originTagId);
       expect(restored.vowId, character.vowId);
@@ -48,6 +58,9 @@ void main() {
         'resources': null,
         'flags': null,
         'meters': null,
+        'relationships': null,
+        'lists': null,
+        'vars': null,
         'origin_id': null,
         'origin_tag_id': null,
         'vow_id': null,
@@ -57,8 +70,51 @@ void main() {
       expect(restored.resources, isEmpty);
       expect(restored.flags, isEmpty);
       expect(restored.meters, isEmpty);
+      expect(restored.relationships, isEmpty);
+      expect(restored.lists, isEmpty);
+      expect(restored.vars, isEmpty);
       expect(restored.originId, isNull);
       expect(restored.vowId, isNull);
+    });
+  });
+
+  group('graphPositionToRow / extendedConflictProgressFromRow', () {
+    test('serializes an active extended conflict progress', () {
+      final row = graphPositionToRow(
+        currentNodeId: 'c7_n03_horda_vias',
+        corridorTurnsUsed: 2,
+        extendedConflictProgress: const ExtendedConflictProgress(
+          successes: 1,
+          failures: 2,
+          lastAttributeKey: 'instinto',
+        ),
+      );
+      expect(row['current_node_id'], 'c7_n03_horda_vias');
+      expect(row['corridor_turns_used'], 2);
+      final progress = row['extended_conflict_progress'] as Map;
+      expect(progress['successes'], 1);
+      expect(progress['failures'], 2);
+      expect(progress['last_attribute_key'], 'instinto');
+    });
+
+    test('serializes a null extended conflict progress as null', () {
+      final row = graphPositionToRow(currentNodeId: 'p0_perfil', corridorTurnsUsed: 0);
+      expect(row['extended_conflict_progress'], isNull);
+    });
+
+    test('extendedConflictProgressFromRow round-trips a stored progress', () {
+      final restored = extendedConflictProgressFromRow({
+        'successes': 1,
+        'failures': 0,
+        'last_attribute_key': 'humanidad',
+      });
+      expect(restored!.successes, 1);
+      expect(restored.failures, 0);
+      expect(restored.lastAttributeKey, 'humanidad');
+    });
+
+    test('extendedConflictProgressFromRow returns null for a null/missing value', () {
+      expect(extendedConflictProgressFromRow(null), isNull);
     });
   });
 

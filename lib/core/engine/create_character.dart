@@ -8,7 +8,7 @@ class CreateCharacterInput {
   const CreateCharacterInput({
     required this.name,
     required this.originId,
-    required this.freeAttributePoint,
+    this.freeAttributePoint,
     required this.vowId,
     this.personalItem = '',
   });
@@ -20,8 +20,11 @@ class CreateCharacterInput {
 
   /// The attribute that receives the free `+1` after the origin's base
   /// values are applied (§5.3: "el jugador suma +1 a un atributo, con
-  /// máximo inicial 4").
-  final String freeAttributePoint;
+  /// máximo inicial 4"). `null` skips this step entirely — for a world whose
+  /// origins are complete, fixed builds with no further customization (e.g.
+  /// a curated campaign's "perfil de supervivencia", which already sums to
+  /// its full point budget across every attribute).
+  final String? freeAttributePoint;
 
   /// Which [Vow] the player picked.
   final String vowId;
@@ -46,10 +49,12 @@ class CreateCharacter {
     final origin = world.originById(input.originId);
     final vow = world.vowById(input.vowId);
 
-    if (world.attributeKeys.isNotEmpty &&
-        !world.attributeKeys.contains(input.freeAttributePoint)) {
+    final freePoint = input.freeAttributePoint;
+    if (freePoint != null &&
+        world.attributeKeys.isNotEmpty &&
+        !world.attributeKeys.contains(freePoint)) {
       throw ArgumentError.value(
-        input.freeAttributePoint,
+        freePoint,
         'freeAttributePoint',
         'not one of this world\'s declared attributes',
       );
@@ -60,15 +65,17 @@ class CreateCharacter {
       ...origin.baseAttributes,
     };
 
-    final beforeFreePoint = attributes[input.freeAttributePoint] ?? 1;
-    final afterFreePoint = beforeFreePoint + 1;
-    if (afterFreePoint > _initialAttributeCap) {
-      throw ArgumentError(
-        'raising ${input.freeAttributePoint} to $afterFreePoint would '
-        'exceed the initial cap of $_initialAttributeCap',
-      );
+    if (freePoint != null) {
+      final beforeFreePoint = attributes[freePoint] ?? 1;
+      final afterFreePoint = beforeFreePoint + 1;
+      if (afterFreePoint > _initialAttributeCap) {
+        throw ArgumentError(
+          'raising $freePoint to $afterFreePoint would '
+          'exceed the initial cap of $_initialAttributeCap',
+        );
+      }
+      attributes[freePoint] = afterFreePoint;
     }
-    attributes[input.freeAttributePoint] = afterFreePoint;
 
     final resources = {
       for (final entry in world.resourceFormulas.entries)
@@ -87,6 +94,12 @@ class CreateCharacter {
       attributes: attributes,
       resources: resources,
       meters: meters,
+      // Mirrored into `vars` (alongside the dedicated fields below) so
+      // curated content can gate on the chosen origin/vow via `VarGate`
+      // (e.g. a profile-specific starting item, or an epilogue beat that
+      // depends on which memory item was picked) without a bespoke gate
+      // type per chargen concept.
+      vars: {'origin_id': origin.id, 'vow_id': vow.id},
       originId: origin.id,
       originTagId: origin.tagId,
       vowId: vow.id,

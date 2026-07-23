@@ -28,6 +28,9 @@ class ApplyStateDeltas {
     this.meterDefinitions = const {},
     this.rankProgression,
     this.resourceFormulas = const {},
+    this.relationshipMagnitudeCap = 1,
+    this.relationshipMin = -2,
+    this.relationshipMax = 3,
   }) : _progression = progression ?? const ExpProgression();
 
   final ExpProgression _progression;
@@ -47,6 +50,20 @@ class ApplyStateDeltas {
   /// total and rank promotion is milestone-gated instead of the simpler
   /// linear [_progression]. Rebuilt per world, same as [_progression].
   final RankProgression? rankProgression;
+
+  /// Max `abs(value)` a single `relationship` delta may carry (default `1`,
+  /// the original AI-safety limit from campaign-bible §19.3). A curated
+  /// world with pre-vetted, human-authored effects can widen this (e.g. a
+  /// confession or a betrayal moving a relationship by 2 or 3 in one step)
+  /// via `World.relationshipMagnitudeCap` — narrator-proposed deltas stay
+  /// bound by whatever the hosting world declares, same as everyone else.
+  final int relationshipMagnitudeCap;
+
+  /// Stored-value clamp for `relationships` (default `[-2, 3]`, the original
+  /// range). A curated world can widen this via `World.relationshipMin`/
+  /// `relationshipMax` (e.g. campaign-bible's `[-3, 3]`).
+  final int relationshipMin;
+  final int relationshipMax;
 
   DeltaApplication call(Character character, List<StateDelta> deltas) {
     var current = character;
@@ -128,38 +145,60 @@ class ApplyStateDeltas {
         return c.copyWith(level: progress.level, exp: progress.exp);
 
       case StateDeltaType.resource:
-        final change = _asInt(delta.value);
-        if (change == null) return null;
+        final raw = _asInt(delta.value);
+        if (raw == null) return null;
         final formula = resourceFormulas[delta.key];
         final max = formula != null ? formula.evaluate(c.attributes) : 1 << 30;
-        final next = (c.resource(delta.key) + change).clamp(0, max);
+        final base = delta.operation == 'set' ? raw : c.resource(delta.key) + raw;
+        final next = base.clamp(0, max);
         return c.copyWith(resources: {...c.resources, delta.key: next});
 
       case StateDeltaType.meter:
-        final change = _asInt(delta.value);
-        if (change == null) return null;
+        final raw = _asInt(delta.value);
+        if (raw == null) return null;
         final definition = meterDefinitions[delta.key];
         // A derived meter (e.g. evidence_count) only ever changes because the
         // flags it counts changed — never by a direct delta (campaign-bible
         // rule: "no se edita de forma independiente").
         if (definition != null && definition.isDerived) return null;
-        final raw = c.meter(delta.key) + change;
-        final next = definition?.clamp(raw) ?? raw;
+        final base = delta.operation == 'set' ? raw : c.meter(delta.key) + raw;
+        final next = definition?.clamp(base) ?? base;
         return c.copyWith(meters: {...c.meters, delta.key: next});
 
       case StateDeltaType.relationship:
         final change = _asInt(delta.value);
         // Campaign-bible §19.3: a single proposed relationship delta is
-        // capped at ±1 magnitude; the stored value is separately clamped to
-        // [-2, 3]. "One per node per NPC" is a per-visit de-dup rule that
-        // needs the current node context `ApplyStateDeltas` doesn't have —
-        // deferred to Fase 8, once `GameController` tracks that.
-        if (change == null || change.abs() > 1) return null;
-        final next =
-            (c.relationship(delta.key) + change).clamp(-2, 3);
+        // capped at [relationshipMagnitudeCap]; the stored value is
+        // separately clamped to [relationshipMin, relationshipMax]. "One per
+        // node per NPC" is a per-visit de-dup rule that needs the current
+        // node context `ApplyStateDeltas` doesn't have — deferred to Fase 8,
+        // once `GameController` tracks that.
+        if (change == null || change.abs() > relationshipMagnitudeCap) {
+          return null;
+        }
+        final next = (c.relationship(delta.key) + change)
+            .clamp(relationshipMin, relationshipMax);
         return c.copyWith(
           relationships: {...c.relationships, delta.key: next},
         );
+
+      case StateDeltaType.listAdd:
+        final item = delta.value;
+        if (item is! String) return null;
+        final current = List<String>.of(c.list(delta.key));
+        if (!current.contains(item)) current.add(item);
+        return c.copyWith(lists: {...c.lists, delta.key: current});
+
+      case StateDeltaType.listRemove:
+        final item = delta.value;
+        if (item is! String) return null;
+        final current = List<String>.of(c.list(delta.key))..remove(item);
+        return c.copyWith(lists: {...c.lists, delta.key: current});
+
+      case StateDeltaType.varSet:
+        final v = delta.value;
+        if (v is! String) return null;
+        return c.copyWith(vars: {...c.vars, delta.key: v});
 
       case StateDeltaType.unknown:
         return null;

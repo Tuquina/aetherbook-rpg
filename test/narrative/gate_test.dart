@@ -79,6 +79,86 @@ void main() {
     });
   });
 
+  group('MaxMeterGate', () {
+    test('satisfied when the meter is at or below the ceiling (e.g. Infección < 3)', () {
+      const gate = MaxMeterGate('infection', 2);
+      expect(gate.isSatisfiedBy(_character(meters: {'infection': 2})), isTrue);
+      expect(gate.isSatisfiedBy(_character(meters: {'infection': 3})), isFalse);
+    });
+
+    test('Gate.fromJson picks MaxMeterGate when the JSON declares "max"', () {
+      final gate = Gate.fromJson({'type': 'meter', 'key': 'infection', 'max': 2});
+      expect(gate, isA<MaxMeterGate>());
+      expect(gate.isSatisfiedBy(_character(meters: {'infection': 1})), isTrue);
+      expect(gate.isSatisfiedBy(_character(meters: {'infection': 3})), isFalse);
+    });
+
+    test('Gate.fromJson still picks MinMeterGate when the JSON declares "min"', () {
+      final gate = Gate.fromJson({'type': 'meter', 'key': 'infection', 'min': 2});
+      expect(gate, isA<MinMeterGate>());
+    });
+  });
+
+  group('VarGate', () {
+    test('satisfied when the named var equals the expected string', () {
+      const gate = VarGate('origin_id', 'manos_de_taller');
+      final character = Character(
+        name: 'x',
+        level: 1,
+        exp: 0,
+        attributes: const {},
+        resources: const {},
+        vars: const {'origin_id': 'manos_de_taller'},
+      );
+      expect(gate.isSatisfiedBy(character), isTrue);
+      expect(gate.isSatisfiedBy(_character()), isFalse);
+    });
+
+    test('Gate.fromJson parses the var shape', () {
+      final gate = Gate.fromJson({'type': 'var', 'key': 'passenger_policy', 'equals': 'vulnerables_primero'});
+      expect(gate, isA<VarGate>());
+    });
+  });
+
+  group('MaxRelationshipGate', () {
+    test('satisfied when the relationship is at or below the ceiling', () {
+      const gate = MaxRelationshipGate('abril', 1);
+      expect(gate.isSatisfiedBy(_character(relationships: {'abril': 1})), isTrue);
+      expect(gate.isSatisfiedBy(_character(relationships: {'abril': 2})), isFalse);
+    });
+
+    test('Gate.fromJson picks MaxRelationshipGate when the JSON declares "max"', () {
+      final gate = Gate.fromJson({'type': 'relationship', 'key': 'abril', 'max': 1});
+      expect(gate, isA<MaxRelationshipGate>());
+    });
+  });
+
+  group('ListContainsGate', () {
+    test('satisfied when the named list contains the value', () {
+      const gate = ListContainsGate('inventory', 'fusible_industrial');
+      final character = Character(
+        name: 'x',
+        level: 1,
+        exp: 0,
+        attributes: const {},
+        resources: const {},
+        lists: const {'inventory': ['fusible_industrial']},
+      );
+      expect(gate.isSatisfiedBy(character), isTrue);
+      expect(gate.isSatisfiedBy(_character()), isFalse);
+    });
+
+    test('expected: false requires the value to be absent', () {
+      const gate = ListContainsGate('inventory', 'fusible_industrial', false);
+      expect(gate.isSatisfiedBy(_character()), isTrue);
+    });
+
+    test('Gate.fromJson parses the list shape', () {
+      final gate = Gate.fromJson({'type': 'list', 'key': 'inventory', 'value': 'x'});
+      expect(gate, isA<ListContainsGate>());
+    });
+  });
+
   group('MinRelationshipGate', () {
     test('checks the named NPC relationship', () {
       const gate = MinRelationshipGate('lian_suyin', 3);
