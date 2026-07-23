@@ -91,12 +91,22 @@ class _DestinyWritingState extends State<DestinyWriting>
 
 /// A celebratory banner shown when the character advances a level/realm.
 class LevelUpBanner extends StatelessWidget {
-  const LevelUpBanner({super.key, required this.levelsGained});
+  const LevelUpBanner({
+    super.key,
+    required this.levelsGained,
+    this.unitLabel = 'nivel',
+  });
 
   final int levelsGained;
 
+  /// The world's term for a level (e.g. 'reino'), so the banner reads right
+  /// whatever the story's progression is called.
+  final String unitLabel;
+
   @override
   Widget build(BuildContext context) {
+    // Naive plural: good enough for 'reino'→'reinos', 'nivel'→'niveles'…
+    final plural = unitLabel.endsWith('l') ? '${unitLabel}es' : '${unitLabel}s';
     return Container(
       padding: const EdgeInsets.symmetric(
           horizontal: AetherSpace.md, vertical: AetherSpace.sm),
@@ -110,12 +120,13 @@ class LevelUpBanner extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.auto_awesome, size: 15, color: AetherColors.goldBright),
+          const Icon(Icons.auto_awesome,
+              size: 15, color: AetherColors.goldBright),
           const SizedBox(width: AetherSpace.sm),
           Text(
             levelsGained > 1
-                ? 'Has ascendido $levelsGained reinos'
-                : 'Has ascendido de reino',
+                ? 'Has ascendido $levelsGained $plural'
+                : 'Has ascendido de $unitLabel',
             style: AetherType.caption.copyWith(
                 color: AetherColors.goldSoft, fontWeight: FontWeight.w700),
           ),

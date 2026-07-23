@@ -19,11 +19,16 @@ class CodexScreen extends StatelessWidget {
     return Scaffold(
       body: AetherBackground(
         child: SafeArea(
-          child: Column(
-            children: [
-              _header(context),
-              const Expanded(child: _CodexBody()),
-            ],
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Column(
+                children: [
+                  _header(context),
+                  const Expanded(child: _CodexBody()),
+                ],
+              ),
+            ),
           ),
         ),
       ),

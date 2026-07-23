@@ -1,4 +1,5 @@
 import '../state/character.dart';
+import 'progression.dart';
 
 /// A declarative world package (CLAUDE.md §8, GDD §4.6). Everything that gives
 /// a world its identity — rules, tone, the narrator's system prompt, starting
@@ -16,6 +17,7 @@ class World {
     required this.criticalMargin,
     required this.primaryAttribute,
     this.attributeKeywords = const {},
+    this.progression = const Progression(),
     required this.startingCharacter,
     required this.seedNarration,
     required this.seedChoices,
@@ -48,6 +50,9 @@ class World {
   /// means for a given world.
   final Map<String, List<String>> attributeKeywords;
 
+  /// How this world models advancement (levels/realms/none). See [Progression].
+  final Progression progression;
+
   final Character startingCharacter;
 
   /// Opening narration and choices shown before the first action.
@@ -71,6 +76,9 @@ class World {
       criticalMargin: (resolution['critical_margin'] as num?)?.toInt() ?? 5,
       primaryAttribute: resolution['primary_attribute'] as String? ?? 'cuerpo',
       attributeKeywords: _keywordsFromJson(resolution['attribute_keywords']),
+      progression: Progression.fromJson(
+        (json['progression'] as Map?)?.cast<String, dynamic>(),
+      ),
       startingCharacter: _characterFromJson(
         (json['starting_character'] as Map).cast<String, dynamic>(),
       ),
