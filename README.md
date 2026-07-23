@@ -60,7 +60,7 @@ Eso elimina el problema clásico de que "el modelo se olvida", inventa ítems o 
 2. **Historia pre-armada** — campañas escritas a mano, con ramas fijas y calidad garantizada.
 3. **Híbrido** *(modo por defecto)* — un esqueleto de hitos pre-escritos + relleno generativo dinámico entre ellos. Coherencia de una historia curada, libertad de una generada.
 
-**Mundos iniciales:** Isekai/Xianxia (cultivo), Superhéroes, Cyberpunk, Post-apocalíptico. Cada mundo re-etiqueta el mismo sistema base de atributos y progresión.
+**Mundos iniciales (5):** Isekai, Xianxia (cultivo), Superhéroes, Cyberpunk, Post-apocalíptico. Isekai y Xianxia son mundos distintos — comparten la premisa de "otro mundo" pero no el género. Cada mundo re-etiqueta el mismo sistema base de atributos y progresión.
 
 ## Pilares de diseño
 
@@ -108,8 +108,8 @@ Regla de dependencias: **hacia adentro** (`adapters` → `ports` → `core`). El
 ## Roadmap
 
 - **Fase 0 — Prueba de concepto** *(completa)*: un mundo (Xianxia), modo freeform, loop mínimo acción → resolución → narración JSON → render, `FakeNarratorAdapter`. Sin auth, sin imágenes.
-- **Fase 1 — MVP jugable** *(en curso)*: ✅ narrador real desplegado (`GeminiNarratorAdapter` con structured output + `GroqNarratorAdapter` de fallback, orquestados por `FallbackNarratorAdapter`, detrás de una Edge Function). Falta: estado persistente en Supabase + Auth, inventario real, memoria de tres niveles, primera campaña híbrida completa.
-- **Fase 2 — Contenido y mundos**: los 4 mundos con theming propio, más campañas, generación de imágenes.
+- **Fase 1 — MVP jugable** *(en curso)*: ✅ narrador real (`GeminiNarratorAdapter` + `GroqNarratorAdapter` de fallback vía `FallbackNarratorAdapter`), ✅ persistencia real en Supabase + Auth anónimo (RLS por sesión), ✅ memoria de tres niveles (diario resumido vía Groq, Edge Function `memory-digest`). Falta: inventario real, grafo de nodos para campañas curadas/híbridas, primera campaña híbrida completa.
+- **Fase 2 — Contenido y mundos**: los 5 mundos (Isekai, Xianxia, Superhéroes, Cyberpunk, Post-apocalíptico) con theming propio, más campañas, generación de imágenes.
 - **Fase 3 — Pulido y profundidad**: consistencia de personaje en imágenes, NPCs con memoria, rebobinar partidas, observabilidad.
 - **Fase 4 — Distribución**: App Store / Play Store + build web, compartir historias generadas.
 

@@ -8,7 +8,7 @@ Este archivo es el contexto persistente para Claude Code. Leelo entero antes de 
 
 Un RPG de narrativa interactiva ("elige tu propia aventura" evolucionado) donde la historia se escribe en tiempo real según las decisiones del jugador, impulsada por modelos de IA gratuitos. Un *Game Master* de IA narra sobre un estado de juego que el motor controla de forma determinista.
 
-Tres modos sobre el mismo motor: **freeform** (IA genera todo), **curada** (campañas escritas a mano) e **híbrida** (esqueleto fijo + relleno generativo, es el modo por defecto). Mundos iniciales: Xianxia/Isekai, Superhéroes, Cyberpunk, Post-apocalíptico.
+Tres modos sobre el mismo motor: **freeform** (IA genera todo), **curada** (campañas escritas a mano) e **híbrida** (esqueleto fijo + relleno generativo, es el modo por defecto). Mundos iniciales: Isekai, Xianxia, Superhéroes, Cyberpunk, Post-apocalíptico (son 5 mundos distintos — Isekai y Xianxia NO son el mismo, aunque compartan la premisa de "otro mundo").
 
 El documento de diseño completo es `GDD-RPG-Narrativo-IA.md`. Este archivo es la versión operativa para desarrollar.
 

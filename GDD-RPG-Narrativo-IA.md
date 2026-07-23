@@ -30,7 +30,7 @@ Tres modos conviven en el mismo motor:
 2. **Modo Historia Pre-armada (curada):** campañas escritas a mano, con ramas fijas y "beats" de calidad garantizada, opcionalmente enriquecidas por IA en los espacios entre nodos.
 3. **Modo Híbrido:** un esqueleto pre-escrito (los grandes hitos) + relleno generativo dinámico entre hitos. Es el punto dulce: coherencia de una historia curada + libertad de una generada.
 
-**Temáticas iniciales:** Isekai/Xianxia (cultivo), Superhéroes, Cyberpunk, Post-apocalíptico. Cada una es un "mundo" con sus reglas, atributos y estética.
+**Temáticas iniciales:** Isekai (transportado/reencarnado a otro mundo, progresión tipo RPG con clases y niveles), Xianxia (cultivo, sectas, ascensión espiritual), Superhéroes, Cyberpunk, Post-apocalíptico. Son **5 mundos distintos** — Isekai y Xianxia comparten la premisa de "otro mundo" pero son géneros y tonos diferentes, cada una es un "mundo" con sus reglas, atributos y estética propios.
 
 **Diferenciador:** la mayoría de los "juegos con IA" son un chat sin memoria ni reglas. Acá el motor separa claramente **estado del juego (determinista, en Postgres)** de **narración (IA)**. La IA nunca es la fuente de verdad de las stats; solo narra sobre un estado que el motor controla. Eso elimina el problema clásico de que "el modelo se olvida", inventa items o rompe las reglas.
 
@@ -94,12 +94,12 @@ La IA lee este estado; nunca lo modifica directamente. Los cambios pasan siempre
 
 Un **sistema base compartido** que cada mundo re-etiqueta:
 
-| Concepto base | Isekai/Xianxia | Superhéroes | Cyberpunk | Post-apocalíptico |
-|---|---|---|---|---|
-| Poder | Nivel de cultivo | Nivel de poder | Street cred | Reputación |
-| Recurso primario | Qi | Energía | RAM/eddies | Suministros |
-| Progresión | Devorar/leer | Entrenar/mutar | Implantes | Craftear/saquear |
-| "Moneda de decisión" | Karma/destino | Moral | Corp vs street | Humanidad vs supervivencia |
+| Concepto base | Isekai | Xianxia | Superhéroes | Cyberpunk | Post-apocalíptico |
+|---|---|---|---|---|---|
+| Poder | Nivel de personaje | Nivel de cultivo | Nivel de poder | Street cred | Reputación |
+| Recurso primario | Maná | Qi | Energía | RAM/eddies | Suministros |
+| Progresión | Subir de nivel / clase | Devorar/leer | Entrenar/mutar | Implantes | Craftear/saquear |
+| "Moneda de decisión" | Nostalgia vs pertenencia | Karma/destino | Moral | Corp vs street | Humanidad vs supervivencia |
 
 Progresión estilo xianxia (la referencia): ganás EXP por acciones ("Cultivar leyendo: +300 EXP"), subís de reino/rango, desbloqueás técnicas. El motor de EXP se reutiliza para todos los mundos; cambia solo el tema.
 
@@ -348,7 +348,7 @@ El juego vive o muere por el contenido. Formatos que un humano escriba cómodo y
 - UI móvil pulida con theming del primer mundo.
 
 ### Fase 2 — Contenido y mundos
-- Los 4 mundos (Xianxia, Superhéroes, Cyberpunk, Post-apocalíptico) con theming propio.
+- Los 5 mundos (Isekai, Xianxia, Superhéroes, Cyberpunk, Post-apocalíptico) con theming propio.
 - 2-3 campañas pre-armadas más.
 - Generación de imágenes (Pollinations/Cloudflare) opcional y cacheada.
 
