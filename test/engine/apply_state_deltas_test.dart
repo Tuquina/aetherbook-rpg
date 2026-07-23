@@ -1,7 +1,9 @@
 import 'package:aetherbook/core/engine/apply_state_deltas.dart';
+import 'package:aetherbook/core/engine/rank_progression.dart';
 import 'package:aetherbook/core/engine/state_delta.dart';
 import 'package:aetherbook/core/state/character.dart';
 import 'package:aetherbook/core/world/meter_definition.dart';
+import 'package:aetherbook/core/world/rank_definition.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -153,6 +155,74 @@ void main() {
         ]).character;
       }
       expect(character.meter('celestial_pressure'), 3);
+    });
+  });
+
+  group('ApplyStateDeltas — rankProgression (milestone-gated ranks)', () {
+    const ranks = [
+      RankDefinition(id: 'aliento_velado', level: 1, expRequired: 0),
+      RankDefinition(
+        id: 'meridiano_abierto',
+        level: 2,
+        expRequired: 5,
+        milestoneFlag: 'reached_casa_de_tinta',
+      ),
+    ];
+    final withRanks =
+        const ApplyStateDeltas(rankProgression: RankProgression(ranks));
+
+    test('exp accumulates as a running total but does not promote without the milestone', () {
+      final result = withRanks(base(), [
+        const StateDelta(type: StateDeltaType.exp, key: 'exp', value: 8),
+      ]);
+      expect(result.character.exp, 8);
+      expect(result.character.level, 1);
+    });
+
+    test('promotes when the milestone flag and EXP delta land in the same turn', () {
+      final result = withRanks(base(), [
+        const StateDelta(type: StateDeltaType.exp, key: 'exp', value: 8),
+        const StateDelta(
+          type: StateDeltaType.flag,
+          key: 'reached_casa_de_tinta',
+          value: true,
+        ),
+      ]);
+      expect(result.character.level, 2);
+      expect(result.character.exp, 8);
+    });
+
+    test('a flag-only turn (no exp delta) still promotes banked EXP from earlier turns', () {
+      // Turn 1: bank enough EXP, milestone not reached yet.
+      final afterExp = withRanks(base(), [
+        const StateDelta(type: StateDeltaType.exp, key: 'exp', value: 8),
+      ]).character;
+      expect(afterExp.level, 1);
+
+      // Turn 2: only a flag delta — no exp delta in this batch at all.
+      final afterMilestone = withRanks(afterExp, [
+        const StateDelta(
+          type: StateDeltaType.flag,
+          key: 'reached_casa_de_tinta',
+          value: true,
+        ),
+      ]).character;
+      expect(afterMilestone.level, 2);
+      expect(afterMilestone.exp, 8);
+    });
+
+    test('without a configured rankProgression, exp uses the simple linear progression as before', () {
+      final result = apply(base(), [
+        const StateDelta(
+          type: StateDeltaType.flag,
+          key: 'reached_casa_de_tinta',
+          value: true,
+        ),
+      ]);
+      // No rankProgression -> the final re-check step is skipped entirely;
+      // a bare flag delta never touches level/exp.
+      expect(result.character.level, 1);
+      expect(result.character.exp, 0);
     });
   });
 }

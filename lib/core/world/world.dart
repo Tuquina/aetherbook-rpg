@@ -2,6 +2,7 @@ import '../state/character.dart';
 import 'character_origin.dart';
 import 'meter_definition.dart';
 import 'progression.dart';
+import 'rank_definition.dart';
 import 'resource_formula.dart';
 import 'vow.dart';
 
@@ -27,6 +28,7 @@ class World {
     this.attributeKeys = const [],
     this.origins = const [],
     this.vows = const [],
+    this.ranks = const [],
     required this.startingCharacter,
     required this.seedNarration,
     required this.seedChoices,
@@ -87,6 +89,10 @@ class World {
   /// Chargen vows available for structured character creation (§5.4).
   final List<Vow> vows;
 
+  /// Milestone-gated ranks (§7.1). Empty for worlds using the simpler linear
+  /// [progression] instead. See `core/engine/rank_progression.dart`.
+  final List<RankDefinition> ranks;
+
   final Character startingCharacter;
 
   /// Opening narration and choices shown before the first action.
@@ -102,6 +108,15 @@ class World {
         (v) => v.id == id,
         orElse: () => throw ArgumentError('unknown vow: $id'),
       );
+
+  /// The [RankDefinition] matching [character]'s current level, or `null`
+  /// for worlds with no milestone-gated ranks (simple linear [progression]).
+  RankDefinition? currentRank(Character character) {
+    for (final rank in ranks) {
+      if (rank.level == character.level) return rank;
+    }
+    return null;
+  }
 
   /// The declared maximum for [resourceKey] given [character]'s current
   /// attributes, or `null` if this world declares no formula for it (a
@@ -146,6 +161,7 @@ class World {
       attributeKeys: _stringList(json['attributes']),
       origins: _originsFromJson(json['origins']),
       vows: _vowsFromJson(json['vows']),
+      ranks: _ranksFromJson(json['ranks']),
       startingCharacter: _characterFromJson(
         (json['starting_character'] as Map).cast<String, dynamic>(),
         resourceFormulas: resourceFormulas,
@@ -247,6 +263,16 @@ class World {
       return [
         for (final item in value)
           Vow.fromJson((item as Map).cast<String, dynamic>()),
+      ];
+    }
+    return const [];
+  }
+
+  static List<RankDefinition> _ranksFromJson(Object? value) {
+    if (value is List) {
+      return [
+        for (final item in value)
+          RankDefinition.fromJson((item as Map).cast<String, dynamic>()),
       ];
     }
     return const [];

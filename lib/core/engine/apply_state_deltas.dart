@@ -1,6 +1,7 @@
 import '../state/character.dart';
 import '../world/meter_definition.dart';
 import 'exp_progression.dart';
+import 'rank_progression.dart';
 import 'state_delta.dart';
 
 /// Outcome of applying a batch of proposed deltas: the resulting character and
@@ -24,6 +25,7 @@ class ApplyStateDeltas {
   const ApplyStateDeltas({
     ExpProgression? progression,
     this.meterDefinitions = const {},
+    this.rankProgression,
   }) : _progression = progression ?? const ExpProgression();
 
   final ExpProgression _progression;
@@ -31,6 +33,11 @@ class ApplyStateDeltas {
   /// World/campaign-declared bounds (and derived-meter markers) for the
   /// `meter` delta type. Rebuilt per world, same as [_progression].
   final Map<String, MeterDefinition> meterDefinitions;
+
+  /// When set (campaign-bible worlds, §7.1), EXP accumulates as a running
+  /// total and rank promotion is milestone-gated instead of the simpler
+  /// linear [_progression]. Rebuilt per world, same as [_progression].
+  final RankProgression? rankProgression;
 
   DeltaApplication call(Character character, List<StateDelta> deltas) {
     var current = character;
@@ -45,6 +52,23 @@ class ApplyStateDeltas {
         current = updated;
         applied.add(delta);
       }
+    }
+
+    // Re-check rank promotion once per turn, after every delta in the batch
+    // has landed — not just when an `exp` delta happens to be present. A
+    // `flag` delta that completes a milestone must promote a character whose
+    // EXP was already banked from earlier turns, even with no EXP gained
+    // this turn; likewise an EXP delta shouldn't need to guess whether a
+    // flag delta later in the same batch will unlock it.
+    final rankProg = rankProgression;
+    if (rankProg != null) {
+      final result = rankProg.applyExp(
+        currentLevel: current.level,
+        currentExp: current.exp,
+        gainedExp: 0,
+        hasFlag: current.flag,
+      );
+      current = current.copyWith(level: result.level);
     }
 
     return DeltaApplication(
@@ -65,6 +89,12 @@ class ApplyStateDeltas {
       case StateDeltaType.exp:
         final gained = _asInt(delta.value);
         if (gained == null || gained < 0) return null;
+        if (rankProgression != null) {
+          // Milestone-gated worlds: EXP is a cumulative running total, never
+          // rolled over. Promotion itself is (re)computed once per turn in
+          // `call` above, using the fully-updated character.
+          return c.copyWith(exp: c.exp + gained);
+        }
         final progress = _progression.applyExp(
           level: c.level,
           exp: c.exp,

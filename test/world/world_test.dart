@@ -97,4 +97,38 @@ void main() {
       expect(world.meterValue('undeclared_counter', character), 7);
     });
   });
+
+  group('World ranks', () {
+    test('parses milestone-gated ranks from JSON', () {
+      final json = baseWorldJson()
+        ..['ranks'] = [
+          {'id': 'aliento_velado', 'level': 1, 'exp_required': 0},
+          {
+            'id': 'meridiano_abierto',
+            'level': 2,
+            'exp_required': 5,
+            'milestone_flag': 'reached_casa_de_tinta',
+          },
+        ];
+      final world = World.fromJson(json);
+      expect(world.ranks, hasLength(2));
+      expect(world.ranks.last.milestoneFlag, 'reached_casa_de_tinta');
+    });
+
+    test('currentRank finds the rank matching the character\'s level', () {
+      final json = baseWorldJson()
+        ..['ranks'] = [
+          {'id': 'aliento_velado', 'level': 1, 'exp_required': 0},
+          {'id': 'meridiano_abierto', 'level': 2, 'exp_required': 5},
+        ];
+      final world = World.fromJson(json);
+      final levelTwo = world.startingCharacter.copyWith(level: 2);
+      expect(world.currentRank(levelTwo)?.id, 'meridiano_abierto');
+    });
+
+    test('currentRank is null for a world with no declared ranks', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(world.currentRank(world.startingCharacter), isNull);
+    });
+  });
 }
