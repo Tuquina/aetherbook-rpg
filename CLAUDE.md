@@ -138,18 +138,28 @@ Nunca mandes el historial completo al modelo.
 
 ---
 
-## 11. Fase actual: Fase 0 — Prueba de concepto
+## 11. Fase actual: Fase 1 — MVP jugable (en curso)
 
-Objetivo: validar que el loop es divertido y el JSON estructurado funciona.
+La Fase 0 (prueba de concepto) está completa y superada. Hoy la app tiene, además del loop mínimo original:
 
-- [ ] Proyecto Flutter (iOS/Android/web) con estructura ports-and-adapters.
-- [ ] `core/engine` con `ResolvePlayerAction` (atributo + d20 vs dificultad, tres bandas) + tests.
-- [ ] `NarratorPort` + `FakeNarratorAdapter`.
-- [ ] Una Edge Function mínima que llame a Gemini Flash cumpliendo `NarratorPort`.
-- [ ] Un mundo (Xianxia) freeform, loop mínimo: acción → resolución → narración JSON → render.
-- [ ] Sin auth, sin imágenes; estado en memoria/local.
+- [x] Proyecto Flutter (iOS/Android/web) con estructura ports-and-adapters.
+- [x] `core/engine` con `ResolvePlayerAction` (atributo + d20 vs dificultad, tres bandas, ventaja/desventaja) + tests.
+- [x] `NarratorPort` + `FakeNarratorAdapter`; narrador real (`GeminiNarratorAdapter` + `GroqNarratorAdapter` de fallback vía `FallbackNarratorAdapter`) desplegado como Edge Function y verificado — el cliente sigue en `FakeNarratorAdapter` a propósito, para no gastar cuota mientras se itera la UI/UX.
+- [x] Persistencia real en Supabase (Auth anónimo + RLS por sesión), con degradación a memoria si falla.
+- [x] Memoria de tres niveles: corto plazo literal, diario resumido cada ~5 turnos vía Groq (Edge Function `memory-digest`), estado largo plazo en Postgres.
+- [x] `core/narrative` con los 4 tipos de nodo de una campaña híbrida real (`fixed_anchor`, `bounded_corridor`, `state_hub`, `resolution`), gates, conflictos extendidos y combate por `guard`.
+- [x] Chargen estructurado (`CreateCharacter`: origen, punto libre, juramento, objeto personal) y progresión por rango con hitos (`RankProgression`), no solo EXP lineal.
+- [x] Contrato del narrador v2 (choices con intención/chequeo esperado, deltas con motivo) y un clasificador de acción libre (`ClassifyFreeAction`) ya construidos — este último todavía no reemplaza al inferidor por keyword en el loop de juego.
+- [x] Una campaña híbrida real cargada como contenido declarativo: **"Los nombres que devora el cielo"** (`assets/worlds/xianxia_lianshu.json`, 19 nodos, reparto, técnicas, 7 finales). Su vertical slice recomendado (apertura curada → corredor → hub → hito con conflicto extendido) es jugable de punta a punta, verificado con test automatizado contra el contenido real y con una sesión manual en navegador.
+- [x] Menú inicial para elegir historia (`WorldSelectScreen`) y navegación de vuelta al menú desde dentro de una partida, sin perder la sesión en memoria.
 
-Lo que **no** hacemos todavía: persistencia real, auth, imágenes, múltiples mundos, campañas curadas. Eso es Fase 1+.
+Lo que falta para cerrar la Fase 1 (todo lo demás del roadmap del GDD sigue siendo Fase 2+):
+
+- Cablear el resto de los 19 nodos de la campaña cargada (finales, epílogo, elección de técnica al subir de rango) — el contenido ya existe, falta ejercitarlo turno a turno en la UI.
+- Reemplazar el inferidor de atributo por keyword por `ClassifyFreeAction` para la acción libre dentro de un nodo curado.
+- Persistir la posición dentro del grafo (nodo actual, turnos de corredor, progreso de conflicto extendido) en Supabase — hoy solo vive en memoria, así que una campaña curada no sobrevive un refresh.
+- Inventario real.
+- Los otros 4 mundos del GDD (Isekai, Superhéroes, Cyberpunk, Post-apocalíptico) todavía no tienen contenido — eso es explícitamente Fase 2.
 
 ---
 
