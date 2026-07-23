@@ -347,4 +347,157 @@ void main() {
       expect(result.character.exp, 0);
     });
   });
+
+  group('ApplyStateDeltas — lists (curated inventory/passenger ids)', () {
+    test('listAdd appends an id to a named list', () {
+      final result = apply(base(), [
+        const StateDelta(
+          type: StateDeltaType.listAdd,
+          key: 'inventory',
+          value: 'llave_maestra_ferroviaria',
+        ),
+      ]);
+      expect(result.character.list('inventory'), ['llave_maestra_ferroviaria']);
+    });
+
+    test('listAdd is idempotent — adding the same id twice keeps one copy', () {
+      var character = base();
+      for (var i = 0; i < 2; i++) {
+        character = apply(character, [
+          const StateDelta(
+            type: StateDeltaType.listAdd,
+            key: 'inventory',
+            value: 'radio_portatil',
+          ),
+        ]).character;
+      }
+      expect(character.list('inventory'), ['radio_portatil']);
+    });
+
+    test('listRemove drops an id from a named list, no-op if absent', () {
+      final withItem = apply(base(), [
+        const StateDelta(
+          type: StateDeltaType.listAdd,
+          key: 'selected_passengers',
+          value: 'abril',
+        ),
+      ]).character;
+      final result = apply(withItem, [
+        const StateDelta(
+          type: StateDeltaType.listRemove,
+          key: 'selected_passengers',
+          value: 'abril',
+        ),
+      ]);
+      expect(result.character.list('selected_passengers'), isEmpty);
+
+      final noOp = apply(result.character, [
+        const StateDelta(
+          type: StateDeltaType.listRemove,
+          key: 'selected_passengers',
+          value: 'nunca_estuvo',
+        ),
+      ]);
+      expect(noOp.rejected, isEmpty);
+      expect(noOp.character.list('selected_passengers'), isEmpty);
+    });
+
+    test('rejects a list delta whose value is not a string id', () {
+      final result = apply(base(), [
+        const StateDelta(type: StateDeltaType.listAdd, key: 'inventory', value: 5),
+      ]);
+      expect(result.rejected, hasLength(1));
+    });
+  });
+
+  group('ApplyStateDeltas — vars (curated enum/id-like state)', () {
+    test('varSet stores a free-form value', () {
+      final result = apply(base(), [
+        const StateDelta(
+          type: StateDeltaType.varSet,
+          key: 'passenger_policy',
+          value: 'vulnerables_primero',
+        ),
+      ]);
+      expect(result.character.varValue('passenger_policy'), 'vulnerables_primero');
+    });
+
+    test('varSet overwrites a previous value', () {
+      final first = apply(base(), [
+        const StateDelta(type: StateDeltaType.varSet, key: 'selected_profile_id', value: 'manos_de_taller'),
+      ]).character;
+      final second = apply(first, [
+        const StateDelta(type: StateDeltaType.varSet, key: 'selected_profile_id', value: 'ojos_de_ruta'),
+      ]).character;
+      expect(second.varValue('selected_profile_id'), 'ojos_de_ruta');
+    });
+
+    test('rejects a var delta whose value is not a string', () {
+      final result = apply(base(), [
+        const StateDelta(type: StateDeltaType.varSet, key: 'x', value: true),
+      ]);
+      expect(result.rejected, hasLength(1));
+    });
+  });
+
+  group('ApplyStateDeltas — absolute set for meter/resource', () {
+    test("operation 'set' replaces a meter outright instead of adding", () {
+      final withBounds = const ApplyStateDeltas(
+        meterDefinitions: {'hours_remaining': MeterDefinition(min: 0, max: 96)},
+      );
+      final afterIncrement = withBounds(base(), [
+        const StateDelta(type: StateDeltaType.meter, key: 'hours_remaining', value: 90),
+      ]).character;
+      final result = withBounds(afterIncrement, [
+        const StateDelta(
+          type: StateDeltaType.meter,
+          key: 'hours_remaining',
+          value: 8,
+          operation: 'set',
+        ),
+      ]);
+      expect(result.character.meter('hours_remaining'), 8);
+    });
+
+    test("operation 'set' replaces a resource outright instead of adding", () {
+      final result = apply(base(), [
+        const StateDelta(
+          type: StateDeltaType.resource,
+          key: 'qi',
+          value: 3,
+          operation: 'set',
+        ),
+      ]);
+      expect(result.character.resource('qi'), 3);
+    });
+
+    test('omitting operation keeps the default increment behavior', () {
+      final result = apply(base(), [
+        const StateDelta(type: StateDeltaType.resource, key: 'qi', value: 3),
+      ]);
+      expect(result.character.resource('qi'), 13);
+    });
+  });
+
+  group('ApplyStateDeltas — configurable relationship bounds (curated worlds)', () {
+    test('a curated world can widen the per-delta magnitude cap and stored range', () {
+      final wide = const ApplyStateDeltas(
+        relationshipMagnitudeCap: 3,
+        relationshipMin: -3,
+        relationshipMax: 3,
+      );
+      final result = wide(base(), [
+        const StateDelta(type: StateDeltaType.relationship, key: 'abril', value: -3),
+      ]);
+      expect(result.applied, hasLength(1));
+      expect(result.character.relationship('abril'), -3);
+    });
+
+    test('the default configuration still rejects a magnitude-2 delta', () {
+      final result = apply(base(), [
+        const StateDelta(type: StateDeltaType.relationship, key: 'abril', value: -2),
+      ]);
+      expect(result.rejected, hasLength(1));
+    });
+  });
 }

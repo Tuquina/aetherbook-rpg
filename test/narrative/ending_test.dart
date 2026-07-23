@@ -1,5 +1,6 @@
 import 'package:aetherbook/core/narrative/ending.dart';
 import 'package:aetherbook/core/narrative/ending_fallback.dart';
+import 'package:aetherbook/core/narrative/epilogue_beat.dart';
 import 'package:aetherbook/core/narrative/gate.dart';
 import 'package:aetherbook/core/state/character.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -77,6 +78,54 @@ void main() {
       expect(ending.costReveals, isEmpty);
       expect(ending.failureCostOptions, isEmpty);
       expect(ending.onFailureFallbacks, isEmpty);
+      expect(ending.bodyBeats, isEmpty);
+    });
+  });
+
+  group('Ending.bodyBeats (curated, AI-free content — §21)', () {
+    test('fromJson parses body_beats using the same shape as an epilogue', () {
+      final ending = Ending.fromJson({
+        'id': 'end_faro_sur',
+        'visible_choice': 'Subir a Aurora',
+        'body_beats': [
+          {'movement': 'entrada', 'text': 'Damián sube.'},
+          {
+            'movement': 'variante_abril',
+            'gate': {'type': 'relationship', 'key': 'abril', 'min': 1},
+            'text': 'Abril se sienta enfrente.',
+          },
+          {'movement': 'variante_abril', 'text': 'Abril elige otro coche.'},
+        ],
+      });
+      expect(ending.bodyBeats, hasLength(3));
+      expect(ending.bodyBeats.first.movement, 'entrada');
+    });
+
+    test('assembleEpilogueBeats picks the first satisfied beat per movement', () {
+      const ending = Ending(
+        id: 'end_faro_sur',
+        visibleChoice: 'Subir a Aurora',
+        bodyBeats: [
+          EpilogueBeat(movement: 'entrada', text: 'Damián sube.'),
+          EpilogueBeat(
+            movement: 'variante_abril',
+            gate: MinRelationshipGate('abril', 1),
+            text: 'Abril se sienta enfrente.',
+          ),
+          EpilogueBeat(movement: 'variante_abril', text: 'Abril elige otro coche.'),
+        ],
+      );
+      expect(assembleEpilogueBeats(ending.bodyBeats, _character), [
+        'Damián sube.',
+        'Abril elige otro coche.',
+      ]);
+      expect(
+        assembleEpilogueBeats(
+          ending.bodyBeats,
+          _character.copyWith(relationships: {'abril': 2}),
+        ),
+        ['Damián sube.', 'Abril se sienta enfrente.'],
+      );
     });
   });
 }

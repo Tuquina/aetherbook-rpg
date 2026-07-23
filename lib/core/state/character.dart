@@ -11,6 +11,8 @@ class Character {
     this.flags = const {},
     this.meters = const {},
     this.relationships = const {},
+    this.lists = const {},
+    this.vars = const {},
     this.originId,
     this.originTagId,
     this.vowId,
@@ -37,9 +39,22 @@ class Character {
   /// `core/world/meter_definition.dart` for bounds and derived meters.
   final Map<String, int> meters;
 
-  /// Per-NPC relationship scores (campaign-bible §8.2), range `[-2, 3]`.
-  /// Changed only in `±1` steps by `ApplyStateDeltas`, never set directly.
+  /// Per-NPC relationship scores (campaign-bible §8.2), range `[-2, 3]` by
+  /// default (a curated world may widen this — see `World.relationshipMin`/
+  /// `relationshipMax`). Changed only through `ApplyStateDeltas`, never set
+  /// directly.
   final Map<String, int> relationships;
+
+  /// Named string lists a curated campaign declares — e.g.
+  /// `lists['inventory']` (item ids) or `lists['selected_passengers']` (NPC
+  /// ids). One generic mechanism instead of a bespoke list per concept
+  /// (campaign-bible §8.3/§8.5: "no persistir nombres, usar IDs").
+  final Map<String, List<String>> lists;
+
+  /// Named free-form id/enum-like state a curated campaign declares — e.g.
+  /// `vars['passenger_policy']`, `vars['selected_profile_id']`. For state
+  /// that isn't boolean, numeric or a per-NPC score.
+  final Map<String, String> vars;
 
   /// The chargen origin chosen at creation (campaign-bible §5.3), or `null`
   /// for worlds that don't use structured character creation.
@@ -61,6 +76,8 @@ class Character {
   bool flag(String key) => flags[key] ?? false;
   int meter(String key) => meters[key] ?? 0;
   int relationship(String key) => relationships[key] ?? 0;
+  List<String> list(String key) => lists[key] ?? const [];
+  String? varValue(String key) => vars[key];
 
   Character copyWith({
     String? name,
@@ -71,6 +88,8 @@ class Character {
     Map<String, bool>? flags,
     Map<String, int>? meters,
     Map<String, int>? relationships,
+    Map<String, List<String>>? lists,
+    Map<String, String>? vars,
     String? originId,
     String? originTagId,
     String? vowId,
@@ -85,6 +104,8 @@ class Character {
       flags: flags ?? this.flags,
       meters: meters ?? this.meters,
       relationships: relationships ?? this.relationships,
+      lists: lists ?? this.lists,
+      vars: vars ?? this.vars,
       originId: originId ?? this.originId,
       originTagId: originTagId ?? this.originTagId,
       vowId: vowId ?? this.vowId,

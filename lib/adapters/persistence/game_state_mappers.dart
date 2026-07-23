@@ -4,6 +4,7 @@
 // actual client.
 
 import '../../core/engine/action_resolution.dart';
+import '../../core/narrative/extended_conflict.dart';
 import '../../core/state/character.dart';
 import '../../core/state/game_session.dart';
 
@@ -17,6 +18,9 @@ Map<String, Object?> characterToRow(String sessionId, Character character) {
     'resources': character.resources,
     'flags': character.flags,
     'meters': character.meters,
+    'relationships': character.relationships,
+    'lists': character.lists,
+    'vars': character.vars,
     'origin_id': character.originId,
     'origin_tag_id': character.originTagId,
     'vow_id': character.vowId,
@@ -33,10 +37,42 @@ Character characterFromRow(Map<String, dynamic> row) {
     resources: _intMap(row['resources']),
     flags: _boolMap(row['flags']),
     meters: _intMap(row['meters']),
+    relationships: _intMap(row['relationships']),
+    lists: _stringListMap(row['lists']),
+    vars: _stringMap(row['vars']),
     originId: row['origin_id'] as String?,
     originTagId: row['origin_tag_id'] as String?,
     vowId: row['vow_id'] as String?,
     personalItem: row['personal_item'] as String?,
+  );
+}
+
+/// The `game_sessions` columns that track graph position — read alongside
+/// the session row in `loadLatestSession`, written by `saveGraphPosition`.
+Map<String, Object?> graphPositionToRow({
+  String? currentNodeId,
+  required int corridorTurnsUsed,
+  ExtendedConflictProgress? extendedConflictProgress,
+}) {
+  return {
+    'current_node_id': currentNodeId,
+    'corridor_turns_used': corridorTurnsUsed,
+    'extended_conflict_progress': extendedConflictProgress == null
+        ? null
+        : {
+            'successes': extendedConflictProgress.successes,
+            'failures': extendedConflictProgress.failures,
+            'last_attribute_key': extendedConflictProgress.lastAttributeKey,
+          },
+  };
+}
+
+ExtendedConflictProgress? extendedConflictProgressFromRow(Object? value) {
+  if (value is! Map) return null;
+  return ExtendedConflictProgress(
+    successes: (value['successes'] as num?)?.toInt() ?? 0,
+    failures: (value['failures'] as num?)?.toInt() ?? 0,
+    lastAttributeKey: value['last_attribute_key'] as String?,
   );
 }
 
@@ -98,6 +134,22 @@ Map<String, int> _intMap(Object? value) {
 Map<String, bool> _boolMap(Object? value) {
   if (value is Map) {
     return value.map((k, v) => MapEntry(k as String, v as bool));
+  }
+  return const {};
+}
+
+Map<String, String> _stringMap(Object? value) {
+  if (value is Map) {
+    return value.map((k, v) => MapEntry(k as String, v as String));
+  }
+  return const {};
+}
+
+Map<String, List<String>> _stringListMap(Object? value) {
+  if (value is Map) {
+    return value.map(
+      (k, v) => MapEntry(k as String, _stringList(v)),
+    );
   }
   return const {};
 }

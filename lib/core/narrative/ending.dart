@@ -1,5 +1,6 @@
 import '../state/character.dart';
 import 'ending_fallback.dart';
+import 'epilogue_beat.dart';
 import 'gate.dart';
 
 /// One possible ending inside a [ResolutionNode] (campaign-bible §16): a
@@ -20,6 +21,7 @@ class Ending {
     this.costReveals = const [],
     this.failureCostOptions = const [],
     this.onFailureFallbacks = const [],
+    this.bodyBeats = const [],
   });
 
   final String id;
@@ -56,6 +58,14 @@ class Ending {
   /// only `nuevo_pacto` uses this (§16.1). Every other ending's failure keeps
   /// the same `ending_id`, just with a worse narrated cost.
   final List<EndingFallback> onFailureFallbacks;
+
+  /// Fully authored prose for this ending's body, assembled the same way as
+  /// `ResolutionNode.epilogueBeats`: grouped by `movement` (e.g. "entrada",
+  /// "variante_companero", "cierre" — a curated ending's own internal
+  /// sections, campaign-bible §21), first satisfied beat per movement wins.
+  /// Empty for hybrid/freeform endings, which narrate from [successReveals]/
+  /// [costReveals] instead.
+  final List<EpilogueBeat> bodyBeats;
 
   bool isAvailableTo(Character character) =>
       hardRequirement.isSatisfiedBy(character);
@@ -95,7 +105,16 @@ class Ending {
       costReveals: _stringList(json['cost_reveals']),
       failureCostOptions: _stringList(json['failure_cost_options']),
       onFailureFallbacks: _fallbacksFromJson(json['on_failure_fallbacks']),
+      bodyBeats: _bodyBeatsFromJson(json['body_beats']),
     );
+  }
+
+  static List<EpilogueBeat> _bodyBeatsFromJson(Object? value) {
+    if (value is! List) return const [];
+    return [
+      for (final item in value)
+        EpilogueBeat.fromJson((item as Map).cast<String, dynamic>()),
+    ];
   }
 
   static List<Gate> _gatesFromJson(Object? value) {

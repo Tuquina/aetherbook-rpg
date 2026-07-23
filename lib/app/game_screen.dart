@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/narrative/story_choice.dart';
 import 'codex_screen.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
@@ -248,14 +249,50 @@ class _ChoicesBar extends StatelessWidget {
   final TextEditingController freeAction;
   final VoidCallback onSubmitFree;
 
+  /// Resolves a tapped [StoryChoice], first asking for confirmation when it's
+  /// marked irreversible (campaign-bible §20.3/§26.4) — a curated author's
+  /// `confirmation_text`, or a generic fallback if the choice declares none.
+  Future<void> _tapStoryChoice(BuildContext context, StoryChoice choice) async {
+    if (!choice.requiresConfirmation) {
+      controller.chooseStoryChoice(choice);
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AetherColors.surface,
+        content: Text(
+          choice.confirmationText ?? '¿Confirmás esta decisión? No se puede deshacer.',
+          style: AetherType.body,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      controller.chooseStoryChoice(choice);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final busy = controller.isLoading;
     // A curated (hybrid-campaign) world offers deterministic story
-    // choices/hub activities instead of the AI's suggested_choices — the
-    // free-action field stays available either way (campaign-bible §18.10:
-    // "la acción libre permanece siempre disponible").
+    // choices/hub activities instead of the AI's suggested_choices. The
+    // free-action field stays available on top of them by default
+    // (campaign-bible §18.10: "la acción libre permanece siempre
+    // disponible") — a fully curated, AI-free world (§25.10) turns it off
+    // entirely via `World.allowFreeText`.
     final curated = controller.currentNode != null;
+    final allowFreeText = controller.world?.allowFreeText ?? true;
     return Container(
       padding: const EdgeInsets.fromLTRB(
           AetherSpace.lg, AetherSpace.md, AetherSpace.lg, AetherSpace.lg),
@@ -296,7 +333,7 @@ class _ChoicesBar extends StatelessWidget {
                                       const EdgeInsets.only(bottom: AetherSpace.md),
                                   child: ChoiceButton(
                                     label: choice.label,
-                                    onTap: () => controller.chooseStoryChoice(choice),
+                                    onTap: () => _tapStoryChoice(context, choice),
                                   ),
                                 ),
                               for (final activity in controller.availableActivities)
@@ -323,9 +360,11 @@ class _ChoicesBar extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: AetherSpace.xs),
-                    FreeActionField(
-                        controller: freeAction, onSubmit: onSubmitFree),
+                    if (allowFreeText) ...[
+                      const SizedBox(height: AetherSpace.xs),
+                      FreeActionField(
+                          controller: freeAction, onSubmit: onSubmitFree),
+                    ],
                   ],
                 ),
         ),

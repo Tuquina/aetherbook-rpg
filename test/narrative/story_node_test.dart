@@ -99,6 +99,53 @@ void main() {
           StoryNode.fromJson('beat_x', {'type': 'fixed_anchor'}) as FixedAnchorNode;
       expect(node.extendedConflict, isNull);
     });
+
+    test('satisfiedInserts returns only the blocks whose gate is met, in authored order', () {
+      const node = FixedAnchorNode(
+        id: 'p1_alarma_camara',
+        narration: 'El segundo clic llega desde el patio.',
+        conditionalInserts: [
+          ConditionalInsert(
+            text: 'Abril está de pie, con la ballesta descargada.',
+            gate: FlagGate('team_has_abril'),
+          ),
+          ConditionalInsert(text: 'Nadie más se mueve en la cabina.'),
+        ],
+      );
+      final withAbril = _character.copyWith(flags: {'team_has_abril': true});
+      expect(node.satisfiedInserts(withAbril), [
+        'Abril está de pie, con la ballesta descargada.',
+        'Nadie más se mueve en la cabina.',
+      ]);
+      expect(node.satisfiedInserts(_character), [
+        'Nadie más se mueve en la cabina.',
+      ]);
+    });
+
+    test('StoryNode.fromJson parses conditional_inserts', () {
+      final node = StoryNode.fromJson('p1_alarma_camara', {
+        'type': 'fixed_anchor',
+        'narration': 'x',
+        'conditional_inserts': [
+          {
+            'text': 'Abril está de pie, con la ballesta descargada.',
+            'gate': {'type': 'flag', 'key': 'team_has_abril'},
+          },
+        ],
+      }) as FixedAnchorNode;
+      expect(node.conditionalInserts, hasLength(1));
+      expect(
+        node.conditionalInserts.single.text,
+        'Abril está de pie, con la ballesta descargada.',
+      );
+      expect(node.conditionalInserts.single.gate, isA<FlagGate>());
+    });
+
+    test('conditional_inserts defaults to empty when omitted', () {
+      final node =
+          StoryNode.fromJson('beat_x', {'type': 'fixed_anchor'}) as FixedAnchorNode;
+      expect(node.conditionalInserts, isEmpty);
+    });
   });
 
   group('BoundedCorridorNode', () {

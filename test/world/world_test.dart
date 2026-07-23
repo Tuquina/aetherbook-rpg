@@ -224,4 +224,78 @@ void main() {
       expect(() => world.opponentById('no_existe'), throwsArgumentError);
     });
   });
+
+  group('World — curated, AI-free campaign flags (§9.1/§25.10)', () {
+    test('aiRuntimeRequired and allowFreeText default to true', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(world.aiRuntimeRequired, isTrue);
+      expect(world.allowFreeText, isTrue);
+    });
+
+    test('both can be turned off from the JSON', () {
+      final json = baseWorldJson()
+        ..['ai_runtime_required'] = false
+        ..['free_text_actions'] = false;
+      final world = World.fromJson(json);
+      expect(world.aiRuntimeRequired, isFalse);
+      expect(world.allowFreeText, isFalse);
+    });
+  });
+
+  group('World — catalog metadata', () {
+    test('defaults to null (WorldSelectScreen renders exactly as before)', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(world.catalogDescription, isNull);
+      expect(world.estimatedDurationMinutes, isNull);
+      expect(world.contentWarning, isNull);
+    });
+
+    test('parses catalog_description, estimated_duration_minutes and content_warning', () {
+      final json = baseWorldJson()
+        ..['catalog_description'] = 'Trece meses después de la Caída...'
+        ..['estimated_duration_minutes'] = 480
+        ..['content_warning'] = 'Violencia zombi, duelo, decisiones irreversibles.';
+      final world = World.fromJson(json);
+      expect(world.catalogDescription, 'Trece meses después de la Caída...');
+      expect(world.estimatedDurationMinutes, 480);
+      expect(world.contentWarning, 'Violencia zombi, duelo, decisiones irreversibles.');
+    });
+  });
+
+  group('World — relationship delta bounds (ApplyStateDeltas wiring)', () {
+    test('default to the original AI-safety values', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(world.relationshipMagnitudeCap, 1);
+      expect(world.relationshipMin, -2);
+      expect(world.relationshipMax, 3);
+    });
+
+    test('a curated world can widen them', () {
+      final json = baseWorldJson()
+        ..['relationship_magnitude_cap'] = 3
+        ..['relationship_min'] = -3
+        ..['relationship_max'] = 3;
+      final world = World.fromJson(json);
+      expect(world.relationshipMagnitudeCap, 3);
+      expect(world.relationshipMin, -3);
+      expect(world.relationshipMax, 3);
+    });
+  });
+
+  group('World — chargen presentation (fixed-build origins)', () {
+    test('hasFreeAttributePoint defaults to true and chargenVowLabel to "Juramento"', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(world.hasFreeAttributePoint, isTrue);
+      expect(world.chargenVowLabel, 'Juramento');
+    });
+
+    test('a curated world can disable the free point and relabel the vow step', () {
+      final json = baseWorldJson()
+        ..['chargen_free_attribute_point'] = false
+        ..['chargen_vow_label'] = 'Recuerdo conservado';
+      final world = World.fromJson(json);
+      expect(world.hasFreeAttributePoint, isFalse);
+      expect(world.chargenVowLabel, 'Recuerdo conservado');
+    });
+  });
 }

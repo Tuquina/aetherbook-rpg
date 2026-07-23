@@ -13,7 +13,11 @@ import 'widgets/atmosphere.dart';
 /// everything shown about it (name, tone, whether it's curated) is always
 /// read live from the world itself via [GameController.loadWorldInfo],
 /// never duplicated in this list.
-const _availableWorldSlugs = ['xianxia_lianshu', 'xianxia'];
+const _availableWorldSlugs = [
+  'curated_zombie_01_ultimo_tren',
+  'xianxia_lianshu',
+  'xianxia',
+];
 
 /// Lets the player pick which world to enter (CLAUDE.md §1: freeform,
 /// curated or hybrid modes over the same engine). Reached from
@@ -142,9 +146,17 @@ class _StoryCard extends StatelessWidget {
   final World world;
   final VoidCallback onTap;
 
+  /// e.g. "Campaña curada", "Historia completa · sin IA", "Modo libre" — a
+  /// fully curated, AI-free campaign (`ai_runtime_required: false`) reads
+  /// differently from the hybrid "curated" label the menu already used,
+  /// without inventing a third boolean just for display.
+  String get _modeLabel {
+    if (world.storyGraph == null) return 'Modo libre';
+    return world.aiRuntimeRequired ? 'Campaña curada' : 'Historia completa · sin IA';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final curated = world.storyGraph != null;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -167,10 +179,35 @@ class _StoryCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(world.name, style: AetherType.title),
                   const SizedBox(height: 6),
-                  Text(
-                    curated ? 'Campaña curada · ${world.tone}' : 'Modo libre · ${world.tone}',
-                    style: AetherType.caption,
-                  ),
+                  Text('$_modeLabel · ${world.tone}', style: AetherType.caption),
+                  if (world.catalogDescription != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      world.catalogDescription!,
+                      style: AetherType.body.copyWith(
+                          color: AetherColors.parchmentDim, fontSize: 14),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  if (world.estimatedDurationMinutes != null ||
+                      world.contentWarning != null) ...[
+                    const SizedBox(height: 6),
+                    if (world.estimatedDurationMinutes != null)
+                      Text(
+                        '~${(world.estimatedDurationMinutes! / 60).round()} h de juego',
+                        style: AetherType.caption
+                            .copyWith(color: AetherColors.goldSoft),
+                      ),
+                    if (world.contentWarning != null)
+                      Text(
+                        world.contentWarning!,
+                        style: AetherType.caption
+                            .copyWith(color: AetherColors.parchmentDim),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
                 ],
               ),
             ),

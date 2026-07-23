@@ -10,6 +10,7 @@ import '../core/engine/create_character.dart';
 import '../core/engine/dice.dart';
 import '../core/engine/exp_progression.dart';
 import '../core/engine/infer_action_attribute.dart';
+import '../core/engine/interpolate_copy.dart';
 import '../core/engine/rank_progression.dart';
 import '../core/engine/resolve_player_action.dart';
 import '../core/engine/resolve_story_choice.dart';
@@ -82,7 +83,8 @@ class GameController extends ChangeNotifier {
         _memoryDigest = memoryDigest,
         _digestEveryNTurns = digestEveryNTurns,
         _resolve = ResolvePlayerAction(dice ?? RandomDice()),
-        _inferAttribute = const InferActionAttribute() {
+        _inferAttribute = const InferActionAttribute(),
+        _interpolate = const InterpolateCopy() {
     _resolveStoryChoice = ResolveStoryChoice(_resolve);
   }
 
@@ -93,6 +95,7 @@ class GameController extends ChangeNotifier {
   final int _digestEveryNTurns;
   final ResolvePlayerAction _resolve;
   final InferActionAttribute _inferAttribute;
+  final InterpolateCopy _interpolate;
   late final ResolveStoryChoice _resolveStoryChoice;
 
   /// Rebuilt per-world in [start] so EXP thresholds match the world's own
@@ -182,6 +185,9 @@ class GameController extends ChangeNotifier {
         rankProgression:
             world.ranks.isEmpty ? null : RankProgression(world.ranks),
         resourceFormulas: world.resourceFormulas,
+        relationshipMagnitudeCap: world.relationshipMagnitudeCap,
+        relationshipMin: world.relationshipMin,
+        relationshipMax: world.relationshipMax,
       );
 
       final persistence = _persistence;
@@ -218,7 +224,7 @@ class GameController extends ChangeNotifier {
         _tone = lastTurn.tone.isNotEmpty ? lastTurn.tone : world.tone;
       } else if (graph != null) {
         final node = graph.nodeById(session.currentNodeId!);
-        _narration = _literalNarrationOf(node) ?? world.seedNarration;
+        _narration = _literalNarrationOf(node, session.character) ?? world.seedNarration;
         _choices = const [];
         _tone = world.tone;
       } else {
@@ -246,11 +252,21 @@ class GameController extends ChangeNotifier {
   /// The node's own pre-written opening prose, if it has one — only a
   /// `FixedAnchorNode` carries literal narration (campaign-bible's curated
   /// hitos); corridors/hubs/resolutions have none and rely on the narrator.
-  String? _literalNarrationOf(StoryNode node) {
-    if (node is FixedAnchorNode && node.narration.isNotEmpty) {
-      return node.narration;
-    }
-    return null;
+  /// Appends every `conditionalInserts` block whose gate [character]
+  /// satisfies, and interpolates `{{token}}` placeholders against it.
+  String? _literalNarrationOf(StoryNode node, Character character) {
+    if (node is! FixedAnchorNode) return null;
+    final inserts = node.satisfiedInserts(character);
+    if (node.narration.isEmpty && inserts.isEmpty) return null;
+    final blocks = [
+      if (node.narration.isNotEmpty) node.narration,
+      ...inserts,
+    ];
+    return _interpolate(
+      blocks.join('\n\n'),
+      character: character,
+      protagonistName: character.name,
+    );
   }
 
   _NodeContext _nodeContext(StoryNode? node) {
@@ -278,6 +294,10 @@ class GameController extends ChangeNotifier {
     final world = _world;
     final session = _session;
     if (world == null || session == null || _isLoading) return;
+    // A curated, AI-free campaign (`allowFreeText == false`) never offers
+    // this field in the UI — this guard just makes that unreachable instead
+    // of relying solely on the UI to enforce it (campaign-bible §25.10).
+    if (!world.allowFreeText) return;
 
     _isLoading = true;
     _error = null;
@@ -379,6 +399,7 @@ class GameController extends ChangeNotifier {
       curatedEffects: resolved.outcome.effects,
       nodeContext: _nodeContext(node),
       nextNodeId: nextNodeId,
+      curatedResultText: resolved.outcome.resultText,
     );
   }
 
@@ -406,37 +427,58 @@ class GameController extends ChangeNotifier {
     required List<StateDelta> curatedEffects,
     required _NodeContext nodeContext,
     String? nextNodeId,
+    String? curatedResultText,
   }) async {
     try {
-      final response = await _narrator.narrate(
-        NarratorRequest(
-          world: world,
+      String narration;
+      String tone;
+      List<String> choiceLabels;
+      List<StateDelta> proposedDeltas;
+
+      if (world.aiRuntimeRequired) {
+        final response = await _narrator.narrate(
+          NarratorRequest(
+            world: world,
+            character: session.character,
+            playerAction: playerAction,
+            resolution: resolution,
+            recentTurns: _recentTurns(session),
+            memoryDigest: _memoryDigestText,
+            nodeFixedReveals: nodeContext.fixedReveals,
+            nodeForbiddenReveals: nodeContext.forbiddenReveals,
+            nodeGoal: nodeContext.goal,
+          ),
+        );
+        narration = response.narration;
+        tone = response.tone;
+        choiceLabels = [for (final c in response.suggestedChoices) c.label];
+        proposedDeltas = [
+          for (final delta in response.stateDeltas) ?delta.toStateDelta(),
+        ];
+      } else {
+        // Curated, AI-free world (campaign-bible §25.10): the resolved
+        // outcome's own authored text is the turn's narration, interpolated
+        // against the character about to receive [curatedEffects]. NEVER
+        // calls `NarratorPort` — this world makes zero AI calls, period.
+        narration = _interpolate(
+          curatedResultText ?? '',
           character: session.character,
-          playerAction: playerAction,
-          resolution: resolution,
-          recentTurns: _recentTurns(session),
-          memoryDigest: _memoryDigestText,
-          nodeFixedReveals: nodeContext.fixedReveals,
-          nodeForbiddenReveals: nodeContext.forbiddenReveals,
-          nodeGoal: nodeContext.goal,
-        ),
-      );
+          protagonistName: session.character.name,
+        );
+        tone = world.tone;
+        choiceLabels = const [];
+        proposedDeltas = const [];
+      }
 
       final beforeLevel = session.character.level;
-      final candidateDeltas = [
-        ...curatedEffects,
-        for (final delta in response.stateDeltas) ?delta.toStateDelta(),
-      ];
+      final candidateDeltas = [...curatedEffects, ...proposedDeltas];
       final application = _applyDeltas(session.character, candidateDeltas);
-      final choiceLabels = [
-        for (final c in response.suggestedChoices) c.label,
-      ];
 
       final turn = Turn(
         index: session.turns.length,
         playerAction: playerAction,
-        narration: response.narration,
-        tone: response.tone,
+        narration: narration,
+        tone: tone,
         suggestedChoices: choiceLabels,
       );
       var updatedSession = session.copyWith(
@@ -444,7 +486,7 @@ class GameController extends ChangeNotifier {
         turns: [...session.turns, turn],
       );
 
-      var narrationToShow = response.narration;
+      var narrationToShow = narration;
       if (nextNodeId != null) {
         final nextNode = world.storyGraph!.nodeById(nextNodeId);
         updatedSession = updatedSession.copyWith(
@@ -452,22 +494,23 @@ class GameController extends ChangeNotifier {
           clearExtendedConflictProgress: true,
           corridorTurnsUsed: nextNode is BoundedCorridorNode ? 0 : updatedSession.corridorTurnsUsed,
         );
-        final literal = _literalNarrationOf(nextNode);
+        final literal = _literalNarrationOf(nextNode, updatedSession.character);
         if (literal != null) {
-          narrationToShow = '$narrationToShow\n\n$literal';
+          narrationToShow =
+              narrationToShow.isEmpty ? literal : '$narrationToShow\n\n$literal';
         }
       }
 
       _session = updatedSession;
       _narration = narrationToShow;
       _choices = choiceLabels;
-      _tone = response.tone;
+      _tone = tone;
       _lastResolution = resolution;
       _lastLevelsGained = application.character.level - beforeLevel;
 
       // Durably record the turn and the character's new state, if a
-      // persistence adapter is configured (Fase 1). AI proposed the deltas;
-      // by this point the engine already validated and applied them, so
+      // persistence adapter is configured (Fase 1). Deltas — AI-proposed or
+      // curated — are already validated and applied by this point, so
       // what's persisted is authoritative state, never raw AI output.
       final persistence = _persistence;
       final sessionId = session.id;
@@ -478,18 +521,29 @@ class GameController extends ChangeNotifier {
           turnIndex: turn.index,
           playerAction: playerAction,
           resolution: resolution,
-          narration: response.narration,
-          tone: response.tone,
+          narration: narration,
+          tone: tone,
           suggestedChoices: choiceLabels,
         );
+        if (world.storyGraph != null) {
+          await persistence.saveGraphPosition(
+            sessionId: sessionId,
+            currentNodeId: updatedSession.currentNodeId,
+            corridorTurnsUsed: updatedSession.corridorTurnsUsed,
+            extendedConflictProgress: updatedSession.extendedConflictProgress,
+          );
+        }
       }
 
       // Medium-term memory: every _digestEveryNTurns, compress the turns
       // since the last digest into a fresh summary that continues it
       // (CLAUDE.md §6, GDD §5.3), instead of ever sending the full history.
+      // A world with `aiRuntimeRequired == false` never calls the narrator,
+      // so there is nothing generative to digest either.
       final memoryDigest = _memoryDigest;
       final updatedTurns = _session!.turns;
-      if (memoryDigest != null &&
+      if (world.aiRuntimeRequired &&
+          memoryDigest != null &&
           updatedTurns.length % _digestEveryNTurns == 0) {
         final sinceLastDigest = updatedTurns.length > _digestEveryNTurns
             ? updatedTurns.sublist(updatedTurns.length - _digestEveryNTurns)
@@ -508,7 +562,7 @@ class GameController extends ChangeNotifier {
         }
       }
     } catch (e) {
-      _error = 'El narrador falló: $e';
+      _error = world.aiRuntimeRequired ? 'El narrador falló: $e' : 'Error al resolver el turno: $e';
     } finally {
       _isLoading = false;
       notifyListeners();

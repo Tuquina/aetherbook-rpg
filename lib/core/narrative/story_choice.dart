@@ -10,7 +10,7 @@ import 'gate.dart';
 /// different destination node — e.g. "empujar la tapa": success leaves
 /// through control, failure capsizes the boat).
 class ChoiceOutcome {
-  const ChoiceOutcome({this.targetNodeId, this.effects = const []});
+  const ChoiceOutcome({this.targetNodeId, this.effects = const [], this.resultText});
 
   /// Overrides the choice's own target node for this outcome. `null` means
   /// "use the choice's own `targetNodeId`" (most outcomes don't redirect
@@ -18,10 +18,21 @@ class ChoiceOutcome {
   final String? targetNodeId;
   final List<StateDelta> effects;
 
+  /// Fully authored prose for this exact outcome band (a curated campaign's
+  /// `copy_key`, already resolved to a literal string in the JSON — see
+  /// campaign-bible §25.4/§25.8). When set, `GameController` can render this
+  /// turn without ever calling `NarratorPort` (a world declaring
+  /// `ai_runtime_required: false` requires every reachable outcome to carry
+  /// one — enforced by content tests, not by a runtime AI fallback). `null`
+  /// for hybrid/freeform content, where the AI narrator still dresses the
+  /// outcome.
+  final String? resultText;
+
   factory ChoiceOutcome.fromJson(Map<String, dynamic> json) {
     return ChoiceOutcome(
       targetNodeId: json['target'] as String?,
       effects: _effectsFromJson(json['effects']),
+      resultText: json['result_text'] as String?,
     );
   }
 }
@@ -44,11 +55,16 @@ class StoryChoice implements Checkable {
     required this.targetNodeId,
     this.gate = const AlwaysGate(),
     this.effects = const [],
+    this.resultText,
     this.checkAttribute,
     this.checkDifficulty,
     this.onSuccess,
     this.onCriticalSuccess,
     this.onFailure,
+    this.requiresConfirmation = false,
+    this.confirmationText,
+    this.advantageWhen,
+    this.disadvantageWhen,
   });
 
   final String label;
@@ -60,6 +76,12 @@ class StoryChoice implements Checkable {
   /// [ChoiceOutcome]) — still validated through [ApplyStateDeltas] the same
   /// as AI-proposed deltas (CLAUDE.md §2.3).
   final List<StateDelta> effects;
+
+  /// Authored prose for an **unconditional** choice (no check at all) — the
+  /// top-level twin of `ChoiceOutcome.resultText`, folded into the `base`
+  /// outcome [outcomeFor] falls back to. A checked choice's text lives on
+  /// its `onSuccess`/`onFailure`/`onCriticalSuccess` branches instead.
+  final String? resultText;
 
   /// Which attribute this choice's check uses, or `null` for no check at all
   /// (an unconditional choice, or one resolved "for free" by an already-met
@@ -82,6 +104,19 @@ class StoryChoice implements Checkable {
   /// most choices' failure is just "no extra cost", not a distinct branch.
   final ChoiceOutcome? onFailure;
 
+  /// Whether taking this choice must be confirmed by the player before it
+  /// resolves (campaign-bible §20.3/§26.4: irreversible choices — killing
+  /// someone, using a body as a lure, boarding while infected...). The UI
+  /// shows [confirmationText] and requires an explicit "yes" first.
+  final bool requiresConfirmation;
+  final String? confirmationText;
+
+  @override
+  final Gate? advantageWhen;
+
+  @override
+  final Gate? disadvantageWhen;
+
   bool isAvailableTo(Character character) => gate.isSatisfiedBy(character);
 
   /// Whether taking this choice requires rolling a check at all.
@@ -93,7 +128,11 @@ class StoryChoice implements Checkable {
   /// `onFailure -> (targetNodeId, effects)` as documented per field.
   @override
   ChoiceOutcome outcomeFor(ActionOutcome outcome) {
-    final base = ChoiceOutcome(targetNodeId: targetNodeId, effects: effects);
+    final base = ChoiceOutcome(
+      targetNodeId: targetNodeId,
+      effects: effects,
+      resultText: resultText,
+    );
     return switch (outcome) {
       ActionOutcome.criticalSuccess => onCriticalSuccess ?? onSuccess ?? base,
       ActionOutcome.success => onSuccess ?? base,
@@ -107,11 +146,20 @@ class StoryChoice implements Checkable {
       targetNodeId: json['target'] as String,
       gate: Gate.fromJson((json['gate'] as Map?)?.cast<String, dynamic>()),
       effects: _effectsFromJson(json['effects']),
+      resultText: json['result_text'] as String?,
       checkAttribute: json['check_attribute'] as String?,
       checkDifficulty: (json['check_difficulty'] as num?)?.toInt(),
       onSuccess: _outcomeFromJson(json['on_success']),
       onCriticalSuccess: _outcomeFromJson(json['on_critical_success']),
       onFailure: _outcomeFromJson(json['on_failure']),
+      requiresConfirmation: json['requires_confirmation'] as bool? ?? false,
+      confirmationText: json['confirmation_text'] as String?,
+      advantageWhen: json['advantage_when'] is Map
+          ? Gate.fromJson((json['advantage_when'] as Map).cast<String, dynamic>())
+          : null,
+      disadvantageWhen: json['disadvantage_when'] is Map
+          ? Gate.fromJson((json['disadvantage_when'] as Map).cast<String, dynamic>())
+          : null,
     );
   }
 
@@ -129,6 +177,7 @@ List<StateDelta> _effectsFromJson(Object? value) {
         type: StateDelta.typeFromString((item as Map)['type'] as String),
         key: item['key'] as String,
         value: item['value'],
+        operation: item['operation'] as String?,
       ),
   ];
 }

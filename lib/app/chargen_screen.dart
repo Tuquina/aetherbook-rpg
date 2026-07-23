@@ -49,7 +49,7 @@ class _ChargenScreenState extends State<ChargenScreen> {
   bool get _canConfirm =>
       _nameController.text.trim().isNotEmpty &&
       _originId != null &&
-      _freeAttributePoint != null &&
+      (!widget.world.hasFreeAttributePoint || _freeAttributePoint != null) &&
       _vowId != null &&
       !_submitting;
 
@@ -65,7 +65,7 @@ class _ChargenScreenState extends State<ChargenScreen> {
       chargenInput: CreateCharacterInput(
         name: _nameController.text.trim(),
         originId: _originId!,
-        freeAttributePoint: _freeAttributePoint!,
+        freeAttributePoint: _freeAttributePoint,
         vowId: _vowId!,
         personalItem: _personalItemController.text.trim(),
       ),
@@ -138,23 +138,25 @@ class _ChargenScreenState extends State<ChargenScreen> {
                       selected: _originId == origin.id,
                       onTap: () => setState(() => _originId = origin.id),
                     ),
+                  if (world.hasFreeAttributePoint) ...[
+                    const SizedBox(height: AetherSpace.xl),
+                    Text('Punto libre (+1 a un atributo)', style: AetherType.overline),
+                    const SizedBox(height: AetherSpace.sm),
+                    Wrap(
+                      spacing: AetherSpace.sm,
+                      runSpacing: AetherSpace.sm,
+                      children: [
+                        for (final attribute in world.attributeKeys)
+                          _AttributeChip(
+                            label: attribute,
+                            selected: _freeAttributePoint == attribute,
+                            onTap: () => setState(() => _freeAttributePoint = attribute),
+                          ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: AetherSpace.xl),
-                  Text('Punto libre (+1 a un atributo)', style: AetherType.overline),
-                  const SizedBox(height: AetherSpace.sm),
-                  Wrap(
-                    spacing: AetherSpace.sm,
-                    runSpacing: AetherSpace.sm,
-                    children: [
-                      for (final attribute in world.attributeKeys)
-                        _AttributeChip(
-                          label: attribute,
-                          selected: _freeAttributePoint == attribute,
-                          onTap: () => setState(() => _freeAttributePoint = attribute),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: AetherSpace.xl),
-                  Text('Juramento', style: AetherType.overline),
+                  Text(world.chargenVowLabel, style: AetherType.overline),
                   const SizedBox(height: AetherSpace.sm),
                   for (final vow in world.vows)
                     _SelectableCard(

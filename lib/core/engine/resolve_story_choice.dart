@@ -62,11 +62,16 @@ class ResolveStoryChoice {
       final modifier = extendedConflict != null
           ? extendedConflict.modifierFor(conflictProgress, attributeKey)
           : 0;
+      final rollMode = combineRollModifiers(
+        hasAdvantage: choice.advantageWhen?.isSatisfiedBy(character) ?? false,
+        hasDisadvantage: choice.disadvantageWhen?.isSatisfiedBy(character) ?? false,
+      );
       resolution = _resolve(
         attributeKey: attributeKey,
         attribute: character.attribute(attributeKey),
         difficulty: choice.checkDifficulty!,
         modifiers: modifier,
+        rollMode: rollMode,
       );
       outcome = resolution.outcome;
     } else {

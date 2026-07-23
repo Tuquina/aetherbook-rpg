@@ -111,4 +111,81 @@ void main() {
       expect(choice.onFailure, isNull);
     });
   });
+
+  group('StoryChoice.resultText — unconditional choices (curated content)', () {
+    test('an unconditional choice\'s own resultText flows through outcomeFor', () {
+      const choice = StoryChoice(
+        label: 'Continuar',
+        targetNodeId: 'p1_alarm_close',
+        resultText: 'Saúl marca la pérdida en la libreta sin decir una palabra.',
+      );
+      for (final outcome in ActionOutcome.values) {
+        expect(
+          choice.outcomeFor(outcome).resultText,
+          'Saúl marca la pérdida en la libreta sin decir una palabra.',
+        );
+      }
+    });
+
+    test('fromJson parses the top-level result_text field', () {
+      final choice = StoryChoice.fromJson({
+        'label': 'Continuar',
+        'target': 'y',
+        'result_text': 'Texto autorado.',
+      });
+      expect(choice.resultText, 'Texto autorado.');
+      expect(choice.outcomeFor(ActionOutcome.success).resultText, 'Texto autorado.');
+    });
+  });
+
+  group('ChoiceOutcome — resultText (curated, AI-free content)', () {
+    test('fromJson parses result_text as authored literal prose', () {
+      final outcome = ChoiceOutcome.fromJson({
+        'target': 'p2',
+        'result_text': 'Damián empuja la puerta y la cadena cede.',
+      });
+      expect(outcome.resultText, 'Damián empuja la puerta y la cadena cede.');
+    });
+
+    test('resultText defaults to null for hybrid/freeform content', () {
+      final outcome = ChoiceOutcome.fromJson({'target': 'p2'});
+      expect(outcome.resultText, isNull);
+    });
+
+    test('a checked StoryChoice carries a distinct resultText per outcome band', () {
+      final choice = StoryChoice.fromJson({
+        'label': 'Ayudar a Ramiro en la puerta norte',
+        'target': 'p1_alarm_close',
+        'check_attribute': 'cuerpo',
+        'check_difficulty': 12,
+        'on_success': {'result_text': 'La puerta sigue cerrada.'},
+        'on_failure': {'result_text': 'Los dientes cierran sobre la manga.'},
+      });
+      expect(choice.onSuccess!.resultText, 'La puerta sigue cerrada.');
+      expect(choice.onFailure!.resultText, 'Los dientes cierran sobre la manga.');
+    });
+  });
+
+  group('StoryChoice — confirmation (irreversible choices)', () {
+    test('defaults to no confirmation required', () {
+      const choice = StoryChoice(label: 'x', targetNodeId: 'y');
+      expect(choice.requiresConfirmation, isFalse);
+      expect(choice.confirmationText, isNull);
+    });
+
+    test('fromJson parses requires_confirmation and confirmation_text', () {
+      final choice = StoryChoice.fromJson({
+        'label': 'Matarlo',
+        'target': 'siguiente',
+        'requires_confirmation': true,
+        'confirmation_text':
+            'Yago está herido y no puede perseguirlos. ¿Confirmás?',
+      });
+      expect(choice.requiresConfirmation, isTrue);
+      expect(
+        choice.confirmationText,
+        'Yago está herido y no puede perseguirlos. ¿Confirmás?',
+      );
+    });
+  });
 }

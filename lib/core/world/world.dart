@@ -43,6 +43,16 @@ class World {
     required this.startingCharacter,
     required this.seedNarration,
     required this.seedChoices,
+    this.aiRuntimeRequired = true,
+    this.allowFreeText = true,
+    this.catalogDescription,
+    this.estimatedDurationMinutes,
+    this.contentWarning,
+    this.relationshipMagnitudeCap = 1,
+    this.relationshipMin = -2,
+    this.relationshipMax = 3,
+    this.hasFreeAttributePoint = true,
+    this.chargenVowLabel = 'Juramento',
   });
 
   final String slug;
@@ -140,6 +150,48 @@ class World {
   final String seedNarration;
   final List<String> seedChoices;
 
+  /// Whether this world's curated turns need `NarratorPort` at all
+  /// (campaign-bible §9.1/§25.10: "ai_runtime_required"). `false` means every
+  /// reachable outcome in [storyGraph] carries its own literal
+  /// `ChoiceOutcome.resultText`/`EpilogueBeat.text`/`FixedAnchorNode.narration`
+  /// — `GameController` never calls the narrator for this world, curated or
+  /// not. `true` (default) preserves the original hybrid behavior, where the
+  /// AI always dresses the turn.
+  final bool aiRuntimeRequired;
+
+  /// Whether the free-text action field is offered at all (campaign-bible
+  /// `free_text_actions`). `false` for a fully curated campaign with no
+  /// freeform input; `true` (default) preserves existing worlds' behavior.
+  final bool allowFreeText;
+
+  /// Optional catalog metadata shown on the world-select card
+  /// (`WorldSelectScreen`) when present — none of these are required, and a
+  /// world that omits them renders exactly as before.
+  final String? catalogDescription;
+  final int? estimatedDurationMinutes;
+  final String? contentWarning;
+
+  /// Per-world overrides for `ApplyStateDeltas`'s relationship-delta safety
+  /// limits (see its doc comments) — default to the original AI-safety
+  /// values (`±1`, range `[-2, 3]`). A curated world with pre-vetted,
+  /// human-authored effects can widen these.
+  final int relationshipMagnitudeCap;
+  final int relationshipMin;
+  final int relationshipMax;
+
+  /// Whether `ChargenScreen` offers the free `+1` attribute step at all
+  /// (default `true`, matching every existing world). `false` for a world
+  /// whose origins are already complete, fixed builds with no further
+  /// customization (campaign-bible's "perfiles de supervivencia", each
+  /// already summing to its full point budget).
+  final bool hasFreeAttributePoint;
+
+  /// Display label for the vow-selection step in `ChargenScreen` (default
+  /// `'Juramento'`). A curated world can repurpose the `vows` mechanism for
+  /// a differently-framed fixed choice (e.g. "Recuerdo conservado") without
+  /// the UI showing a mismatched label.
+  final String chargenVowLabel;
+
   CharacterOrigin originById(String id) => origins.firstWhere(
         (o) => o.id == id,
         orElse: () => throw ArgumentError('unknown origin: $id'),
@@ -234,6 +286,19 @@ class World {
       ),
       seedNarration: seed['narration'] as String? ?? '',
       seedChoices: _stringList(seed['choices']),
+      aiRuntimeRequired: json['ai_runtime_required'] as bool? ?? true,
+      allowFreeText: json['free_text_actions'] as bool? ?? true,
+      catalogDescription: json['catalog_description'] as String?,
+      estimatedDurationMinutes:
+          (json['estimated_duration_minutes'] as num?)?.toInt(),
+      contentWarning: json['content_warning'] as String?,
+      relationshipMagnitudeCap:
+          (json['relationship_magnitude_cap'] as num?)?.toInt() ?? 1,
+      relationshipMin: (json['relationship_min'] as num?)?.toInt() ?? -2,
+      relationshipMax: (json['relationship_max'] as num?)?.toInt() ?? 3,
+      hasFreeAttributePoint:
+          json['chargen_free_attribute_point'] as bool? ?? true,
+      chargenVowLabel: json['chargen_vow_label'] as String? ?? 'Juramento',
     );
   }
 
