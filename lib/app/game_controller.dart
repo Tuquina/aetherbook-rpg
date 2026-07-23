@@ -12,6 +12,7 @@ import '../core/state/character.dart';
 import '../core/state/game_session.dart';
 import '../core/world/world.dart';
 import '../ports/game_state_repository_port.dart';
+import '../ports/memory_digest_port.dart';
 import '../ports/narrator_port.dart';
 import '../ports/world_repository_port.dart';
 
@@ -27,23 +28,35 @@ import '../ports/world_repository_port.dart';
 /// in memory for the life of the app, exactly as before. When provided
 /// (Fase 1), each turn is also durably recorded in Postgres and a session is
 /// resumed on [start] instead of always beginning from the world's seed.
+///
+/// [memoryDigest] is also optional: when configured, every [digestEveryNTurns]
+/// the last turns are compressed into a medium-term summary (CLAUDE.md §6,
+/// GDD §5.3) that then travels in every subsequent narrator prompt, instead of
+/// the model ever seeing the full turn history.
 class GameController extends ChangeNotifier {
   GameController({
     required WorldRepositoryPort worldRepository,
     required NarratorPort narrator,
     GameStateRepositoryPort? persistence,
+    MemoryDigestPort? memoryDigest,
+    int digestEveryNTurns = 5,
     Dice? dice,
   })  : _worldRepository = worldRepository,
         _narrator = narrator,
         _persistence = persistence,
+        _memoryDigest = memoryDigest,
+        _digestEveryNTurns = digestEveryNTurns,
         _resolve = ResolvePlayerAction(dice ?? RandomDice()),
         _applyDeltas = const ApplyStateDeltas();
 
   final WorldRepositoryPort _worldRepository;
   final NarratorPort _narrator;
   final GameStateRepositoryPort? _persistence;
+  final MemoryDigestPort? _memoryDigest;
+  final int _digestEveryNTurns;
   final ResolvePlayerAction _resolve;
   final ApplyStateDeltas _applyDeltas;
+  String? _memoryDigestText;
 
   World? _world;
   GameSession? _session;
@@ -65,6 +78,9 @@ class GameController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isReady => _world != null && _session != null;
+
+  /// The current medium-term memory digest, if any has been generated yet.
+  String? get memoryDigestText => _memoryDigestText;
 
   /// Loads a world and sets up the opening scene — resumed from a persisted
   /// session if [persistence] is configured and one already exists, or from
@@ -93,6 +109,11 @@ class GameController extends ChangeNotifier {
         );
       }
       _session = session;
+
+      _memoryDigestText = null;
+      if (persistence != null && session.id != null) {
+        _memoryDigestText = await persistence.loadLatestMemoryDigest(session.id!);
+      }
 
       if (session.turns.isNotEmpty) {
         final lastTurn = session.turns.last;
@@ -140,6 +161,7 @@ class GameController extends ChangeNotifier {
           playerAction: action,
           resolution: resolution,
           recentTurns: _recentTurns(session),
+          memoryDigest: _memoryDigestText,
         ),
       );
 
@@ -183,6 +205,31 @@ class GameController extends ChangeNotifier {
           tone: response.tone,
           suggestedChoices: response.suggestedChoices,
         );
+      }
+
+      // 6. Medium-term memory: every _digestEveryNTurns, compress the turns
+      // since the last digest into a fresh summary that continues it
+      // (CLAUDE.md §6, GDD §5.3), instead of ever sending the full history.
+      final memoryDigest = _memoryDigest;
+      final updatedTurns = _session!.turns;
+      if (memoryDigest != null &&
+          updatedTurns.length % _digestEveryNTurns == 0) {
+        final sinceLastDigest =
+            updatedTurns.length > _digestEveryNTurns
+                ? updatedTurns.sublist(updatedTurns.length - _digestEveryNTurns)
+                : updatedTurns;
+        final summary = await memoryDigest.summarize(
+          turnsToSummarize: sinceLastDigest,
+          previousDigest: _memoryDigestText,
+        );
+        _memoryDigestText = summary;
+        if (persistence != null && sessionId != null) {
+          await persistence.saveMemoryDigest(
+            sessionId: sessionId,
+            upToTurn: updatedTurns.length,
+            summaryText: summary,
+          );
+        }
       }
     } catch (e) {
       _error = 'El narrador falló: $e';

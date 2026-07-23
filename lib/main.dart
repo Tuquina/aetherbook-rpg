@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'adapters/content/asset_world_repository.dart';
+import 'adapters/memory/fake_memory_digest_adapter.dart';
 import 'adapters/narrator/fake_narrator_adapter.dart';
 import 'adapters/persistence/supabase_game_state_adapter.dart';
 import 'app/game_controller.dart';
@@ -21,12 +22,16 @@ Future<void> main() async {
   final persistence = await _tryInitPersistence();
 
   // Composition root: this is the ONLY place that knows about concrete
-  // adapters. Everything downstream depends on ports (CLAUDE.md §4). Swapping
-  // the FakeNarratorAdapter for the Gemini-backed one later happens here too.
+  // adapters. Everything downstream depends on ports (CLAUDE.md §4). Both AI
+  // ports stay on their Fakes for now — zero quota spent while iterating on
+  // UI/UX — even though the real Gemini/Groq-backed adapters already exist,
+  // are deployed, and are verified working (HttpNarratorAdapter,
+  // HttpMemoryDigestAdapter). Swapping them in later happens here.
   final controller = GameController(
     worldRepository: const AssetWorldRepository(),
     narrator: const FakeNarratorAdapter(),
     persistence: persistence,
+    memoryDigest: const FakeMemoryDigestAdapter(),
   );
 
   runApp(AetherbookApp(controller: controller));

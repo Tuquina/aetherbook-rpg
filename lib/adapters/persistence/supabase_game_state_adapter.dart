@@ -115,4 +115,32 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
           ),
         );
   }
+
+  @override
+  Future<String?> loadLatestMemoryDigest(String sessionId) async {
+    final row = await _client
+        .from('memory_digests')
+        .select()
+        .eq('session_id', sessionId)
+        .order('up_to_turn', ascending: false)
+        .limit(1)
+        .maybeSingle();
+    return row == null ? null : row['summary_text'] as String;
+  }
+
+  @override
+  Future<void> saveMemoryDigest({
+    required String sessionId,
+    required int upToTurn,
+    required String summaryText,
+  }) async {
+    await _client.from('memory_digests').upsert(
+      {
+        'session_id': sessionId,
+        'up_to_turn': upToTurn,
+        'summary_text': summaryText,
+      },
+      onConflict: 'session_id,up_to_turn',
+    );
+  }
 }
