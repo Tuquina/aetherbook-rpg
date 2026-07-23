@@ -14,6 +14,10 @@ void main() {
         resources: {'qi': 8},
         flags: {'conoció_al_anciano': true},
         meters: {'karma': 1, 'ledger_debt': 2},
+        originId: 'discipulo_expulsado',
+        originTagId: 'disciplina_de_secta',
+        vowId: 'nadie_me_posee',
+        personalItem: 'Un pincel reparado tres veces.',
       );
 
       final row = characterToRow('session-1', character);
@@ -29,9 +33,13 @@ void main() {
       expect(restored.resources, character.resources);
       expect(restored.flags, character.flags);
       expect(restored.meters, character.meters);
+      expect(restored.originId, character.originId);
+      expect(restored.originTagId, character.originTagId);
+      expect(restored.vowId, character.vowId);
+      expect(restored.personalItem, character.personalItem);
     });
 
-    test('characterFromRow defaults missing jsonb maps to empty', () {
+    test('characterFromRow defaults missing jsonb maps to empty and chargen fields to null', () {
       final restored = characterFromRow({
         'name': 'X',
         'level': 1,
@@ -40,11 +48,17 @@ void main() {
         'resources': null,
         'flags': null,
         'meters': null,
+        'origin_id': null,
+        'origin_tag_id': null,
+        'vow_id': null,
+        'personal_item': null,
       });
       expect(restored.attributes, isEmpty);
       expect(restored.resources, isEmpty);
       expect(restored.flags, isEmpty);
       expect(restored.meters, isEmpty);
+      expect(restored.originId, isNull);
+      expect(restored.vowId, isNull);
     });
   });
 
