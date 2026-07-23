@@ -1,10 +1,13 @@
 import '../narrative/abstract_opponent.dart';
+import '../narrative/story_graph.dart';
 import '../state/character.dart';
 import 'character_origin.dart';
 import 'meter_definition.dart';
+import 'npc.dart';
 import 'progression.dart';
 import 'rank_definition.dart';
 import 'resource_formula.dart';
+import 'technique.dart';
 import 'vow.dart';
 
 /// A declarative world package (CLAUDE.md §8, GDD §4.6). Everything that gives
@@ -34,6 +37,9 @@ class World {
     this.vows = const [],
     this.ranks = const [],
     this.opponents = const [],
+    this.npcs = const [],
+    this.techniques = const [],
+    this.storyGraph,
     required this.startingCharacter,
     required this.seedNarration,
     required this.seedChoices,
@@ -116,6 +122,18 @@ class World {
   /// Named opponents this campaign declares for abstract combat (§6.13).
   final List<AbstractOpponent> opponents;
 
+  /// Recurring named cast members (§4), for narrator context and free-action
+  /// `targetId` resolution. Empty for worlds with no structured cast.
+  final List<Npc> npcs;
+
+  /// Declared techniques (§7.3-7.5): initial, forbidden and final. Empty for
+  /// worlds that don't use the technique system.
+  final List<Technique> techniques;
+
+  /// The hybrid-campaign node graph (§9), or `null` for freeform worlds with
+  /// no curated/hybrid content (Fase 0 style).
+  final StoryGraph? storyGraph;
+
   final Character startingCharacter;
 
   /// Opening narration and choices shown before the first action.
@@ -135,6 +153,16 @@ class World {
   AbstractOpponent opponentById(String id) => opponents.firstWhere(
         (o) => o.id == id,
         orElse: () => throw ArgumentError('unknown opponent: $id'),
+      );
+
+  Npc npcById(String id) => npcs.firstWhere(
+        (n) => n.id == id,
+        orElse: () => throw ArgumentError('unknown npc: $id'),
+      );
+
+  Technique techniqueById(String id) => techniques.firstWhere(
+        (t) => t.id == id,
+        orElse: () => throw ArgumentError('unknown technique: $id'),
       );
 
   /// The [RankDefinition] matching [character]'s current level, or `null`
@@ -194,6 +222,11 @@ class World {
       vows: _vowsFromJson(json['vows']),
       ranks: _ranksFromJson(json['ranks']),
       opponents: _opponentsFromJson(json['opponents']),
+      npcs: _npcsFromJson(json['npcs']),
+      techniques: _techniquesFromJson(json['techniques']),
+      storyGraph: json['graph'] is Map
+          ? StoryGraph.fromJson((json['graph'] as Map).cast<String, dynamic>())
+          : null,
       startingCharacter: _characterFromJson(
         (json['starting_character'] as Map).cast<String, dynamic>(),
         resourceFormulas: resourceFormulas,
@@ -315,6 +348,26 @@ class World {
       return [
         for (final item in value)
           AbstractOpponent.fromJson((item as Map).cast<String, dynamic>()),
+      ];
+    }
+    return const [];
+  }
+
+  static List<Npc> _npcsFromJson(Object? value) {
+    if (value is List) {
+      return [
+        for (final item in value)
+          Npc.fromJson((item as Map).cast<String, dynamic>()),
+      ];
+    }
+    return const [];
+  }
+
+  static List<Technique> _techniquesFromJson(Object? value) {
+    if (value is List) {
+      return [
+        for (final item in value)
+          Technique.fromJson((item as Map).cast<String, dynamic>()),
       ];
     }
     return const [];

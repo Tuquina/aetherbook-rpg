@@ -86,4 +86,75 @@ void main() {
       expect(graph.nodeById('ritual'), isA<ResolutionNode>());
     });
   });
+
+  group('StoryGraph.unknownTargetIds', () {
+    test('is empty when every reference resolves', () {
+      final graph = StoryGraph.fromJson({
+        'start_node': 'a',
+        'nodes': {
+          'a': {
+            'choices': [
+              {'label': 'x', 'target': 'b'},
+            ],
+          },
+          'b': {'narration': 'Fin'},
+        },
+      });
+      expect(graph.unknownTargetIds(), isEmpty);
+    });
+
+    test('reports a dangling choice target on a fixed_anchor node', () {
+      final graph = StoryGraph.fromJson({
+        'start_node': 'a',
+        'nodes': {
+          'a': {
+            'choices': [
+              {'label': 'x', 'target': 'no_existe'},
+            ],
+          },
+        },
+      });
+      expect(graph.unknownTargetIds(), {'no_existe'});
+    });
+
+    test('reports a dangling fallback exit on a bounded_corridor node', () {
+      final graph = StoryGraph.fromJson({
+        'start_node': 'a',
+        'nodes': {
+          'a': {
+            'type': 'bounded_corridor',
+            'goal': 'g',
+            'turn_budget': 3,
+            'fallback_exit': 'no_existe',
+          },
+        },
+      });
+      expect(graph.unknownTargetIds(), {'no_existe'});
+    });
+
+    test('reports a dangling exit on a state_hub node', () {
+      final graph = StoryGraph.fromJson({
+        'start_node': 'a',
+        'nodes': {
+          'a': {
+            'type': 'state_hub',
+            'exits': [
+              {'label': 'Salir', 'target': 'no_existe'},
+            ],
+          },
+        },
+      });
+      expect(graph.unknownTargetIds(), {'no_existe'});
+    });
+
+    test('a resolution node has no outgoing references to check', () {
+      final graph = StoryGraph.fromJson({
+        'start_node': 'a',
+        'nodes': {
+          'a': {'type': 'resolution'},
+        },
+      });
+      expect(graph.unknownTargetIds(), isEmpty);
+    });
+  });
 }

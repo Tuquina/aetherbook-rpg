@@ -83,11 +83,46 @@ void main() {
       expect(result.canonCompatibility, CanonCompatibility.valid);
     });
 
-    test('targetId is always null in this phase (needs Fase 7 content)', () {
+    test('targetId is null when no npc aliases are declared', () {
       final result = classify(
         action: 'Hablo con Qiao Wen',
         attributeKeywords: attributeKeywords,
         fallbackAttribute: 'espiritu',
+      );
+      expect(result.targetId, isNull);
+    });
+
+    test('targetId resolves via knownNpcAliases keyword-vote', () {
+      const knownNpcAliases = {
+        'lian_suyin': ['suyin', 'la calígrafa'],
+        'qiao_wen': ['qiao', 'qiao wen', 'el inspector'],
+      };
+
+      final result = classify(
+        action: 'Le pregunto a Qiao Wen por el sello',
+        attributeKeywords: attributeKeywords,
+        fallbackAttribute: 'espiritu',
+        knownNpcAliases: knownNpcAliases,
+      );
+      expect(result.targetId, 'qiao_wen');
+
+      final other = classify(
+        action: 'Busco a la calígrafa',
+        attributeKeywords: attributeKeywords,
+        fallbackAttribute: 'espiritu',
+        knownNpcAliases: knownNpcAliases,
+      );
+      expect(other.targetId, 'lian_suyin');
+    });
+
+    test('targetId is null when the text mentions no known alias', () {
+      final result = classify(
+        action: 'Miro el río en silencio',
+        attributeKeywords: attributeKeywords,
+        fallbackAttribute: 'espiritu',
+        knownNpcAliases: const {
+          'qiao_wen': ['qiao'],
+        },
       );
       expect(result.targetId, isNull);
     });

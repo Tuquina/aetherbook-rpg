@@ -1,4 +1,5 @@
 import '../state/character.dart';
+import 'ending_fallback.dart';
 import 'gate.dart';
 
 /// One possible ending inside a [ResolutionNode] (campaign-bible §16): a
@@ -15,6 +16,10 @@ class Ending {
     this.softRequirements = const [],
     this.difficultyBySoftRequirementsMet = const {},
     this.baseDifficulty = 15,
+    this.successReveals = const [],
+    this.costReveals = const [],
+    this.failureCostOptions = const [],
+    this.onFailureFallbacks = const [],
   });
 
   final String id;
@@ -35,8 +40,35 @@ class Ending {
   final Map<int, int> difficultyBySoftRequirementsMet;
   final int baseDifficulty;
 
+  /// Facts the narrator must include when narrating this ending's success
+  /// (same spirit as `FixedAnchorNode.fixedReveals`).
+  final List<String> successReveals;
+
+  /// Facts the narrator must include when narrating this ending's cost.
+  final List<String> costReveals;
+
+  /// Possible costs on failure when there's more than one — the player picks
+  /// (campaign-bible §16.2's three options on Portador del Margen's
+  /// failure). Empty when failure has only one, fixed cost.
+  final List<String> failureCostOptions;
+
+  /// Redirects to a *different* `ending_id` on a failed resolution check —
+  /// only `nuevo_pacto` uses this (§16.1). Every other ending's failure keeps
+  /// the same `ending_id`, just with a worse narrated cost.
+  final List<EndingFallback> onFailureFallbacks;
+
   bool isAvailableTo(Character character) =>
       hardRequirement.isSatisfiedBy(character);
+
+  /// The ending id this resolves to on a failed check: the first
+  /// [onFailureFallbacks] entry whose gate [character] satisfies, or this
+  /// ending's own [id] when there are no fallbacks (or none apply).
+  String failureEndingIdFor(Character character) {
+    for (final fallback in onFailureFallbacks) {
+      if (fallback.isSatisfiedBy(character)) return fallback.endingId;
+    }
+    return id;
+  }
 
   int softRequirementsMetBy(Character character) =>
       softRequirements.where((gate) => gate.isSatisfiedBy(character)).length;
@@ -59,6 +91,10 @@ class Ending {
       difficultyBySoftRequirementsMet:
           _difficultyMapFromJson(json['difficulty_by_soft_requirements_met']),
       baseDifficulty: (json['base_difficulty'] as num?)?.toInt() ?? 15,
+      successReveals: _stringList(json['success_reveals']),
+      costReveals: _stringList(json['cost_reveals']),
+      failureCostOptions: _stringList(json['failure_cost_options']),
+      onFailureFallbacks: _fallbacksFromJson(json['on_failure_fallbacks']),
     );
   }
 
@@ -75,5 +111,18 @@ class Ending {
     return value.map(
       (key, v) => MapEntry(int.parse(key as String), (v as num).toInt()),
     );
+  }
+
+  static List<String> _stringList(Object? value) {
+    if (value is! List) return const [];
+    return value.whereType<String>().toList(growable: false);
+  }
+
+  static List<EndingFallback> _fallbacksFromJson(Object? value) {
+    if (value is! List) return const [];
+    return [
+      for (final item in value)
+        EndingFallback.fromJson((item as Map).cast<String, dynamic>()),
+    ];
   }
 }

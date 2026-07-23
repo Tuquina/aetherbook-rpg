@@ -244,5 +244,35 @@ void main() {
         ['always', 'needs_covenant'],
       );
     });
+
+    test('parses epilogue_beats and final_technique_rules', () {
+      final node = StoryNode.fromJson('e_epilogo', {
+        'type': 'resolution',
+        'epilogue_beats': [
+          {
+            'movement': 'la_tablilla',
+            'text': 'La tablilla acepta muchas caligrafías.',
+            'gate': {'type': 'flag', 'key': 'ending_nuevo_pacto'},
+          },
+        ],
+        'final_technique_rules': [
+          {
+            'gate': {'type': 'meter', 'key': 'ledger_debt', 'min': 3},
+            'technique_id': 'nombre_que_devora_nombres',
+          },
+        ],
+      }) as ResolutionNode;
+
+      expect(node.epilogueBeats.single.movement, 'la_tablilla');
+      expect(node.finalTechniqueRules.single.techniqueId, 'nombre_que_devora_nombres');
+    });
+
+    test('epilogueBeats and finalTechniqueRules default to empty', () {
+      final node =
+          StoryNode.fromJson('c5_n03_ritual_final', {'type': 'resolution'})
+              as ResolutionNode;
+      expect(node.epilogueBeats, isEmpty);
+      expect(node.finalTechniqueRules, isEmpty);
+    });
   });
 }

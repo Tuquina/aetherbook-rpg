@@ -20,6 +20,29 @@ class StoryGraph {
     return node;
   }
 
+  /// Every node id referenced by a choice/exit/fallback exit anywhere in the
+  /// graph that isn't actually declared in [nodes] — referential integrity
+  /// for a large, hand-authored graph (campaign-bible §22.1: "desde todo
+  /// nodo existe una ruta válida..."). Pure and generic, not tied to any one
+  /// campaign's node ids.
+  Set<String> unknownTargetIds() {
+    final referenced = <String>{};
+    for (final node in nodes.values) {
+      switch (node) {
+        case FixedAnchorNode(:final choices):
+          referenced.addAll(choices.map((c) => c.targetNodeId));
+        case BoundedCorridorNode(:final choices, :final fallbackExitNodeId):
+          referenced.addAll(choices.map((c) => c.targetNodeId));
+          referenced.add(fallbackExitNodeId);
+        case StateHubNode(:final exits):
+          referenced.addAll(exits.map((e) => e.targetNodeId));
+        case ResolutionNode():
+          break;
+      }
+    }
+    return referenced.difference(nodes.keys.toSet());
+  }
+
   factory StoryGraph.fromJson(Map<String, dynamic> json) {
     final nodesJson = (json['nodes'] as Map).cast<String, dynamic>();
     return StoryGraph(
