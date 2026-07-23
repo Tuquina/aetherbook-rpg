@@ -33,6 +33,11 @@ abstract class Gate {
           json['key'] as String,
           (json['min'] as num).toInt(),
         );
+      case 'relationship':
+        return MinRelationshipGate(
+          json['key'] as String,
+          (json['min'] as num).toInt(),
+        );
       case 'all':
         return AllOfGate([
           for (final g in json['gates'] as List)
@@ -115,6 +120,21 @@ class MinMeterGate extends Gate {
 
   @override
   bool isSatisfiedBy(Character character) => character.meter(key) >= minValue;
+}
+
+/// Requires a per-NPC relationship (karma, celestial_pressure sit on
+/// [MinMeterGate]; this is specifically `character.relationships`) to be at
+/// least [minValue] — e.g. gating a final technique on a deep bond with an
+/// ally (campaign-bible §7.5's "relación total con aliados").
+class MinRelationshipGate extends Gate {
+  const MinRelationshipGate(this.key, this.minValue);
+
+  final String key;
+  final int minValue;
+
+  @override
+  bool isSatisfiedBy(Character character) =>
+      character.relationship(key) >= minValue;
 }
 
 /// Composite: satisfied only if every sub-[gates] is satisfied.

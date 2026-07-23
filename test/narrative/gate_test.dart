@@ -8,6 +8,7 @@ Character _character({
   Map<String, int> resources = const {},
   Map<String, bool> flags = const {},
   Map<String, int> meters = const {},
+  Map<String, int> relationships = const {},
 }) {
   return Character(
     name: 'Discípulo',
@@ -17,6 +18,7 @@ Character _character({
     resources: resources,
     flags: flags,
     meters: meters,
+    relationships: relationships,
   );
 }
 
@@ -77,6 +79,20 @@ void main() {
     });
   });
 
+  group('MinRelationshipGate', () {
+    test('checks the named NPC relationship', () {
+      const gate = MinRelationshipGate('lian_suyin', 3);
+      expect(
+        gate.isSatisfiedBy(_character(relationships: {'lian_suyin': 2})),
+        isFalse,
+      );
+      expect(
+        gate.isSatisfiedBy(_character(relationships: {'lian_suyin': 3})),
+        isTrue,
+      );
+    });
+  });
+
   group('AllOfGate / AnyOfGate', () {
     test('AllOfGate requires every sub-gate', () {
       const gate = AllOfGate([MinLevelGate(2), FlagGate('tiene_llave')]);
@@ -111,6 +127,10 @@ void main() {
       expect(
         Gate.fromJson({'type': 'meter', 'key': 'evidence_count', 'min': 2}),
         isA<MinMeterGate>(),
+      );
+      expect(
+        Gate.fromJson({'type': 'relationship', 'key': 'lian_suyin', 'min': 3}),
+        isA<MinRelationshipGate>(),
       );
     });
 

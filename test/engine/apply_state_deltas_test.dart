@@ -4,6 +4,7 @@ import 'package:aetherbook/core/engine/state_delta.dart';
 import 'package:aetherbook/core/state/character.dart';
 import 'package:aetherbook/core/world/meter_definition.dart';
 import 'package:aetherbook/core/world/rank_definition.dart';
+import 'package:aetherbook/core/world/resource_formula.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -188,6 +189,32 @@ void main() {
         ]).character;
       }
       expect(character.meter('celestial_pressure'), 3);
+    });
+  });
+
+  group('ApplyStateDeltas — resource formulas (campaign-bible "descansar")', () {
+    test('caps a resource restore at the character-specific formula ceiling', () {
+      final withFormula = const ApplyStateDeltas(
+        resourceFormulas: {
+          'vitality': ResourceFormula(base: 8, perAttribute: {'cuerpo': 2}),
+        },
+      );
+      // cuerpo 2 -> ceiling 8 + 2*2 = 12.
+      final character = base().copyWith(
+        attributes: {'espiritu': 2, 'cuerpo': 2},
+        resources: {'vitality': 3},
+      );
+      final result = withFormula(character, [
+        const StateDelta(type: StateDeltaType.resource, key: 'vitality', value: 9999),
+      ]);
+      expect(result.character.resource('vitality'), 12);
+    });
+
+    test('a resource with no declared formula keeps the old unbounded-above behavior', () {
+      final result = apply(base(), [
+        const StateDelta(type: StateDeltaType.resource, key: 'qi', value: 9999),
+      ]);
+      expect(result.character.resource('qi'), 10009);
     });
   });
 
