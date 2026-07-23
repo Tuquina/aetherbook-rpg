@@ -6,7 +6,7 @@ import 'adapters/memory/fake_memory_digest_adapter.dart';
 import 'adapters/narrator/fake_narrator_adapter.dart';
 import 'adapters/persistence/supabase_game_state_adapter.dart';
 import 'app/game_controller.dart';
-import 'app/game_screen.dart';
+import 'app/splash_screen.dart';
 import 'app/theme.dart';
 import 'ports/game_state_repository_port.dart';
 
@@ -69,7 +69,7 @@ class AetherbookApp extends StatelessWidget {
       title: 'Aetherbook',
       debugShowCheckedModeBanner: false,
       theme: AetherTheme.dark,
-      home: GameScreen(controller: controller),
+      home: SplashScreen(controller: controller),
     );
   }
 }

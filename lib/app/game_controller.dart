@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import '../core/engine/action_resolution.dart';
 import '../core/engine/apply_state_deltas.dart';
 import '../core/engine/dice.dart';
+import '../core/engine/exp_progression.dart';
 import '../core/engine/infer_action_attribute.dart';
 import '../core/engine/resolve_player_action.dart';
 import '../core/state/character.dart';
@@ -48,7 +49,6 @@ class GameController extends ChangeNotifier {
         _memoryDigest = memoryDigest,
         _digestEveryNTurns = digestEveryNTurns,
         _resolve = ResolvePlayerAction(dice ?? RandomDice()),
-        _applyDeltas = const ApplyStateDeltas(),
         _inferAttribute = const InferActionAttribute();
 
   final WorldRepositoryPort _worldRepository;
@@ -57,8 +57,11 @@ class GameController extends ChangeNotifier {
   final MemoryDigestPort? _memoryDigest;
   final int _digestEveryNTurns;
   final ResolvePlayerAction _resolve;
-  final ApplyStateDeltas _applyDeltas;
   final InferActionAttribute _inferAttribute;
+
+  /// Rebuilt per-world in [start] so EXP thresholds match the world's own
+  /// progression config (a world may scale levels differently, or not at all).
+  ApplyStateDeltas _applyDeltas = const ApplyStateDeltas();
   String? _memoryDigestText;
 
   World? _world;
@@ -95,6 +98,10 @@ class GameController extends ChangeNotifier {
     try {
       final world = await _worldRepository.loadWorld(worldSlug);
       _world = world;
+      _applyDeltas = ApplyStateDeltas(
+        progression:
+            ExpProgression(baseExpPerLevel: world.progression.baseExpPerLevel),
+      );
 
       final persistence = _persistence;
       GameSession session;

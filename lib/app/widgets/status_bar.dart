@@ -22,16 +22,17 @@ class StatusBar extends StatelessWidget {
   final Character character;
   final VoidCallback onOpenCodex;
 
-  static const _expProgression = ExpProgression();
-
   @override
   Widget build(BuildContext context) {
-    final toNext = _expProgression.expToNext(character.level);
+    final prog = world.progression;
+    final expProgression =
+        ExpProgression(baseExpPerLevel: prog.baseExpPerLevel);
+    final toNext = expProgression.expToNext(character.level);
     final progress = (character.exp / toNext).clamp(0.0, 1.0);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(
-          AetherSpace.lg, AetherSpace.md, AetherSpace.sm, AetherSpace.md),
+          AetherSpace.lg, AetherSpace.lg, AetherSpace.sm, AetherSpace.md),
       decoration: const BoxDecoration(
         color: AetherColors.surface,
         border: Border(bottom: BorderSide(color: AetherColors.hairline)),
@@ -56,8 +57,10 @@ class StatusBar extends StatelessWidget {
                               style: AetherType.title.copyWith(fontSize: 17),
                               overflow: TextOverflow.ellipsis),
                         ),
-                        const SizedBox(width: AetherSpace.sm),
-                        _levelPill(character.level),
+                        if (prog.enabled) ...[
+                          const SizedBox(width: AetherSpace.sm),
+                          _levelPill(prog.unitLabelCapitalized, character.level),
+                        ],
                       ],
                     ),
                   ],
@@ -71,8 +74,10 @@ class StatusBar extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AetherSpace.sm),
-          _expBar(progress, character.exp, toNext),
+          if (prog.enabled) ...[
+            const SizedBox(height: AetherSpace.sm),
+            _expBar(progress, character.exp, toNext, prog.unitLabel),
+          ],
           const SizedBox(height: AetherSpace.md),
           Wrap(
             spacing: AetherSpace.sm,
@@ -87,7 +92,7 @@ class StatusBar extends StatelessWidget {
     );
   }
 
-  Widget _levelPill(int level) => Container(
+  Widget _levelPill(String label, int level) => Container(
         padding:
             const EdgeInsets.symmetric(horizontal: AetherSpace.sm, vertical: 2),
         decoration: BoxDecoration(
@@ -95,12 +100,12 @@ class StatusBar extends StatelessWidget {
           borderRadius: AetherRadius.allPill,
           border: Border.all(color: AetherColors.gold.withValues(alpha: 0.4)),
         ),
-        child: Text('Reino $level',
+        child: Text('$label $level',
             style: AetherType.overline.copyWith(
                 color: AetherColors.goldSoft, fontSize: 10, letterSpacing: 0.8)),
       );
 
-  Widget _expBar(double progress, int exp, int toNext) => Column(
+  Widget _expBar(double progress, int exp, int toNext, String unit) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
@@ -129,7 +134,7 @@ class StatusBar extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 3),
-          Text('$exp / $toNext EXP hacia el próximo reino',
+          Text('$exp / $toNext EXP hacia el próximo $unit',
               style: AetherType.caption
                   .copyWith(fontSize: 10.5, color: AetherColors.parchmentFaint)),
         ],

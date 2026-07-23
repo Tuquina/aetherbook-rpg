@@ -71,42 +71,85 @@ class _GameScreenState extends State<GameScreen> {
     final c = widget.controller;
     return Scaffold(
       body: AetherBackground(
-        child: SafeArea(
-          child: ListenableBuilder(
-            listenable: c,
-            builder: (context, _) {
-              if (!c.isReady && c.isLoading) {
-                return const Center(child: DestinyWriting());
-              }
-              if (c.error != null && !c.isReady) {
-                return Padding(
+        child: ListenableBuilder(
+          listenable: c,
+          builder: (context, _) {
+            if (!c.isReady && c.isLoading) {
+              return const SafeArea(child: Center(child: DestinyWriting()));
+            }
+            if (c.error != null && !c.isReady) {
+              return SafeArea(
+                child: Padding(
                   padding: const EdgeInsets.all(AetherSpace.xl),
                   child: Center(
                     child: Text(c.error!,
                         style: AetherType.body, textAlign: TextAlign.center),
                   ),
-                );
-              }
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  StatusBar(
-                    world: c.world!,
-                    character: c.character!,
-                    onOpenCodex: () =>
-                        Navigator.of(context).push(CodexScreen.route()),
-                  ),
-                  Expanded(
-                    child: _NarrationView(controller: c, scroll: _scroll),
-                  ),
-                  _ChoicesBar(
-                    controller: c,
-                    freeAction: _freeAction,
-                    onSubmitFree: _submitFreeAction,
-                  ),
-                ],
+                ),
               );
-            },
+            }
+            return _ReadingFrame(
+              child: SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    StatusBar(
+                      world: c.world!,
+                      character: c.character!,
+                      onOpenCodex: () =>
+                          Navigator.of(context).push(CodexScreen.route()),
+                    ),
+                    Expanded(
+                      child: _NarrationView(controller: c, scroll: _scroll),
+                    ),
+                    _ChoicesBar(
+                      controller: c,
+                      freeAction: _freeAction,
+                      onSubmitFree: _submitFreeAction,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Keeps the game a comfortable reading width on any screen. On phones it's
+/// edge-to-edge as designed; on wide screens (web/desktop) the same layout is
+/// centered in a framed "codex page" so it reads like an open tome instead of
+/// stretching across the whole window — the mobile design is never altered,
+/// only bounded and framed.
+class _ReadingFrame extends StatelessWidget {
+  const _ReadingFrame({required this.child});
+
+  final Widget child;
+
+  static const double _maxWidth = 720;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width <= _maxWidth) return child;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AetherSpace.xl),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: _maxWidth),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: AetherRadius.allLg,
+              border: Border.all(color: AetherColors.hairlineStrong),
+              boxShadow: AetherShadow.panel,
+            ),
+            child: ClipRRect(
+              borderRadius: AetherRadius.allLg,
+              child: ColoredBox(color: AetherColors.ink, child: child),
+            ),
           ),
         ),
       ),
@@ -142,7 +185,8 @@ class _NarrationView extends StatelessWidget {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: LevelUpBanner(
-                      levelsGained: controller.lastLevelsGained),
+                      levelsGained: controller.lastLevelsGained,
+                      unitLabel: controller.world!.progression.unitLabel),
                 ),
               ),
             const SizedBox(height: AetherSpace.xl),

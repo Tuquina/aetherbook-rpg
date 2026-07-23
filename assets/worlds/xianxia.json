@@ -5,6 +5,11 @@
   "tone": "épico y contemplativo",
   "system_prompt": "Sos el Game Master de un mundo xianxia de cultivo. Narrás en segunda persona, en español, con tono épico y contemplativo. NUNCA inventes stats ni resuelvas tiradas: recibís el resultado mecánico ya calculado y solo lo narrás con estilo. Devolvés SOLO JSON válido, sin markdown, sin backticks, sin preámbulo.",
   "image_style_suffix": "arte xianxia, tinta china, dorado etéreo, montañas brumosas",
+  "progression": {
+    "enabled": true,
+    "unit_label": "reino",
+    "base_exp_per_level": 300
+  },
   "resolution": {
     "default_difficulty": 12,
     "critical_margin": 5,
