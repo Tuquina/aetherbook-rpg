@@ -122,8 +122,14 @@ class _ChargenScreenState extends State<ChargenScreen> {
                   ),
                   const SizedBox(height: AetherSpace.md),
                   Text(world.name, style: AetherType.display),
-                  const SizedBox(height: AetherSpace.xs),
-                  Text('Creá tu personaje', style: AetherType.title),
+                  const SizedBox(height: AetherSpace.md),
+                  Container(
+                    width: 40,
+                    height: 2,
+                    color: AetherColors.hairlineStrong,
+                  ),
+                  const SizedBox(height: AetherSpace.md),
+                  Text('CREÁ TU PERSONAJE', style: AetherType.overline),
                   const SizedBox(height: AetherSpace.xl),
                   Text('Nombre', style: AetherType.overline),
                   const SizedBox(height: AetherSpace.sm),
@@ -225,6 +231,22 @@ class _NameField extends StatelessWidget {
   }
 }
 
+/// Splits an origin's flavor text from its mechanical "Pasiva: ..." clause
+/// (campaign-bible convention — see `assets/worlds/*.json`'s
+/// `narrative_connection` fields) so the two render as visually distinct
+/// blocks instead of one run-on paragraph. Origins that declare no passive
+/// (e.g. `xianxia_lianshu`'s) just get a null [passive].
+({String description, String? passive}) _splitPassive(String? text) {
+  if (text == null || text.isEmpty) return (description: '', passive: null);
+  const marker = 'Pasiva:';
+  final index = text.indexOf(marker);
+  if (index == -1) return (description: text, passive: null);
+  return (
+    description: text.substring(0, index).trim(),
+    passive: text.substring(index + marker.length).trim(),
+  );
+}
+
 class _SelectableCard extends StatelessWidget {
   const _SelectableCard({
     required this.title,
@@ -240,6 +262,7 @@ class _SelectableCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final parts = _splitPassive(subtitle);
     return Padding(
       padding: const EdgeInsets.only(bottom: AetherSpace.sm),
       child: GestureDetector(
@@ -268,9 +291,32 @@ class _SelectableCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title, style: AetherType.label),
-                    if (subtitle != null && subtitle!.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(subtitle!, style: AetherType.caption),
+                    if (parts.description.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(parts.description, style: AetherType.caption),
+                    ],
+                    if (parts.passive != null) ...[
+                      const SizedBox(height: AetherSpace.sm),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: AetherSpace.sm, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AetherColors.goldGlow,
+                          borderRadius: AetherRadius.allSm,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('PASIVA',
+                                style: AetherType.overline.copyWith(
+                                    fontSize: 9.5, color: AetherColors.goldSoft)),
+                            const SizedBox(height: 2),
+                            Text(parts.passive!,
+                                style: AetherType.caption
+                                    .copyWith(color: AetherColors.parchment)),
+                          ],
+                        ),
+                      ),
                     ],
                   ],
                 ),
