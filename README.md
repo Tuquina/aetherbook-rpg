@@ -6,6 +6,8 @@ Aetherbook es un "elige tu propia aventura" evolucionado: un *Game Master* de IA
 
 📄 El diseño completo está en [`GDD-RPG-Narrativo-IA.md`](GDD-RPG-Narrativo-IA.md). Las reglas operativas para desarrollar con Claude Code están en [`CLAUDE.md`](CLAUDE.md).
 
+🎮 **Jugalo ya, sin instalar nada:** [aetherbook-rpg.vercel.app](https://aetherbook-rpg.vercel.app) — deployado en Vercel (tier gratuito), redeploya solo con cada push a `master` (`vercel.json`).
+
 ---
 
 ## Cómo correrlo y probarlo en local
@@ -46,7 +48,7 @@ Al abrir la app por primera vez, Supabase te firma como usuario **anónimo** en 
 
 Para llevar el progreso entre dispositivos, "Guardar tu progreso con tu email" (botón en la pantalla de inicio, `lib/app/account_screen.dart`) **vincula** un email a la cuenta anónima actual sin cambiar su identidad (`AuthPort.continueWithEmail` → `SupabaseAuthAdapter`, usando `updateUser` de Supabase) — todo lo ya jugado se conserva. Si ese email ya estaba vinculado desde otro dispositivo, en cambio manda un enlace para entrar a esa cuenta existente. Ninguno de los dos casos cambia nada hasta que se abre el enlace del correo.
 
-**Paso manual pendiente en Supabase** (no lo puedo hacer yo desde acá, es config del dashboard): en [Authentication → URL Configuration](https://supabase.com/dashboard/project/hsgdldztcolteyodiscu/auth/url-configuration) del proyecto, agregá como *Redirect URL* la URL donde termine viviendo la app (una vez deployada) — y, para probarlo en local, algo como `http://localhost:8080/**`. Sin esa allow-list, Supabase manda el correo igual pero el enlace no vuelve a la app.
+Configurado en [Authentication → URL Configuration](https://supabase.com/dashboard/project/hsgdldztcolteyodiscu/auth/url-configuration) del proyecto: Site URL `https://aetherbook-rpg.vercel.app` y `https://aetherbook-rpg.vercel.app/**` en Redirect URLs (ese campo sí admite wildcards; el de Site URL no). Para probar el flujo desde `localhost` en vez de producción, agregá también `http://localhost:8080/**` a Redirect URLs — sin la URL en esa allow-list, Supabase manda el correo igual pero el enlace no vuelve a la app.
 
 ### Correr los tests
 
