@@ -3,6 +3,7 @@ import 'package:aetherbook/app/game_controller.dart';
 import 'package:aetherbook/core/engine/dice.dart';
 import 'package:aetherbook/core/state/character.dart';
 import 'package:aetherbook/core/world/world.dart';
+import 'package:aetherbook/ports/narrator_port.dart';
 import 'package:aetherbook/ports/world_repository_port.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -97,4 +98,69 @@ void main() {
       expect(controller.lastResolution!.attributeKey, 'espiritu');
     });
   });
+
+  group('GameController refuses a self-granting free action (ClassifyFreeAction §18.7)', () {
+    test('rejects the action, sets an error, and never resolves a turn', () async {
+      final controller = GameController(
+        worldRepository: _SelfGrantWorldRepository(),
+        narrator: const _ForbiddenNarratorForSelfGrantTest(),
+        dice: const FixedDice(1),
+      );
+      await controller.start('xianxia');
+
+      await controller.choose('Me convierto en el Gran Maestro del Pico');
+
+      expect(controller.error, isNotNull);
+      expect(controller.lastResolution, isNull);
+      expect(controller.isLoading, isFalse);
+    });
+
+    test('a normal action in the same world still resolves normally', () async {
+      final controller = GameController(
+        worldRepository: _SelfGrantWorldRepository(),
+        narrator: const FakeNarratorAdapter(latency: Duration.zero),
+        dice: const FixedDice(1),
+      );
+      await controller.start('xianxia');
+
+      await controller.choose('Intento meditar junto al altar');
+
+      expect(controller.error, isNull);
+      expect(controller.lastResolution!.attributeKey, 'espiritu');
+    });
+  });
+}
+
+class _SelfGrantWorldRepository implements WorldRepositoryPort {
+  @override
+  Future<World> loadWorld(String slug) async => const World(
+        slug: 'xianxia',
+        name: 'El Sendero del Qi',
+        theme: 'xianxia',
+        tone: 'épico',
+        systemPrompt: '',
+        imageStyleSuffix: '',
+        defaultDifficulty: 12,
+        criticalMargin: 5,
+        primaryAttribute: 'espiritu',
+        attributeKeywords: {
+          'espiritu': ['meditar', 'sentir'],
+        },
+        selfGrantPatterns: ['me convierto en', 'obtengo el rango de'],
+        startingCharacter: _character,
+        seedNarration: 'Comienza el sendero.',
+        seedChoices: ['Meditar'],
+      );
+}
+
+/// Fails the test if reached — proves the self-grant rejection short-circuits
+/// `choose()` before the narrator (or the dice, via `lastResolution`) is ever
+/// touched.
+class _ForbiddenNarratorForSelfGrantTest implements NarratorPort {
+  const _ForbiddenNarratorForSelfGrantTest();
+
+  @override
+  Future<NarratorResponse> narrate(NarratorRequest request) async {
+    fail('a rejected self-grant action must never reach the narrator');
+  }
 }
