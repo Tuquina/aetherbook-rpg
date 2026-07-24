@@ -96,6 +96,25 @@
     {"id": "davila", "display_name": "Capitana Vera Dávila", "age": 48, "role": "Autoridad del Convoy Aurora", "description": "Conductora de carga, no militar. Conserva la orden que Damián obedeció.", "voice_notes": "Lacónica y transaccional. No decide sola quién sube."}
   ],
 
+  "items": [
+    {"id": "llave_maestra_ferroviaria", "display_name": "Llave maestra ferroviaria", "description": "Abre casi cualquier puerta de servicio de la red. La única herencia limpia que le quedó a Damián de ser operador.", "category": "key"},
+    {"id": "radio_portatil", "display_name": "Radio portátil", "description": "Corto alcance, batería que hay que cuidar. Suficiente para no perderse de vista entre frentes.", "category": "tool"},
+    {"id": "multiherramienta_ferroviaria", "display_name": "Multiherramienta ferroviaria", "description": "Se ganó el filo gastado en trece meses de reparaciones de emergencia.", "category": "tool"},
+    {"id": "botiquin_compacto", "display_name": "Botiquín compacto", "description": "Vendas y un torniquete: lo justo para estabilizar antes de seguir corriendo.", "category": "medicine"},
+    {"id": "revolver_servicio", "display_name": "Revólver de servicio", "description": "Tres cartuchos contados, ni uno de sobra.", "category": "weapon"},
+    {"id": "pack_medical", "display_name": "Paquete médico", "description": "Vendas, antibióticos y una férula — lo que la enfermería de La Cámara puede prestar sin quedarse corta.", "category": "medicine"},
+    {"id": "antibioticos", "display_name": "Antibióticos", "description": "Rescatados de una farmacia o de una ambulancia. Valen más que su peso en un invierno sin hospital.", "category": "medicine"},
+    {"id": "anticoagulantes", "display_name": "Anticoagulantes", "description": "Una caja pequeña que va a importar más de lo que pesa.", "category": "medicine"},
+    {"id": "llave_ambulancia", "display_name": "Llave de la ambulancia blanca", "description": "Abre la caja de emergencias que quedó varada en el peaje.", "category": "key"},
+    {"id": "fusible_industrial", "display_name": "Fusible industrial", "description": "Repuesto de taller. Hace falta para devolverle energía a más de una torre.", "category": "tool"},
+    {"id": "detonador_vial", "display_name": "Detonador vial", "description": "Cargas de obra encontradas en un gabinete cerrado. Abre caminos que nada más puede abrir.", "category": "tool"},
+    {"id": "cable_cobre", "display_name": "Cable de cobre", "description": "Alcanza para una reparación improvisada. No para todas.", "category": "tool"},
+    {"id": "bengala_roja", "display_name": "Bengala roja", "description": "Saqueada de un puesto militar abandonado en la avenida de evacuación.", "category": "misc"},
+    {"id": "manivela_puente", "display_name": "Manivela del puente", "description": "La pieza exacta que falta para girar a mano el puente de agujas.", "category": "tool"},
+    {"id": "registro_c17", "display_name": "Registro de C-17", "description": "El registrador del conductor. Guarda la verdad entera; no la explica ni la perdona.", "category": "document"},
+    {"id": "acople_aurora", "display_name": "Acople de Aurora", "description": "Recuperado al separar los coches del convoy. Prueba de un trabajo hecho limpio, bajo presión.", "category": "tool"}
+  ],
+
   "graph": {
     "start_node": "intro_fiebre_lazaro",
     "nodes": {

@@ -2,6 +2,7 @@ import '../narrative/abstract_opponent.dart';
 import '../narrative/story_graph.dart';
 import '../state/character.dart';
 import 'character_origin.dart';
+import 'item_definition.dart';
 import 'meter_definition.dart';
 import 'npc.dart';
 import 'progression.dart';
@@ -39,6 +40,7 @@ class World {
     this.opponents = const [],
     this.npcs = const [],
     this.techniques = const [],
+    this.items = const [],
     this.storyGraph,
     required this.startingCharacter,
     required this.seedNarration,
@@ -141,6 +143,12 @@ class World {
   /// worlds that don't use the technique system.
   final List<Technique> techniques;
 
+  /// Descriptions for ids that can end up in `character.lists['inventory']`
+  /// (via `list_add`/`list_remove` state deltas). A world doesn't have to
+  /// describe every id it ever adds — `findItem` degrades gracefully for one
+  /// that isn't here yet.
+  final List<ItemDefinition> items;
+
   /// The hybrid-campaign node graph (§9), or `null` for freeform worlds with
   /// no curated/hybrid content (Fase 0 style).
   final StoryGraph? storyGraph;
@@ -222,6 +230,17 @@ class World {
         orElse: () => throw ArgumentError('unknown npc: $id'),
       );
 
+  /// The description for inventory item [id], or `null` if this world hasn't
+  /// declared one — deliberately non-throwing (unlike `npcById`/`vowById`):
+  /// an inventory id can come from any `list_add` in the content, and a
+  /// missing description should degrade the UI, never crash it.
+  ItemDefinition? findItem(String id) {
+    for (final item in items) {
+      if (item.id == id) return item;
+    }
+    return null;
+  }
+
   Technique techniqueById(String id) => techniques.firstWhere(
         (t) => t.id == id,
         orElse: () => throw ArgumentError('unknown technique: $id'),
@@ -286,6 +305,7 @@ class World {
       opponents: _opponentsFromJson(json['opponents']),
       npcs: _npcsFromJson(json['npcs']),
       techniques: _techniquesFromJson(json['techniques']),
+      items: _itemsFromJson(json['items']),
       storyGraph: json['graph'] is Map
           ? StoryGraph.fromJson((json['graph'] as Map).cast<String, dynamic>())
           : null,
@@ -434,6 +454,16 @@ class World {
       return [
         for (final item in value)
           Npc.fromJson((item as Map).cast<String, dynamic>()),
+      ];
+    }
+    return const [];
+  }
+
+  static List<ItemDefinition> _itemsFromJson(Object? value) {
+    if (value is List) {
+      return [
+        for (final item in value)
+          ItemDefinition.fromJson((item as Map).cast<String, dynamic>()),
       ];
     }
     return const [];

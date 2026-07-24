@@ -5,6 +5,7 @@ import 'codex_screen.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'game_controller.dart';
+import 'inventory_screen.dart';
 import 'widgets/atmosphere.dart';
 import 'widgets/choice_button.dart';
 import 'widgets/fate_roll.dart';
@@ -148,6 +149,10 @@ class _GameScreenState extends State<GameScreen> {
                       character: c.character!,
                       onOpenCodex: () =>
                           Navigator.of(context).push(CodexScreen.route()),
+                      onOpenInventory: () => Navigator.of(context).push(
+                        InventoryScreen.route(
+                            world: c.world!, character: c.character!),
+                      ),
                       onBack: () => Navigator.of(context).pushReplacement(
                         PageRouteBuilder(
                           transitionDuration: AetherMotion.slow,

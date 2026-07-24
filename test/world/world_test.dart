@@ -1,3 +1,4 @@
+import 'package:aetherbook/core/world/item_definition.dart';
 import 'package:aetherbook/core/world/world.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -190,6 +191,30 @@ void main() {
     test('npcById throws for an unknown id', () {
       final world = World.fromJson(baseWorldJson());
       expect(() => world.npcById('no_existe'), throwsArgumentError);
+    });
+
+    test('parses items and finds them by id', () {
+      final json = baseWorldJson()
+        ..['items'] = [
+          {
+            'id': 'llave_maestra_ferroviaria',
+            'display_name': 'Llave maestra ferroviaria',
+            'description': 'Abre casi cualquier puerta de servicio.',
+            'category': 'key',
+          },
+        ];
+      final world = World.fromJson(json);
+      expect(world.items, hasLength(1));
+      final item = world.findItem('llave_maestra_ferroviaria');
+      expect(item, isNotNull);
+      expect(item!.displayName, 'Llave maestra ferroviaria');
+      expect(item.category, ItemCategory.key);
+    });
+
+    test('findItem returns null for an id the world never described, '
+        'instead of throwing', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(world.findItem('algo_no_declarado'), isNull);
     });
 
     test('parses techniques and finds them by id', () {
