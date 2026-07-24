@@ -40,6 +40,14 @@ Al abrir la app vas a ver un **menú para elegir historia**, agrupado en tres m�
 
 El cliente usa el narrador real ([lib/main.dart](lib/main.dart)): `HttpNarratorAdapter` llama a la Edge Function desplegada (Gemini → Groq de fallback), y `HttpMemoryDigestAdapter` hace lo mismo para el diario resumido. Jugar "Los nombres que devora el cielo" gasta cuota real de esos proveedores (gratuita, pero real). "El último tren..." no — su motor nunca invoca al narrador (`ai_runtime_required: false`), así que esa historia sigue siendo 100% gratis y funciona sin conexión. Los tests nunca gastan cuota: corren contra `FakeNarratorAdapter`/`FakeMemoryDigestAdapter` (JSON fijo, sin red), nunca contra el narrador real.
 
+### Cuentas: de anónimo a permanente
+
+Al abrir la app por primera vez, Supabase te firma como usuario **anónimo** en silencio — nunca hace falta crear cuenta para jugar. Esa identidad vive en el `localStorage` del navegador, así que es *por origen*: `localhost:8080` y la IP de tu PC son dos usuarios distintos, y cada navegador/dispositivo que uses arranca con su propio progreso.
+
+Para llevar el progreso entre dispositivos, "Guardar tu progreso con tu email" (botón en la pantalla de inicio, `lib/app/account_screen.dart`) **vincula** un email a la cuenta anónima actual sin cambiar su identidad (`AuthPort.continueWithEmail` → `SupabaseAuthAdapter`, usando `updateUser` de Supabase) — todo lo ya jugado se conserva. Si ese email ya estaba vinculado desde otro dispositivo, en cambio manda un enlace para entrar a esa cuenta existente. Ninguno de los dos casos cambia nada hasta que se abre el enlace del correo.
+
+**Paso manual pendiente en Supabase** (no lo puedo hacer yo desde acá, es config del dashboard): en [Authentication → URL Configuration](https://supabase.com/dashboard/project/hsgdldztcolteyodiscu/auth/url-configuration) del proyecto, agregá como *Redirect URL* la URL donde termine viviendo la app (una vez deployada) — y, para probarlo en local, algo como `http://localhost:8080/**`. Sin esa allow-list, Supabase manda el correo igual pero el enlace no vuelve a la app.
+
 ### Correr los tests
 
 ```powershell
