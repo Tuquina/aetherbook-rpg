@@ -171,7 +171,16 @@ class GameController extends ChangeNotifier {
   /// build the starting character for a world that declares chargen origins
   /// (campaign-bible §5) — ignored for a world that doesn't (Fase 0 style,
   /// which keeps using `world.startingCharacter`).
-  Future<void> start(String worldSlug, {CreateCharacterInput? chargenInput}) async {
+  /// [forceNew] abandons whatever session was already in progress for
+  /// [worldSlug] (if persisted) and always starts a clean one instead of
+  /// resuming — the "reiniciar historia" affordance on [WorldSelectScreen],
+  /// for a player who wants to play a curated campaign again from the top
+  /// rather than pick up where they left off.
+  Future<void> start(
+    String worldSlug, {
+    CreateCharacterInput? chargenInput,
+    bool forceNew = false,
+  }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -193,7 +202,12 @@ class GameController extends ChangeNotifier {
       final persistence = _persistence;
       GameSession session;
       if (persistence != null) {
-        final existing = await persistence.loadLatestSession(worldSlug);
+        var existing = await persistence.loadLatestSession(worldSlug);
+        if (forceNew && existing != null) {
+          final staleId = existing.id;
+          if (staleId != null) await persistence.abandonSession(staleId);
+          existing = null;
+        }
         session = existing ??
             await persistence.createSession(
               worldSlug: world.slug,

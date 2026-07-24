@@ -58,4 +58,10 @@ abstract class GameStateRepositoryPort {
     required int corridorTurnsUsed,
     ExtendedConflictProgress? extendedConflictProgress,
   });
+
+  /// Marks [sessionId] as no longer active, so [loadLatestSession] stops
+  /// returning it — used when the player explicitly restarts a story
+  /// (`GameController.start(..., forceNew: true)`) instead of resuming where
+  /// they left off. The turn log itself is left intact, not deleted.
+  Future<void> abandonSession(String sessionId);
 }

@@ -147,6 +147,14 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
   }
 
   @override
+  Future<void> abandonSession(String sessionId) async {
+    await _client
+        .from('game_sessions')
+        .update({'status': 'abandoned'})
+        .eq('id', sessionId);
+  }
+
+  @override
   Future<String?> loadLatestMemoryDigest(String sessionId) async {
     final row = await _client
         .from('memory_digests')

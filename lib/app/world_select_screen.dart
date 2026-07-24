@@ -94,7 +94,7 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
     }
   }
 
-  void _goToChargen(World world) {
+  void _goToChargen(World world, {bool forceNew = false}) {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: AetherMotion.slow,
@@ -102,11 +102,49 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
           controller: widget.controller,
           worldSlug: world.slug,
           world: world,
+          forceNew: forceNew,
         ),
         transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
       ),
     );
+  }
+
+  /// "Reiniciar historia" — abandons whatever session already exists for
+  /// [world] (in memory or persisted in Supabase) and starts a clean one, for
+  /// a player who wants to play a curated campaign again from the top
+  /// instead of always resuming where they left off.
+  Future<void> _restart(World world) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AetherColors.surface,
+        title: Text(world.name, style: AetherType.title),
+        content: Text(
+          'Vas a reiniciar esta historia desde el principio. El progreso actual se pierde. ¿Confirmás?',
+          style: AetherType.body,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Reiniciar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    if (world.origins.isNotEmpty) {
+      _goToChargen(world, forceNew: true);
+    } else {
+      await widget.controller.start(world.slug, forceNew: true);
+      if (!mounted) return;
+      _goToGame(world.slug);
+    }
   }
 
   void _goToGame(String worldSlug) {
@@ -175,6 +213,7 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
                                       module: module,
                                       worlds: byModule[module]!,
                                       onTap: _select,
+                                      onRestart: _restart,
                                     ),
                                   ),
                             ],
@@ -201,11 +240,13 @@ class _StoryModuleSection extends StatelessWidget {
     required this.module,
     required this.worlds,
     required this.onTap,
+    required this.onRestart,
   });
 
   final _StoryModule module;
   final List<World> worlds;
   final ValueChanged<World> onTap;
+  final ValueChanged<World> onRestart;
 
   @override
   Widget build(BuildContext context) {
@@ -234,6 +275,7 @@ class _StoryModuleSection extends StatelessWidget {
                 world: world,
                 enabled: module.enabled,
                 onTap: () => onTap(world),
+                onRestart: module.enabled ? () => onRestart(world) : null,
               ),
             ),
         ],
@@ -243,11 +285,22 @@ class _StoryModuleSection extends StatelessWidget {
 }
 
 class _StoryCard extends StatelessWidget {
-  const _StoryCard({required this.world, required this.onTap, this.enabled = true});
+  const _StoryCard({
+    required this.world,
+    required this.onTap,
+    this.enabled = true,
+    this.onRestart,
+  });
 
   final World world;
   final VoidCallback onTap;
   final bool enabled;
+
+  /// `null` hides the restart affordance entirely (disabled module). When
+  /// present, always usable — the player may already have a session resting
+  /// server-side even on a fresh app load, where there's no client-side way
+  /// to know that in advance without the tap itself.
+  final VoidCallback? onRestart;
 
   String get _themeLabel => _themeLabels[world.theme] ?? world.theme.toUpperCase();
 
@@ -310,6 +363,15 @@ class _StoryCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AetherSpace.sm),
+            if (onRestart != null)
+              IconButton(
+                onPressed: onRestart,
+                tooltip: 'Reiniciar historia',
+                icon: const Icon(Icons.replay_rounded, size: 20),
+                color: AetherColors.parchmentFaint,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              ),
             Icon(
               enabled ? Icons.chevron_right : Icons.lock_outline_rounded,
               color: AetherColors.goldSoft,
