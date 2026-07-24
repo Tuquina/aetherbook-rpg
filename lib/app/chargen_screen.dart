@@ -47,7 +47,7 @@ class _ChargenScreenState extends State<ChargenScreen> {
   }
 
   bool get _canConfirm =>
-      _nameController.text.trim().isNotEmpty &&
+      (!widget.world.hasCustomizableName || _nameController.text.trim().isNotEmpty) &&
       _originId != null &&
       (!widget.world.hasFreeAttributePoint || _freeAttributePoint != null) &&
       _vowId != null &&
@@ -60,10 +60,13 @@ class _ChargenScreenState extends State<ChargenScreen> {
       _error = null;
     });
 
+    final world = widget.world;
     await widget.controller.start(
       widget.worldSlug,
       chargenInput: CreateCharacterInput(
-        name: _nameController.text.trim(),
+        name: world.hasCustomizableName
+            ? _nameController.text.trim()
+            : world.startingCharacter.name,
         originId: _originId!,
         freeAttributePoint: _freeAttributePoint,
         vowId: _vowId!,
@@ -131,10 +134,22 @@ class _ChargenScreenState extends State<ChargenScreen> {
                   const SizedBox(height: AetherSpace.md),
                   Text('CREÁ TU PERSONAJE', style: AetherType.overline),
                   const SizedBox(height: AetherSpace.xl),
-                  Text('Nombre', style: AetherType.overline),
-                  const SizedBox(height: AetherSpace.sm),
-                  _NameField(controller: _nameController, onChanged: () => setState(() {})),
-                  const SizedBox(height: AetherSpace.xl),
+                  if (world.hasCustomizableName) ...[
+                    Text('Nombre', style: AetherType.overline),
+                    const SizedBox(height: AetherSpace.sm),
+                    _NameField(controller: _nameController, onChanged: () => setState(() {})),
+                    const SizedBox(height: AetherSpace.xl),
+                  ] else ...[
+                    Text('Protagonista', style: AetherType.overline),
+                    const SizedBox(height: AetherSpace.sm),
+                    Text(world.startingCharacter.name, style: AetherType.title),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Esta historia sigue a un personaje ya definido — vos elegís cómo llegó hasta acá y qué hace de ahora en más.',
+                      style: AetherType.caption,
+                    ),
+                    const SizedBox(height: AetherSpace.xl),
+                  ],
                   Text('Origen', style: AetherType.overline),
                   const SizedBox(height: AetherSpace.sm),
                   for (final origin in world.origins)
