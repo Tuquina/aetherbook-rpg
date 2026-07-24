@@ -94,7 +94,7 @@ void main() {
       expect(character.resource('health'), 14);
       expect(character.varValue('origin_id'), 'manos_de_taller');
       expect(character.varValue('vow_id'), 'reloj_elena');
-      expect(controller.currentNode!.id, 'p0_perfil');
+      expect(controller.currentNode!.id, 'intro_fiebre_lazaro');
     });
 
     test('plays prólogo end to end without ever calling NarratorPort, reaching c1_n01_consejo', () async {
@@ -113,6 +113,9 @@ void main() {
       // they're still at their flat starting_character defaults here.
       expect(controller.character!.resource('ammo'), 0);
       expect(controller.character!.list('inventory'), isEmpty);
+
+      await _pick(controller, 'Empezar');
+      expect(controller.currentNode!.id, 'p0_perfil');
 
       await _pick(controller, 'Revisar el revólver');
       expect(controller.currentNode!.id, 'p0_postura');
@@ -161,6 +164,7 @@ void main() {
           vowId: 'placa_operador',
         ),
       );
+      await _pick(controller, 'Empezar');
       await _pick(controller, 'Cargar el botiquín');
       final node = controller.currentNode as FixedAnchorNode;
       final anyRequiresConfirmation = node.choices.any((c) => c.requiresConfirmation);
