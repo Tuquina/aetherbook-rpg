@@ -6,10 +6,11 @@ import 'package:flutter/foundation.dart';
 
 import '../core/engine/action_resolution.dart';
 import '../core/engine/apply_state_deltas.dart';
+import '../core/engine/classify_free_action.dart';
 import '../core/engine/create_character.dart';
 import '../core/engine/dice.dart';
 import '../core/engine/exp_progression.dart';
-import '../core/engine/infer_action_attribute.dart';
+import '../core/engine/free_action_classification.dart';
 import '../core/engine/interpolate_copy.dart';
 import '../core/engine/rank_progression.dart';
 import '../core/engine/resolve_player_action.dart';
@@ -83,7 +84,7 @@ class GameController extends ChangeNotifier {
         _memoryDigest = memoryDigest,
         _digestEveryNTurns = digestEveryNTurns,
         _resolve = ResolvePlayerAction(dice ?? RandomDice()),
-        _inferAttribute = const InferActionAttribute(),
+        _classifyFreeAction = const ClassifyFreeAction(),
         _interpolate = const InterpolateCopy() {
     _resolveStoryChoice = ResolveStoryChoice(_resolve);
   }
@@ -94,7 +95,7 @@ class GameController extends ChangeNotifier {
   final MemoryDigestPort? _memoryDigest;
   final int _digestEveryNTurns;
   final ResolvePlayerAction _resolve;
-  final InferActionAttribute _inferAttribute;
+  final ClassifyFreeAction _classifyFreeAction;
   final InterpolateCopy _interpolate;
   late final ResolveStoryChoice _resolveStoryChoice;
 
@@ -313,24 +314,39 @@ class GameController extends ChangeNotifier {
     // of relying solely on the UI to enforce it (campaign-bible §25.10).
     if (!world.allowFreeText) return;
 
+    // Resolve mechanics deterministically — the engine decides, not the AI.
+    // ClassifyFreeAction (campaign-bible §18.7) turns the free-typed text
+    // into a fixed vector in code: which attribute the check uses (the same
+    // keyword-vote InferActionAttribute always did — ClassifyFreeAction
+    // wraps it), plus whether this is a self-granting attempt (an item, a
+    // rank, a relationship the player is trying to type into existence)
+    // that the engine has to refuse outright, before ever asking the
+    // narrator to dress it up.
+    final classification = _classifyFreeAction(
+      action: action,
+      attributeKeywords: world.attributeKeywords,
+      fallbackAttribute: world.primaryAttribute,
+      intentKeywords: world.intentKeywords,
+      riskKeywords: world.riskKeywords,
+      selfGrantPatterns: world.selfGrantPatterns,
+      knownNpcAliases: {for (final npc in world.npcs) npc.id: npc.aliases},
+    );
+
+    if (classification.canonCompatibility == CanonCompatibility.invalid) {
+      _error = 'Esa acción intenta otorgarte algo directamente (un objeto, '
+          'un rango, un vínculo) en vez de intentarlo — describí lo que tu '
+          'personaje hace, no lo que consigue.';
+      notifyListeners();
+      return;
+    }
+
     _isLoading = true;
     _error = null;
     notifyListeners();
 
-    // Resolve mechanics deterministically — the engine decides, not the AI.
-    // Which attribute a check uses is also decided in code, via keyword
-    // matching declared per world (CLAUDE.md §2.2, GDD §4.1) — the AI never
-    // picks the attribute, whether the action was typed freely or tapped
-    // from a suggested choice. `ClassifyFreeAction` (Fase 6) isn't wired in
-    // here yet — deliberately deferred past the Fase 8 vertical slice.
-    final attributeKey = _inferAttribute(
-      action: action,
-      attributeKeywords: world.attributeKeywords,
-      fallback: world.primaryAttribute,
-    );
     final resolution = _resolve(
-      attributeKey: attributeKey,
-      attribute: session.character.attribute(attributeKey),
+      attributeKey: classification.attributeKey,
+      attribute: session.character.attribute(classification.attributeKey),
       difficulty: world.defaultDifficulty,
       criticalMargin: world.criticalMargin,
     );
