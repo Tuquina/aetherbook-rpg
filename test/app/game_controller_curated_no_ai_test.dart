@@ -143,6 +143,9 @@ class _RecordingPersistence implements GameStateRepositoryPort {
   }) async {
     savedGraphNodeIds.add(currentNodeId);
   }
+
+  @override
+  Future<void> abandonSession(String sessionId) async {}
 }
 
 void main() {

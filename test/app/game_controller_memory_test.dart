@@ -105,6 +105,9 @@ class _FakeGameStateRepository implements GameStateRepositoryPort {
     required int corridorTurnsUsed,
     ExtendedConflictProgress? extendedConflictProgress,
   }) async {}
+
+  @override
+  Future<void> abandonSession(String sessionId) async {}
 }
 
 void main() {

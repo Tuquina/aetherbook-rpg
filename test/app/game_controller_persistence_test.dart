@@ -102,6 +102,13 @@ class _FakeGameStateRepository implements GameStateRepositoryPort {
   }) async {
     savedGraphPositionNodeIds.add(currentNodeId);
   }
+
+  final List<String> abandonedSessionIds = [];
+
+  @override
+  Future<void> abandonSession(String sessionId) async {
+    abandonedSessionIds.add(sessionId);
+  }
 }
 
 void main() {
@@ -152,6 +159,40 @@ void main() {
       expect(controller.narration, 'Ya meditaste una vez.');
       expect(controller.choices, ['Seguir meditando', 'Levantarte']);
       expect(controller.character!.level, 2);
+    });
+
+    test('forceNew: true abandons an existing session and starts a clean one '
+        '("reiniciar historia")', () async {
+      final persistence = _FakeGameStateRepository()
+        ..seeded = GameSession(
+          id: 'existing-session',
+          worldSlug: 'xianxia',
+          character: _character.copyWith(level: 5, exp: 900),
+          turns: const [
+            Turn(
+              index: 0,
+              playerAction: 'Meditar',
+              narration: 'Ya meditaste una vez.',
+              tone: 'sereno',
+              suggestedChoices: ['Seguir meditando', 'Levantarte'],
+            ),
+          ],
+        );
+
+      final controller = GameController(
+        worldRepository: _FakeWorldRepository(),
+        narrator: const FakeNarratorAdapter(latency: Duration.zero),
+        persistence: persistence,
+        dice: const FixedDice(10),
+      );
+
+      await controller.start('xianxia', forceNew: true);
+
+      expect(persistence.abandonedSessionIds, ['existing-session']);
+      expect(persistence.createSessionCalls, 1);
+      expect(controller.narration, contains('sendero de piedra'));
+      expect(controller.choices, _world.seedChoices);
+      expect(controller.character!.level, 1);
     });
 
     test('choose() persists the character and appends the turn', () async {

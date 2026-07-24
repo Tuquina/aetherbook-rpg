@@ -20,11 +20,17 @@ class ChargenScreen extends StatefulWidget {
     required this.controller,
     required this.worldSlug,
     required this.world,
+    this.forceNew = false,
   });
 
   final GameController controller;
   final String worldSlug;
   final World world;
+
+  /// Passed through to `GameController.start` — true when this chargen was
+  /// reached via "reiniciar historia" and any existing session for this
+  /// world should be abandoned rather than resumed.
+  final bool forceNew;
 
   @override
   State<ChargenScreen> createState() => _ChargenScreenState();
@@ -72,6 +78,7 @@ class _ChargenScreenState extends State<ChargenScreen> {
         vowId: _vowId!,
         personalItem: _personalItemController.text.trim(),
       ),
+      forceNew: widget.forceNew,
     );
 
     if (!mounted) return;
