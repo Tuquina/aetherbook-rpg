@@ -31,10 +31,18 @@ class _RealContentWorldRepository implements WorldRepositoryPort {
 }
 
 Future<void> _tapAndSettle(WidgetTester tester, String label) async {
+  // GameScreen hides the choices bar behind a "seguí leyendo" hint until the
+  // player scrolls through the current turn's prose (mobile UX: no tapping
+  // past text you haven't read) -- scroll to the end first so it unlocks,
+  // same as a real reader would before finding the button. pumpAndSettle
+  // (rather than fixed-duration pumps) rides out the scroll-to-top animation
+  // GameScreen fires on every new turn, whatever its actual duration.
+  await tester.drag(find.byKey(const Key('narrationScroll')), const Offset(0, -10000));
+  await tester.pumpAndSettle();
+
   expect(find.text(label), findsOneWidget, reason: 'expected a "$label" button on screen');
   await tester.tap(find.text(label));
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 500));
+  await tester.pumpAndSettle();
 }
 
 void main() {
