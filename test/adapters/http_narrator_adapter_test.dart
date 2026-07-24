@@ -106,6 +106,7 @@ void main() {
         nodeFixedReveals: const ['Siete personas ya fueron borradas.'],
         nodeForbiddenReveals: const ['El ritual original distribuía recuerdos.'],
         nodeGoal: 'Obtener exactamente un access_token.',
+        isFreeform: true,
       ));
 
       expect(capturedUrl, endpoint);
@@ -124,6 +125,30 @@ void main() {
       expect(capturedBody!['nodeForbiddenReveals'],
           ['El ritual original distribuía recuerdos.']);
       expect(capturedBody!['nodeGoal'], 'Obtener exactamente un access_token.');
+      expect(capturedBody!['isFreeform'], true);
+    });
+
+    test('defaults isFreeform to false when not specified', () async {
+      Map<String, dynamic>? capturedBody;
+      final client = MockClient((request) async {
+        capturedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(_validResponseJson, 200);
+      });
+
+      final adapter = HttpNarratorAdapter(
+        endpoint: endpoint,
+        publishableKey: 'pub-key',
+        client: client,
+      );
+
+      await adapter.narrate(NarratorRequest(
+        world: _world,
+        character: _character,
+        playerAction: 'x',
+        resolution: null,
+      ));
+
+      expect(capturedBody!['isFreeform'], false);
     });
 
     test('serializes a null resolution as JSON null (opening turn)', () async {

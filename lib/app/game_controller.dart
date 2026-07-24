@@ -472,6 +472,32 @@ class GameController extends ChangeNotifier {
     );
   }
 
+  /// Advances a freeform story with no dice roll and no specific action —
+  /// the "Continuar" fallback the UI shows when the narrator's last
+  /// `suggested_choices` came back empty (CLAUDE.md Fase 2: not every
+  /// AI-generated turn needs to end on a decision point). Freeform-only: a
+  /// curated/hybrid world always has `StoryChoice`s/`HubActivity`s to tap
+  /// instead, so this is a no-op there.
+  Future<void> continueStory() async {
+    final world = _world;
+    final session = _session;
+    if (world == null || session == null || _isLoading) return;
+    if (world.storyGraph != null) return;
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    await _resolveTurn(
+      world: world,
+      session: session,
+      playerAction: '',
+      resolution: null,
+      curatedEffects: const [],
+      nodeContext: _nodeContext(null),
+    );
+  }
+
   /// Taps a curated `StoryChoice` (a button, not free text): resolves its own
   /// check (if any) via `ResolveStoryChoice` — never `world.defaultDifficulty`
   /// — and advances the graph once its outcome (and any extended conflict)
@@ -670,6 +696,7 @@ class GameController extends ChangeNotifier {
             nodeFixedReveals: nodeContext.fixedReveals,
             nodeForbiddenReveals: nodeContext.forbiddenReveals,
             nodeGoal: nodeContext.goal,
+            isFreeform: world.storyGraph == null,
           ),
         );
         narration = response.narration;
@@ -794,6 +821,11 @@ class GameController extends ChangeNotifier {
 
   List<String> _recentTurns(GameSession session) {
     final recent = session.turns.reversed.take(3).toList().reversed;
-    return [for (final t in recent) '${t.playerAction} -> ${t.narration}'];
+    return [
+      for (final t in recent)
+        t.playerAction.isEmpty
+            ? 'Continuó sin una acción puntual -> ${t.narration}'
+            : '${t.playerAction} -> ${t.narration}',
+    ];
   }
 }

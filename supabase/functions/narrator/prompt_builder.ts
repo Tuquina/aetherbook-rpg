@@ -37,6 +37,25 @@ export const HUMAN_STYLE_INSTRUCTION =
   `abajo) — usalo con naturalidad de tanto en tanto, como lo haría alguien ` +
   `que lo conoce. No narres todo en "vos" sin nombrarlo nunca.`;
 
+// Only injected for worlds with no StoryGraph at all (100% generated por
+// IA, sin contenido curado) — un mundo curado/híbrido ofrece sus propias
+// StoryChoices/HubActivities y nunca muestra `suggested_choices` en la UI,
+// así que pedírselas ahí sería trabajo desperdiciado.
+export const FREEFORM_CHOICES_INSTRUCTION =
+  `OPCIONES SUGERIDAS (esta historia es 100% generada por vos, sin guion ` +
+  `previo):\n` +
+  `- Devolvé preferentemente 2 "suggested_choices", como mucho 3, nunca ` +
+  `más. Tienen que ser acciones simples y concretas, coherentes con cómo ` +
+  `terminó tu propia narración recién — el paso siguiente lógico, no un ` +
+  `menú de todas las opciones posibles.\n` +
+  `- El jugador SIEMPRE puede escribir su propia acción en vez de elegir ` +
+  `una tuya, así que no hace falta cubrir cada posibilidad — con dos ` +
+  `caminos razonables alcanza.\n` +
+  `- Si la escena todavía no llegó a un punto de decisión concreto (por ` +
+  `ejemplo, si vos mismo dejaste algo abierto para resolverlo en el próximo ` +
+  `turno), devolvé "suggested_choices": [] — no hace falta forzar una ` +
+  `elección en cada turno, la historia puede seguir su curso sin una.`;
+
 export const OUTPUT_INSTRUCTION =
   `Devolvé SOLO un objeto JSON válido con esta forma exacta, sin markdown, ` +
   `sin backticks, sin preámbulo ni texto fuera del JSON:\n` +
@@ -51,7 +70,12 @@ export const OUTPUT_INSTRUCTION =
   `"node_status": "active"|"ready_to_exit"}`;
 
 export function buildSystemPrompt(request: NarratorRequest): string {
-  return [request.world.systemPrompt, HUMAN_STYLE_INSTRUCTION, OUTPUT_INSTRUCTION]
+  return [
+    request.world.systemPrompt,
+    HUMAN_STYLE_INSTRUCTION,
+    request.isFreeform ? FREEFORM_CHOICES_INSTRUCTION : "",
+    OUTPUT_INSTRUCTION,
+  ]
     .filter((s) => s.trim().length > 0)
     .join("\n\n");
 }
@@ -102,10 +126,28 @@ export function buildUserPrompt(request: NarratorRequest): string {
   }
 
   if (request.resolution === null) {
-    parts.push(
-      `Es el turno inicial: todavía no hubo acción del jugador. Narrá la ` +
-        `escena de apertura del mundo "${request.world.name}".`,
-    );
+    // `resolution` es null en dos casos reales (nunca en el turno de
+    // apertura: ese usa la prosa literal del mundo y jamás llega acá):
+    // una acción puntual que no necesitó chequeo (playerAction viene
+    // completo), o un turno "seguir" sin acción específica (playerAction
+    // viene vacío) — ver GameController.continueStory.
+    if (request.playerAction && request.playerAction.trim().length > 0) {
+      parts.push(
+        `El jugador hizo esto: "${request.playerAction}". No hizo falta ` +
+          `ninguna tirada para resolverlo — no había incertidumbre ` +
+          `mecánica real en juego, así que sale tal como se planteó. Narrá ` +
+          `el resultado con naturalidad, sin mencionar chequeos ni ` +
+          `tiradas.`,
+      );
+    } else {
+      parts.push(
+        `El jugador no especificó una acción puntual esta vez — prefirió ` +
+          `dejar que la historia avance sola. Continuá la escena con ` +
+          `naturalidad desde donde quedó: traé algo nuevo (información, ` +
+          `un giro, una reacción del entorno o de un personaje), sin ` +
+          `necesidad de resolver ningún chequeo.`,
+      );
+    }
   } else {
     const r = request.resolution;
     parts.push(

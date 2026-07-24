@@ -89,6 +89,7 @@ class HttpNarratorAdapter implements NarratorPort {
       'nodeFixedReveals': request.nodeFixedReveals,
       'nodeForbiddenReveals': request.nodeForbiddenReveals,
       'nodeGoal': request.nodeGoal,
+      'isFreeform': request.isFreeform,
     };
   }
 

@@ -568,7 +568,7 @@ class _ChoicesBar extends StatelessWidget {
                                         onTap: () => _tapEnding(context, ending),
                                       ),
                                     ),
-                                ] else
+                                ] else if (controller.choices.isNotEmpty)
                                   for (final choice in controller.choices)
                                     Padding(
                                       padding: const EdgeInsets.only(
@@ -577,7 +577,22 @@ class _ChoicesBar extends StatelessWidget {
                                         label: choice,
                                         onTap: () => controller.choose(choice),
                                       ),
+                                    )
+                                else
+                                  // The AI didn't return any suggested_choices
+                                  // this turn (a legitimate outcome — not
+                                  // every turn needs a decision point). Free
+                                  // text stays available below regardless;
+                                  // this just lets the story keep moving
+                                  // without forcing one.
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        bottom: AetherSpace.md),
+                                    child: ChoiceButton(
+                                      label: 'Continuar',
+                                      onTap: controller.continueStory,
                                     ),
+                                  ),
                               ],
                             ),
                           ),

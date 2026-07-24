@@ -18,14 +18,19 @@ class NarratorRequest {
     this.nodeFixedReveals = const [],
     this.nodeForbiddenReveals = const [],
     this.nodeGoal,
+    this.isFreeform = false,
   });
 
   final World world;
   final Character character;
   final String playerAction;
 
-  /// The already-resolved mechanics. `null` only for the opening/seed turn,
-  /// where the player has not acted yet.
+  /// The already-resolved mechanics. `null` when there was nothing to roll:
+  /// either an unconditional curated `StoryChoice`/`HubActivity` (a real
+  /// action, carried in [playerAction], that never needed a check), or a
+  /// freeform "continue" turn with no specific action at all (`playerAction`
+  /// empty) — see `GameController.continueStory`. The opening/seed turn
+  /// never reaches the narrator at all, so it isn't a third case.
   final ActionResolution? resolution;
 
   /// Short-term memory: the last few turns, literal (CLAUDE.md §6).
@@ -47,6 +52,12 @@ class NarratorRequest {
   /// keeps a generative corridor's free-text turns from drifting into new
   /// milestones (campaign-bible §9.1/§18.8). `null` outside a corridor.
   final String? nodeGoal;
+
+  /// Whether this world has no `StoryGraph` at all (100% AI-generated, no
+  /// curated content) — tells the narrator prompt to actively offer its own
+  /// `suggested_choices` rather than relying on curated content to drive the
+  /// story forward (CLAUDE.md Fase 2).
+  final bool isFreeform;
 }
 
 /// The check a suggested choice would trigger if taken — shown to the UI so

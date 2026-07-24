@@ -3,12 +3,31 @@ import 'package:aetherbook/app/game_controller.dart';
 import 'package:aetherbook/core/engine/action_resolution.dart';
 import 'package:aetherbook/core/engine/dice.dart';
 import 'package:aetherbook/core/narrative/extended_conflict.dart';
+import 'package:aetherbook/core/narrative/story_graph.dart';
+import 'package:aetherbook/core/narrative/story_node.dart';
 import 'package:aetherbook/core/state/character.dart';
 import 'package:aetherbook/core/state/game_session.dart';
 import 'package:aetherbook/core/world/world.dart';
 import 'package:aetherbook/ports/game_state_repository_port.dart';
+import 'package:aetherbook/ports/narrator_port.dart';
 import 'package:aetherbook/ports/world_repository_port.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+/// Wraps [FakeNarratorAdapter] to record the last [NarratorRequest] it saw,
+/// so a test can assert on wiring (like `isFreeform`) without needing the
+/// real HTTP adapter.
+class _CapturingNarrator implements NarratorPort {
+  _CapturingNarrator(this._delegate);
+
+  final NarratorPort _delegate;
+  NarratorRequest? lastRequest;
+
+  @override
+  Future<NarratorResponse> narrate(NarratorRequest request) {
+    lastRequest = request;
+    return _delegate.narrate(request);
+  }
+}
 
 const _character = Character(
   name: 'Discípulo',
@@ -428,6 +447,76 @@ void main() {
         );
 
         expect(await controller.listCreatedStories(['cyberpunk']), isEmpty);
+      });
+
+      test('choose() sends isFreeform: true to the narrator for a graph-less '
+          'world', () async {
+        final narrator =
+            _CapturingNarrator(const FakeNarratorAdapter(latency: Duration.zero));
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: narrator,
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('xianxia');
+        await controller.choose('Meditar');
+
+        expect(narrator.lastRequest!.isFreeform, isTrue);
+      });
+
+      test('continueStory() plays a no-check turn: empty playerAction, null '
+          'resolution, still persists', () async {
+        final persistence = _FakeGameStateRepository();
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          persistence: persistence,
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('xianxia');
+        await controller.continueStory();
+
+        expect(controller.error, isNull);
+        expect(controller.lastResolution, isNull);
+        expect(persistence.savedCharacterCalls, ['new-session']);
+        expect(persistence.appendedTurnIndexes, [0]);
+      });
+
+      test('continueStory() is a no-op for a curated (graph) world', () async {
+        final graph = StoryGraph(
+          startNodeId: 'p0',
+          nodes: const {
+            'p0': FixedAnchorNode(id: 'p0', narration: 'Comienzo curado.'),
+          },
+        );
+        final curatedWorld = World(
+          slug: 'curated_test',
+          name: 'Historia curada de prueba',
+          theme: 'test',
+          tone: 'seco',
+          systemPrompt: '',
+          imageStyleSuffix: '',
+          defaultDifficulty: 12,
+          criticalMargin: 5,
+          primaryAttribute: 'espiritu',
+          storyGraph: graph,
+          startingCharacter: _character,
+          seedNarration: '',
+          seedChoices: const [],
+        );
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(curatedWorld),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('curated_test');
+        final narrationBefore = controller.narration;
+        await controller.continueStory();
+
+        expect(controller.narration, narrationBefore);
       });
 
       test('abandonStory delegates to persistence.abandonSession', () async {

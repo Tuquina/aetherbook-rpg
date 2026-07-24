@@ -40,7 +40,9 @@ export interface NarratorRequest {
   world: WorldContext;
   character: CharacterState;
   playerAction: string;
-  /** `null` only for the opening/seed turn. */
+  /** `null` when there was nothing to roll: an unconditional curated choice
+   * (a real action in `playerAction`, no check needed) or a freeform
+   * "continue" turn with no specific action (`playerAction` empty). */
   resolution: ActionResolution | null;
   /** Short-term memory: the last few turns, literal (CLAUDE.md §6). */
   recentTurns?: string[];
@@ -54,6 +56,10 @@ export interface NarratorRequest {
   /** The current corridor's single objective, when inside a
    * bounded_corridor node (campaign-bible §18.8). `null` otherwise. */
   nodeGoal?: string | null;
+  /** Whether this world has no `StoryGraph` at all (100% AI-generated, no
+   * curated content) — tells the narrator to offer its own suggested_choices
+   * instead of relying on curated content to drive the story forward. */
+  isFreeform?: boolean;
 }
 
 /** A state delta as the narrator proposes it (campaign-bible §18.5/§19.3):

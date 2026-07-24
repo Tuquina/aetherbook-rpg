@@ -35,10 +35,21 @@ Deno.test("system prompt always includes the shared human-style instruction", ()
   assertStringIncludes(prompt, "usalo con naturalidad");
 });
 
-Deno.test("user prompt narrates the opening scene when resolution is null", () => {
+Deno.test("user prompt asks to continue naturally when resolution is null and playerAction is empty", () => {
   const prompt = buildUserPrompt(baseRequest);
-  assertStringIncludes(prompt, "turno inicial");
-  assertStringIncludes(prompt, "El Sendero del Qi");
+  assertStringIncludes(prompt, "no especificó una acción puntual");
+  assertStringIncludes(prompt, "dejar que la historia avance sola");
+});
+
+Deno.test("user prompt narrates an unresolved-but-specific action when resolution is null and playerAction is set (unconditional curated choice)", () => {
+  const request: NarratorRequest = {
+    ...baseRequest,
+    playerAction: "Ir a la Torre de las Campanas",
+  };
+  const prompt = buildUserPrompt(request);
+  assertStringIncludes(prompt, 'El jugador hizo esto: "Ir a la Torre de las Campanas"');
+  assertStringIncludes(prompt, "No hizo falta ninguna tirada");
+  assertEquals(prompt.includes("no especificó una acción puntual"), false);
 });
 
 Deno.test("user prompt includes the resolved mechanics, not a request to resolve them", () => {
@@ -121,6 +132,19 @@ Deno.test("user prompt includes the corridor's single goal", () => {
   const prompt = buildUserPrompt(request);
   assertStringIncludes(prompt, "tramo generativo acotado");
   assertStringIncludes(prompt, "Obtener exactamente un access_token.");
+});
+
+Deno.test("system prompt omits the freeform-choices instruction for a curated world", () => {
+  const prompt = buildSystemPrompt(baseRequest);
+  assertEquals(prompt.includes("OPCIONES SUGERIDAS"), false);
+});
+
+Deno.test("system prompt includes the freeform-choices instruction when isFreeform is true", () => {
+  const prompt = buildSystemPrompt({ ...baseRequest, isFreeform: true });
+  assertStringIncludes(prompt, "OPCIONES SUGERIDAS");
+  assertStringIncludes(prompt, "preferentemente 2");
+  assertStringIncludes(prompt, "SIEMPRE puede escribir su propia acción");
+  assertStringIncludes(prompt, '"suggested_choices": []');
 });
 
 Deno.test("user prompt omits node-context sections when absent", () => {
