@@ -16,12 +16,14 @@ class StatusBar extends StatelessWidget {
     required this.world,
     required this.character,
     required this.onOpenCodex,
+    required this.onOpenInventory,
     this.onBack,
   });
 
   final World world;
   final Character character;
   final VoidCallback onOpenCodex;
+  final VoidCallback onOpenInventory;
 
   /// Returns to the story menu, keeping this session in memory (picking the
   /// same story again resumes it). `null` hides the back affordance.
@@ -76,6 +78,18 @@ class StatusBar extends StatelessWidget {
                       ],
                     ),
                   ],
+                ),
+              ),
+              IconButton(
+                onPressed: onOpenInventory,
+                tooltip: 'Inventario',
+                icon: Badge(
+                  isLabelVisible: character.list('inventory').isNotEmpty,
+                  label: Text('${character.list('inventory').length}'),
+                  backgroundColor: AetherColors.gold,
+                  textColor: AetherColors.void_,
+                  child: const Icon(Icons.inventory_2_rounded,
+                      color: AetherColors.goldSoft, size: 22),
                 ),
               ),
               IconButton(

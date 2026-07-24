@@ -418,4 +418,32 @@ void main() {
       }
     });
   });
+
+  group('curated_zombie_01_ultimo_tren.json — inventory (Fase 1 "inventario real")', () {
+    test('every inventory id a choice can list_add has a matching item description', () {
+      final raw = jsonDecode(
+        File('assets/worlds/curated_zombie_01_ultimo_tren.json').readAsStringSync(),
+      );
+      final addedIds = <String>{};
+      void walk(Object? node) {
+        if (node is Map) {
+          if (node['type'] == 'list_add' && node['key'] == 'inventory') {
+            addedIds.add(node['value'] as String);
+          }
+          node.values.forEach(walk);
+        } else if (node is List) {
+          node.forEach(walk);
+        }
+      }
+
+      walk(raw);
+      expect(addedIds, isNotEmpty, reason: 'sanity check: the campaign does grant items');
+
+      final world = _loadWorld();
+      final undescribed = addedIds.where((id) => world.findItem(id) == null).toList();
+      expect(undescribed, isEmpty,
+          reason: 'these ids are granted via list_add but have no entry in '
+              '"items" — the inventory screen would show a bare id for them');
+    });
+  });
 }
