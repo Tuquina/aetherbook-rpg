@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../ports/auth_port.dart';
+import 'account_screen.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'game_controller.dart';
@@ -9,14 +11,21 @@ import 'widgets/atmosphere.dart';
 import 'world_select_screen.dart';
 
 /// The entry screen: an animated tome, the wordmark, and the way in. A moment
-/// of arrival before the world opens (GDD §9). Account sign-in is stubbed for
-/// now (anonymous play happens transparently) — the affordance is here so it
-/// can light up later without a redesign. "Comenzar" leads to
+/// of arrival before the world opens (GDD §9). Anonymous play happens
+/// transparently (CLAUDE.md-adjacent: no account required to start) — the
+/// account button opens [AccountScreen] to opt into attaching a durable
+/// email, so progress survives switching devices/browsers instead of
+/// staying tied to this one's local storage. "Comenzar" leads to
 /// [WorldSelectScreen], where the player picks which story to enter.
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key, required this.controller});
+  const SplashScreen({super.key, required this.controller, this.auth});
 
   final GameController controller;
+
+  /// `null` when Supabase failed to initialize (degraded, in-memory-only
+  /// mode) — the account button is hidden in that case, since there would
+  /// be no session to attach an email to.
+  final AuthPort? auth;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -46,15 +55,10 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  void _accountSoon() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AetherColors.surfaceRaised,
-        content: Text('Pronto vas a poder guardar tu progreso con tu cuenta.',
-            style: TextStyle(color: AetherColors.parchment)),
-      ),
-    );
+  void _openAccount() {
+    final auth = widget.auth;
+    if (auth == null) return;
+    Navigator.of(context).push(AccountScreen.route(authPort: auth));
   }
 
   @override
@@ -105,13 +109,18 @@ class _SplashScreenState extends State<SplashScreen>
                       const Spacer(flex: 3),
                       _PrimaryButton(label: 'Comenzar', onTap: _begin),
                       const SizedBox(height: AetherSpace.md),
-                      TextButton(
-                        onPressed: _accountSoon,
-                        child: Text('Entrar con tu cuenta',
+                      if (widget.auth != null)
+                        TextButton(
+                          onPressed: _openAccount,
+                          child: Text(
+                            widget.auth!.isAnonymous
+                                ? 'Guardar tu progreso con tu email'
+                                : 'Jugando como ${widget.auth!.email}',
                             style: AetherType.caption.copyWith(
                                 color: AetherColors.parchmentFaint,
-                                fontSize: 13)),
-                      ),
+                                fontSize: 13),
+                          ),
+                        ),
                       const Spacer(flex: 1),
                     ],
                   ),
