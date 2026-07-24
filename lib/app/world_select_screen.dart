@@ -19,6 +19,46 @@ const _availableWorldSlugs = [
   'xianxia',
 ];
 
+/// Friendly display name for a world's `theme` slug, shown as the card's
+/// overline instead of the raw JSON value (e.g. `postapoc_zombie`). Purely
+/// presentational — the underlying slug still drives identity/lookup, this
+/// map only exists because the menu has to read well to a first-time player.
+const _themeLabels = {
+  'postapoc_zombie': 'Postapocalíptica · supervivencia tras el colapso',
+  'xianxia': 'Xianxia · cultivo y ascensión inmortal',
+};
+
+/// The three story types the menu groups campaigns into (GDD §1: freeform,
+/// curated, hybrid — reframed here in player-facing language). Determined
+/// from the world's own declared shape, never hardcoded per-slug.
+enum _StoryModule { complete, preArmada, aiNarrator }
+
+extension on _StoryModule {
+  String get title => switch (this) {
+        _StoryModule.complete => 'Historias completas',
+        _StoryModule.preArmada => 'Historias pre-armadas',
+        _StoryModule.aiNarrator => 'Historias con narrador por IA',
+      };
+
+  String get description => switch (this) {
+        _StoryModule.complete =>
+          'Una historia ya armada de punta a punta. Tus decisiones eligen el camino, pero cada escena está escrita a mano.',
+        _StoryModule.preArmada =>
+          'Una campaña pre-diseñada, con hitos fijos, que un narrador de IA viste turno a turno según tus elecciones.',
+        _StoryModule.aiNarrator =>
+          'Toda la historia se genera en tiempo real, sin guion previo. Próximamente.',
+      };
+
+  /// Only the freeform, fully-generated mode is gated off for now — the
+  /// other two are real, playable content.
+  bool get enabled => this != _StoryModule.aiNarrator;
+}
+
+_StoryModule _moduleFor(World world) {
+  if (world.storyGraph == null) return _StoryModule.aiNarrator;
+  return world.aiRuntimeRequired ? _StoryModule.preArmada : _StoryModule.complete;
+}
+
 /// Lets the player pick which world to enter (CLAUDE.md §1: freeform,
 /// curated or hybrid modes over the same engine). Reached from
 /// [SplashScreen]'s "Comenzar", and from the back arrow inside a story
@@ -39,6 +79,7 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
   );
 
   void _select(World world) {
+    if (!_moduleFor(world).enabled) return;
     final controller = widget.controller;
     // Already the active session in memory (e.g. the player used the back
     // arrow mid-story) — resume it instead of restarting chargen.
@@ -117,14 +158,26 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
                           if (worlds == null) {
                             return const Center(child: DestinyWriting());
                           }
-                          return ListView.separated(
-                            itemCount: worlds.length,
-                            separatorBuilder: (_, _) =>
-                                const SizedBox(height: AetherSpace.md),
-                            itemBuilder: (context, i) => _StoryCard(
-                              world: worlds[i],
-                              onTap: () => _select(worlds[i]),
-                            ),
+                          final byModule = <_StoryModule, List<World>>{
+                            for (final m in _StoryModule.values) m: [],
+                          };
+                          for (final world in worlds) {
+                            byModule[_moduleFor(world)]!.add(world);
+                          }
+                          return ListView(
+                            children: [
+                              for (final module in _StoryModule.values)
+                                if (byModule[module]!.isNotEmpty)
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.only(bottom: AetherSpace.xl),
+                                    child: _StoryModuleSection(
+                                      module: module,
+                                      worlds: byModule[module]!,
+                                      onTap: _select,
+                                    ),
+                                  ),
+                            ],
                           );
                         },
                       ),
@@ -140,47 +193,92 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
   }
 }
 
-class _StoryCard extends StatelessWidget {
-  const _StoryCard({required this.world, required this.onTap});
+/// A module's header (title + one-line explanation) followed by its cards.
+/// When the module is disabled (only the AI-narrator one, for now), cards
+/// render dimmed and don't respond to taps — present, but clearly "not yet".
+class _StoryModuleSection extends StatelessWidget {
+  const _StoryModuleSection({
+    required this.module,
+    required this.worlds,
+    required this.onTap,
+  });
 
-  final World world;
-  final VoidCallback onTap;
-
-  /// e.g. "Campaña curada", "Historia completa · sin IA", "Modo libre" — a
-  /// fully curated, AI-free campaign (`ai_runtime_required: false`) reads
-  /// differently from the hybrid "curated" label the menu already used,
-  /// without inventing a third boolean just for display.
-  String get _modeLabel {
-    if (world.storyGraph == null) return 'Modo libre';
-    return world.aiRuntimeRequired ? 'Campaña curada' : 'Historia completa · sin IA';
-  }
+  final _StoryModule module;
+  final List<World> worlds;
+  final ValueChanged<World> onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(AetherSpace.lg),
-        decoration: BoxDecoration(
-          color: AetherColors.surface,
-          borderRadius: AetherRadius.allMd,
-          border: Border.all(color: AetherColors.hairlineStrong),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(world.theme.toUpperCase(),
-                      style: AetherType.overline
-                          .copyWith(color: AetherColors.gold)),
-                  const SizedBox(height: 4),
-                  Text(world.name, style: AetherType.title),
-                  const SizedBox(height: 6),
-                  Text('$_modeLabel · ${world.tone}', style: AetherType.caption),
-                  if (world.catalogDescription != null) ...[
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AetherSpace.lg),
+      decoration: BoxDecoration(
+        color: AetherColors.goldGlow,
+        borderRadius: AetherRadius.allLg,
+        border: Border.all(color: AetherColors.hairline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            module.title,
+            style: AetherType.title.copyWith(fontSize: 17),
+          ),
+          const SizedBox(height: 2),
+          Text(module.description, style: AetherType.caption),
+          const SizedBox(height: AetherSpace.lg),
+          for (final world in worlds)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AetherSpace.md),
+              child: _StoryCard(
+                world: world,
+                enabled: module.enabled,
+                onTap: () => onTap(world),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StoryCard extends StatelessWidget {
+  const _StoryCard({required this.world, required this.onTap, this.enabled = true});
+
+  final World world;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  String get _themeLabel => _themeLabels[world.theme] ?? world.theme.toUpperCase();
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: enabled ? 1 : 0.55,
+      child: GestureDetector(
+        onTap: enabled ? onTap : null,
+        child: Container(
+          padding: const EdgeInsets.all(AetherSpace.lg),
+          decoration: BoxDecoration(
+            color: AetherColors.surface,
+            borderRadius: AetherRadius.allMd,
+            border: Border.all(color: AetherColors.hairlineStrong),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_themeLabel.toUpperCase(),
+                        style: AetherType.overline
+                            .copyWith(color: AetherColors.gold)),
+                    const SizedBox(height: 4),
+                    Text(world.name, style: AetherType.title),
+                    const SizedBox(height: 6),
+                    Text(world.tone, style: AetherType.caption),
+                    if (world.catalogDescription != null) ...[
                     const SizedBox(height: 8),
                     Text(
                       world.catalogDescription!,
@@ -212,9 +310,13 @@ class _StoryCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AetherSpace.sm),
-            const Icon(Icons.chevron_right, color: AetherColors.goldSoft),
+            Icon(
+              enabled ? Icons.chevron_right : Icons.lock_outline_rounded,
+              color: AetherColors.goldSoft,
+            ),
           ],
         ),
+      ),
       ),
     );
   }

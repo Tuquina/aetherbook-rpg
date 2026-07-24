@@ -38,7 +38,15 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
         .from('characters')
         .select()
         .eq('session_id', sessionId)
-        .single();
+        .maybeSingle();
+
+    // A session row with no matching character is a partial write — e.g. a
+    // prior createSession that inserted the session but then failed before
+    // inserting the character (a missing-column error, a dropped
+    // connection). Treat it as if no active session exists so start() falls
+    // through to createSession and gets a clean one, instead of crashing on
+    // every future load of this world.
+    if (characterRow == null) return null;
 
     final turnRows = await _client
         .from('turns')
