@@ -27,6 +27,14 @@ Deno.test("system prompt includes the world's prompt and the output instruction"
   assertStringIncludes(prompt, "SOLO un objeto JSON válido");
 });
 
+Deno.test("system prompt always includes the shared human-style instruction", () => {
+  const prompt = buildSystemPrompt(baseRequest);
+  assertStringIncludes(prompt, "ESTILO DE ESCRITURA");
+  assertStringIncludes(prompt, "Alterná drásticamente la longitud");
+  assertStringIncludes(prompt, "Evitá clichés");
+  assertStringIncludes(prompt, "usalo con naturalidad");
+});
+
 Deno.test("user prompt narrates the opening scene when resolution is null", () => {
   const prompt = buildUserPrompt(baseRequest);
   assertStringIncludes(prompt, "turno inicial");

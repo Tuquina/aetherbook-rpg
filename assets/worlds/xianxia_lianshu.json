@@ -870,7 +870,7 @@
 
       "c3_n02_audiencia": {
         "type": "fixed_anchor",
-        "narration": "Shen Rui convoca al protagonista en la Plaza de las Nueve Campanas. Qiao Wen está presente, de pie un paso detrás de ella.",
+        "narration": "Shen Rui convoca a {{name}} en la Plaza de las Nueve Campanas. Qiao Wen está presente, de pie un paso detrás de ella.",
         "fixed_reveals": [
           "LÍNEA OBLIGATORIA de Qiao Wen: \"No necesito creer que esto sea justo. Necesito saber qué queda en pie mañana si dejo de hacerlo.\"",
           "LÍNEA OBLIGATORIA de Shen Rui: \"La pureza moral es un lujo que solo poseen quienes llegan después de la inundación.\""
@@ -1274,23 +1274,23 @@
           {"movement": "la_mañana_siguiente", "gate": {"type": "all", "gates": []}, "text": "Nueve Campanas amanece igual que siempre, con la diferencia exacta que dejaste."},
 
           {"movement": "una_persona_afectada", "gate": {"type": "all", "gates": [{"type": "relationship", "key": "lian_suyin", "min": 2}, {"type": "flag", "key": "tao_stabilized"}]}, "text": "Suyin se presenta de nuevo a Tao, sin exigir que la recuerde."},
-          {"movement": "una_persona_afectada", "gate": {"type": "relationship", "key": "qiao_wen", "min": 1}, "text": "Qiao Wen entrega su campana rota al protagonista."},
+          {"movement": "una_persona_afectada", "gate": {"type": "relationship", "key": "qiao_wen", "min": 1}, "text": "Qiao Wen entrega su campana rota a {{name}}."},
           {"movement": "una_persona_afectada", "gate": {"type": "all", "gates": []}, "text": "Suyin dejó el pincel reparado y una carta estrictamente factual sobre la mesa vacía."},
 
           {"movement": "la_nueva_regla", "gate": {"type": "flag", "key": "ending_nuevo_pacto"}, "text": "La primera reunión para administrar la Bóveda ocurre en una plaza, no en el Pabellón."},
           {"movement": "la_nueva_regla", "gate": {"type": "flag", "key": "ending_guardian_del_registro"}, "text": "Una nueva tablilla en blanco entra al Salón Quieto. No hay discurso."},
           {"movement": "la_nueva_regla", "gate": {"type": "all", "gates": []}, "text": "Alguien tiene que decidir, mañana, quién administra lo que quedó del Registro."},
 
-          {"movement": "el_protagonista", "gate": {"type": "meter", "key": "ledger_debt", "min": 5}, "text": "El protagonista confunde, de vez en cuando, un recuerdo propio con uno ajeno."},
-          {"movement": "el_protagonista", "gate": {"type": "all", "gates": []}, "text": "El protagonista todavía puede nombrar, en voz alta, quién fue antes del río."},
+          {"movement": "el_protagonista", "gate": {"type": "meter", "key": "ledger_debt", "min": 5}, "text": "{{name}} confunde, de vez en cuando, un recuerdo propio con uno ajeno."},
+          {"movement": "el_protagonista", "gate": {"type": "all", "gates": []}, "text": "{{name}} todavía puede nombrar, en voz alta, quién fue antes del río."},
 
           {"movement": "la_tablilla", "gate": {"type": "flag", "key": "ending_nuevo_pacto"}, "text": "La tablilla acepta muchas caligrafías y ninguna ocupa el centro."},
-          {"movement": "la_tablilla", "gate": {"type": "flag", "key": "ending_portador_del_margen"}, "text": "Alguien vuelve a escribir el nombre terrenal del protagonista cada mañana."},
+          {"movement": "la_tablilla", "gate": {"type": "flag", "key": "ending_portador_del_margen"}, "text": "Alguien vuelve a escribir el nombre terrenal de {{name}} cada mañana."},
           {"movement": "la_tablilla", "gate": {"type": "flag", "key": "ending_cielo_roto"}, "text": "La tablilla termina como madera para reparar una puerta."},
           {"movement": "la_tablilla", "gate": {"type": "flag", "key": "ending_guardian_del_registro"}, "text": "La tablilla queda en la octava plaza, ahora ocupada."},
-          {"movement": "la_tablilla", "gate": {"type": "flag", "key": "ending_soberano_sin_nombre"}, "text": "Todas las tablillas se inclinan cuando el protagonista entra."},
+          {"movement": "la_tablilla", "gate": {"type": "flag", "key": "ending_soberano_sin_nombre"}, "text": "Todas las tablillas se inclinan cuando {{name}} entra."},
           {"movement": "la_tablilla", "gate": {"type": "flag", "key": "ending_fugitivo_degradado"}, "text": "La tablilla viaja río abajo sin sello y no vuelve."},
-          {"movement": "la_tablilla", "gate": {"type": "all", "gates": []}, "text": "La tablilla queda donde el protagonista la dejó: en blanco, pero ya no vacía."}
+          {"movement": "la_tablilla", "gate": {"type": "all", "gates": []}, "text": "La tablilla queda donde {{name}} la dejó: en blanco, pero ya no vacía."}
         ]
       }
     }

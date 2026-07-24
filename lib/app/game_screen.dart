@@ -37,14 +37,23 @@ class _GameScreenState extends State<GameScreen> {
   final ScrollController _scroll = ScrollController();
   String _lastNarration = '';
 
-  /// Whether the choices for the *current* turn are allowed to show yet. On
-  /// mobile, a reader can blow past the prose to the buttons at the bottom
-  /// without ever reading it — so each new turn starts with choices hidden
-  /// behind a "keep reading" hint, and they unlock (and then stay put, no
-  /// re-hiding on scrolling back up) once the player reaches the bottom of
-  /// the narration. Short text that doesn't overflow the viewport at all
-  /// unlocks immediately — there's nothing to scroll through.
+  /// Whether the full choices bar is showing. On mobile, a reader can blow
+  /// past the prose to the buttons at the bottom without ever reading it —
+  /// so each new turn starts with choices hidden behind a "keep reading"
+  /// hint, and stays hidden (and then stays revealed, no re-hiding on
+  /// scrolling back up) once set. Short text that doesn't overflow the
+  /// viewport at all reveals immediately — there's nothing to scroll
+  /// through.
   bool _choicesRevealed = false;
+
+  /// Whether the player has scrolled through the whole turn and the hint can
+  /// turn into a tappable "ver opciones" button. Deliberately does **not**
+  /// auto-reveal [_choicesRevealed] on its own: the choices bar is taller
+  /// than the hint, and swapping it in the instant the scroll position
+  /// crossed a threshold used to cover the last lines of text the player was
+  /// still reading, mid-scroll — now that swap only happens on an explicit
+  /// tap, once the player has actually finished and chooses to see options.
+  bool _canRevealChoices = false;
 
   @override
   void initState() {
@@ -82,7 +91,10 @@ class _GameScreenState extends State<GameScreen> {
     final narration = widget.controller.narration;
     if (narration != _lastNarration) {
       _lastNarration = narration;
-      setState(() => _choicesRevealed = false);
+      setState(() {
+        _choicesRevealed = false;
+        _canRevealChoices = false;
+      });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!_scroll.hasClients) return;
         _scroll.animateTo(0,
@@ -103,12 +115,14 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _onScroll() {
-    if (_choicesRevealed || !_scroll.hasClients) return;
+    if (_canRevealChoices || !_scroll.hasClients) return;
     final position = _scroll.position;
     if (position.pixels >= position.maxScrollExtent - 24) {
-      setState(() => _choicesRevealed = true);
+      setState(() => _canRevealChoices = true);
     }
   }
+
+  void _revealChoices() => setState(() => _choicesRevealed = true);
 
   void _submitFreeAction() {
     final text = _freeAction.text.trim();
@@ -179,7 +193,10 @@ class _GameScreenState extends State<GameScreen> {
                         onFinishStory: _goToMenu,
                       )
                     else
-                      const _KeepReadingHint(),
+                      _KeepReadingHint(
+                        ready: _canRevealChoices,
+                        onReveal: _revealChoices,
+                      ),
                   ],
                 ),
               ),
@@ -316,32 +333,68 @@ class _EndOfStory extends StatelessWidget {
   }
 }
 
-/// Sits where [_ChoicesBar] would, before the player has scrolled through
-/// the current turn's prose — a quiet nudge, not a wall, so the app doesn't
-/// look broken when the buttons are simply not there yet.
-class _KeepReadingHint extends StatelessWidget {
-  const _KeepReadingHint();
+/// Sits where [_ChoicesBar] would, before the player has finished reading
+/// the current turn's prose. Two states: a quiet, non-interactive nudge
+/// while there's still text below the fold ([ready] false), and — once the
+/// player has scrolled all the way down — a real tappable button that reveals
+/// the choices bar on an explicit tap rather than automatically. That's
+/// deliberate: the choices bar is taller than this hint, so auto-revealing
+/// it the instant the scroll position crossed a threshold used to cover the
+/// last lines of text the player was still reading, mid-scroll.
+class _KeepReadingHint extends StatefulWidget {
+  const _KeepReadingHint({required this.ready, required this.onReveal});
+
+  final bool ready;
+  final VoidCallback onReveal;
+
+  @override
+  State<_KeepReadingHint> createState() => _KeepReadingHintState();
+}
+
+class _KeepReadingHintState extends State<_KeepReadingHint> {
+  bool _pressed = false;
+
+  void _set(bool v) {
+    if (_pressed != v) setState(() => _pressed = v);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AetherSpace.lg, vertical: AetherSpace.lg),
-      decoration: const BoxDecoration(
-        color: AetherColors.surface,
-        border: Border(top: BorderSide(color: AetherColors.hairline)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Seguí leyendo',
-                style: AetherType.caption.copyWith(color: AetherColors.parchmentFaint)),
-            const SizedBox(width: AetherSpace.xs),
-            const Icon(Icons.keyboard_arrow_down_rounded,
-                size: 18, color: AetherColors.parchmentFaint),
-          ],
+    final ready = widget.ready;
+    final accent = ready ? AetherColors.goldSoft : AetherColors.parchmentFaint;
+    return GestureDetector(
+      onTapDown: ready ? (_) => _set(true) : null,
+      onTapUp: ready ? (_) => _set(false) : null,
+      onTapCancel: ready ? () => _set(false) : null,
+      onTap: ready ? widget.onReveal : null,
+      child: AnimatedContainer(
+        duration: AetherMotion.fast,
+        padding: const EdgeInsets.symmetric(
+            horizontal: AetherSpace.lg, vertical: AetherSpace.lg),
+        decoration: BoxDecoration(
+          color: ready && _pressed ? AetherColors.surfaceRaised : AetherColors.surface,
+          border: const Border(top: BorderSide(color: AetherColors.hairline)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                ready ? 'Ver opciones' : 'Seguí leyendo',
+                style: AetherType.caption.copyWith(
+                  color: accent,
+                  fontWeight: ready ? FontWeight.w700 : FontWeight.normal,
+                ),
+              ),
+              const SizedBox(width: AetherSpace.xs),
+              Icon(
+                ready ? Icons.chevron_right_rounded : Icons.keyboard_arrow_down_rounded,
+                size: 18,
+                color: accent,
+              ),
+            ],
+          ),
         ),
       ),
     );

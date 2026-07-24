@@ -69,7 +69,7 @@
   },
 
   "seed": {
-    "narration": "{{name}}: el polvo todavía no se asienta del todo sobre lo que alguna vez fue algo. Llevás encima solo lo que pudiste cargar, y el silencio que queda cuando no hay motores ni voces de fondo todavía se siente raro, años después de que empezara todo esto.\n\nEn algún lugar hay otros sobrevivientes. La pregunta es si vas a buscarlos, o si ya aprendiste que es más seguro estar solo.",
+    "narration": "El polvo no termina de asentarse sobre lo que fue, hace mucho, alguna otra cosa. Cargás solo lo que entra en una mochila, {{name}}, y algo más, invisible, que no entra en ninguna parte: los años.\n\nEl silencio todavía te sorprende. Ya deberías haberte acostumbrado — no hay motores, no hay voces de fondo, no hay ese zumbido bajo que antes ni se notaba porque estaba siempre — pero cada tanto el cuerpo espera un ruido que ya no va a llegar, y esa espera duele un poco, sin razón clara.\n\nEn algún lugar, probablemente, hay otros. Encontrarlos es una posibilidad. Buscarlos es una decisión.",
     "choices": [
       "Revisar qué te queda antes de decidir hacia dónde ir",
       "Buscar señales de otros sobrevivientes cerca",

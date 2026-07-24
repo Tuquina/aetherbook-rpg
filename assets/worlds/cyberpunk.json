@@ -68,7 +68,7 @@
   },
 
   "seed": {
-    "narration": "{{name}}: el neón se refleja en un charco de lluvia ácida y por un segundo tu propio reflejo tiene un color que no le corresponde. En esta ciudad nadie hace nada gratis, y vos tampoco — la pregunta es a quién le debés algo, y quién te debe algo a vos.\n\nEl día recién empieza, y ya hay alguien buscándote, aunque todavía no sepas para qué.",
+    "narration": "Neón sobre un charco de lluvia ácida, y por medio segundo tu propio reflejo tiene un color que no te corresponde — un parpadeo, nada más, probablemente el implante desincronizado otra vez. Vas a tener que revisarlo. Después.\n\nEn esta ciudad nadie hace nada gratis, {{name}}, y vos tampoco. Ni un favor, ni una mirada, ni un dato suelto en un bar a las tres de la mañana — todo tiene precio, y la pregunta que importa nunca es si vas a pagar, sino cuánto y a quién.\n\nEl día recién empieza. Ya hay alguien preguntando por vos, dos calles más allá, en un tono que todavía no decidiste si te preocupa.",
     "choices": [
       "Ir directo a tu contacto habitual a ver qué se cocina",
       "Quedarte en las sombras y escuchar antes de moverte",

@@ -68,7 +68,7 @@
   },
 
   "seed": {
-    "narration": "{{name}}: todavía te tiemblan las manos por lo que acaba de pasar. Hace un rato eras nadie en particular; ahora hay algo en vos que no debería ser posible, y la ciudad sigue igual de indiferente a tu alrededor, sin saber lo que acaba de cambiar.\n\nNadie te dio un manual. Lo primero que hagas con esto va a decir quién sos.",
+    "narration": "Las manos todavía te tiemblan. Las mirás un momento, casi esperando que dejen de hacerlo solas, pero no pasa — y bajo la piel, donde antes no había nada, ahora hay algo que se mueve cuando no debería, que responde antes de que se lo pidas.\n\nHace media hora eras una persona más, de esas que nadie mira dos veces en la calle, {{name}}. Eso ya no es del todo cierto.\n\nLa ciudad sigue exactamente igual: las luces del semáforo cambian sin apuro, alguien discute por teléfono en la esquina, un colectivo frena mal y toca bocina. Nadie sabe lo que acaba de pasar. Nadie tiene por qué saberlo todavía.\n\nLo que hagas en los próximos minutos con esto — sea lo que sea — va a decir más sobre quién sos que cualquier cosa que hayas hecho antes.",
     "choices": [
       "Probar hasta dónde llega tu poder, en privado",
       "Buscar a alguien de confianza y contarle lo que pasó",

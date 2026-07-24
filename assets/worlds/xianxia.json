@@ -68,7 +68,7 @@
   },
 
   "seed": {
-    "narration": "{{name}}: el viento arrastra pétalos de durazno sobre un sendero de piedra que no elegiste vos, pero que ya es tuyo. El qi a tu alrededor responde apenas, sensible a lo que decidas hacer primero.\n\nAdelante se abren tres caminos en la niebla del amanecer, y nadie más que vos sabe todavía qué clase de cultivador vas a ser.",
+    "narration": "El viento trae pétalos de durazno por el sendero de piedra, uno cada tanto, como si la montaña estuviera decidiendo algo. No elegiste este lugar, {{name}}. Nadie elige el lugar donde el qi por fin responde.\n\nHace tres días todavía dormías bajo un techo distinto, con un nombre que recién ahora empieza a sentirse propio. Ahora hay niebla baja, tres senderos que se abren sin cartel ni guía, y una sensación en el pecho — tenue, casi vergonzosa de admitir — de que algo, en algún lugar de esta montaña, ya sabe que llegaste.\n\nNingún maestro. Ninguna secta. Solo el aire, más denso de lo que debería, y la primera decisión real.",
     "choices": [
       "Sentarte a meditar y sentir el flujo del qi antes de moverte",
       "Seguir el sendero que sube hacia el templo distante",

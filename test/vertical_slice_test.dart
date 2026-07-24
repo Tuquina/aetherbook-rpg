@@ -40,6 +40,16 @@ Future<void> _tapAndSettle(WidgetTester tester, String label) async {
   await tester.drag(find.byKey(const Key('narrationScroll')), const Offset(0, -10000));
   await tester.pumpAndSettle();
 
+  // Reaching the bottom only turns the hint into a tappable "Ver opciones"
+  // button -- it no longer auto-reveals the choices bar (that used to cover
+  // the last lines of text mid-scroll). Tap it explicitly, same as a real
+  // reader choosing to see their options once they're done reading.
+  final revealButton = find.text('Ver opciones');
+  if (revealButton.evaluate().isNotEmpty) {
+    await tester.tap(revealButton);
+    await tester.pumpAndSettle();
+  }
+
   expect(find.text(label), findsOneWidget, reason: 'expected a "$label" button on screen');
   await tester.tap(find.text(label));
   await tester.pumpAndSettle();

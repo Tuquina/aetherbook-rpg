@@ -68,7 +68,7 @@
   },
 
   "seed": {
-    "narration": "{{name}}: la luz se apaga y el suelo bajo tus pies ya no es el de tu mundo. El aire huele distinto, hay dos lunas donde debería haber una, y algo — o alguien — sabía que ibas a llegar.\n\nNadie te explica nada todavía. Lo único seguro es que ya no podés volver por donde viniste, al menos no ahora.",
+    "narration": "La luz se apaga de golpe y, cuando vuelve, algo cambió. El piso ya no es el mismo piso. Tardás un segundo en notarlo, {{name}} — el aire pesa distinto, hay un olor que no reconocés, dulce y metálico a la vez — y otro segundo más en aceptar que esto no es un sueño, ni un error, ni nada que se arregle volviendo a dormir.\n\nArriba, donde debería haber una luna, hay dos. Ninguna de las dos es la tuya.\n\nNadie vino a explicarte nada. No hay manual, no hay guía, no hay una voz que diga bienvenido. Solo un mundo entero que ya estaba ahí antes de que llegaras, indiferente, y la certeza incómoda de que el camino de vuelta, si existe, no empieza por donde viniste.",
     "choices": [
       "Buscar a la primera persona que veas y pedir explicaciones",
       "Quedarte quieto y observar el lugar antes de moverte",
