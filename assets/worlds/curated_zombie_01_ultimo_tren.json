@@ -656,7 +656,7 @@
 
       "c1_n01_consejo": {
         "type": "fixed_anchor",
-        "narration": "El comedor de La Cámara fue una sala de despiece. Conserva ganchos en el techo y un desagüe central que nadie logró destapar.\n\nSesenta y tres personas no caben sentadas. Se agrupan entre mesas, puertas y estantes. Lucía sostiene la radio sobre una caja para que todos escuchen la tercera repetición.\n\nCuando la voz dice veinte, nadie murmura. El ruido empieza después.\n\nUna mujer pregunta si los niños cuentan como pasajeros. Un hombre quiere saber si Faro Sur tiene médicos. Ramiro pregunta cuántos soldados viajan en el tren. Saúl tose dentro de un pañuelo.\n\nDamián extiende el mapa ferroviario. Marca la Estación Central, la torre, el puente de agujas y el Túnel 17.\n\n—Nada de esto funciona —dice—. Si queremos que Aurora frene, hay que encenderlo.\n\n—Vos podés —responde Abril.\n\nNo es una pregunta. Sesenta y dos personas giran hacia él.",
+        "narration": "El comedor de La Cámara fue, alguna vez, una sala de despiece. Todavía conserva los ganchos en el techo, oxidados en una hilera perfecta, y un desagüe central en el piso que nadie logró destapar y que todos aprendieron a rodear sin mirar.\n\nSesenta y tres personas no caben sentadas. Se agrupan entre mesas, puertas y estantes vacíos, respirando el mismo aire caliente. Lucía sostiene la radio en alto sobre una caja de leche para que todos alcancen a escuchar la tercera repetición del mensaje.\n\nCuando la voz dice veinte, nadie murmura. El silencio dura justo lo que tarda la gente en hacer la cuenta. Después empieza el ruido.\n\nUna mujer pregunta si los niños cuentan como pasajeros aparte. Un hombre quiere saber si Faro Sur tiene médicos de verdad o solo la palabra pegada a un cartel. Ramiro pregunta cuántos soldados viajan en el tren, como si la respuesta cambiara algo. Saúl tose dentro de un pañuelo que ya no es blanco y nadie le pregunta por qué.\n\nDamián extiende el mapa ferroviario sobre la mesa más cercana, alisando los dobleces con el canto de la mano. Marca la Estación Central, la torre, el puente de agujas, el Túnel 17 — cuatro puntos que trece meses de silencio no le dejaron olvidar.\n\n—Nada de esto funciona sin energía —dice—. Si queremos que Aurora frene, hay que encender la señal.\n\n—Vos podés —responde Abril, desde algún lugar detrás de las cabezas.\n\nNo suena a pregunta. Sesenta y dos personas giran hacia él al mismo tiempo, y por un segundo el comedor entero respira distinto.",
         "choices": [
           {
             "label": "Decir ahora que son veinte",
@@ -1049,7 +1049,7 @@
             "label": "\"No vamos por eso.\"",
             "target": "c2_n01_bifurcacion",
             "gate": {"type": "flag", "key": "team_has_abril", "equals": false},
-            "result_text": "—No vamos por eso —dice Damián.\n\nEl silencio que sigue no es enojo. Es otra cosa que todavía no tiene nombre. La puerta sur se cierra detrás de los tres."
+            "result_text": "—No vamos por eso —dice Damián.\n\nEl silencio que sigue dura hasta la puerta sur, y no se parece al enojo — se parece más a algo que todavía no encontró su nombre y quizás prefiera seguir así. La puerta se cierra detrás de los tres."
           },
           {
             "label": "\"No queda nada que encontrar.\"",
@@ -2001,7 +2001,7 @@
 
       "c5_n02_vagon_equipajes": {
         "type": "fixed_anchor",
-        "narration": "El coche de equipajes quedó de pie.\n\nLa puerta está trabada por maletas. Detrás se oye un golpeteo irregular.\n\nTres golpes. Pausa. Dos. Pausa. Tres.\n\nNo es un código. Es una rueda suelta movida por agua.\n\nDamián tarda demasiado en convencerse.",
+        "narration": "El coche de equipajes quedó de pie, apoyado contra la pared curva del túnel como si alguien lo hubiera estacionado ahí a propósito.\n\nLa puerta está trabada por maletas caídas. Detrás se oye un golpeteo irregular.\n\nTres golpes. Pausa. Dos. Pausa. Tres.\n\nDamián se convence de que es un código antes de convencerse de lo contrario — es más fácil creer en un mensaje que en una rueda suelta que el agua mueve al azar, golpeando metal contra metal sin que a nadie del otro lado le importe. Tarda más de lo que debería en aceptar la segunda explicación.",
         "choices": [
           {
             "label": "Abrir sin ruido",
@@ -3440,7 +3440,7 @@
         "narration": "—No hay trato —dice Damián.\n\nDávila asiente una vez. No lo llama cobarde. No insiste.\n\nAurora cierra puertas y libera frenos.",
         "conditional_inserts": [
           {"text": "Las ventanas pasan una detrás de otra. Veinte asientos disponibles cruzan el andén sin detenerse otra vez.", "gate": {"type": "flag", "key": "aurora_medical_saved", "equals": false}},
-          {"text": "Dávila acepta a algunas personas sin combustible adicional, por la emergencia del brote. No es la lista completa. Es lo que puede sostener después de las pérdidas.", "gate": {"type": "flag", "key": "aurora_medical_saved"}},
+          {"text": "Dávila acepta a algunas personas sin combustible adicional, por la emergencia del brote — no la lista completa, apenas lo que puede sostener después de contar cuánto perdió.", "gate": {"type": "flag", "key": "aurora_medical_saved"}},
           {"text": "Con alta Humanidad, Damián no dice que salvó a todos. Dice que no compró veinte lugares con el calor de cuarenta y tres personas.", "gate": {"type": "meter", "key": "humanity_axis", "min": 2}},
           {"text": "Con baja Humanidad, Damián conserva el combustible porque no acepta una selección que no controla. La diferencia se vuelve visible cuando distribuye raciones.", "gate": {"type": "meter", "key": "humanity_axis", "max": -2}},
           {"text": "En primavera, si llega, Damián enciende la señal una vez por semana. No para Aurora. Para que cualquiera que siga las vías sepa que alguien permanece.", "gate": {"type": "flag", "key": "damian_dead", "equals": false}},
