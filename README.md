@@ -25,9 +25,9 @@ La primera vez descarga la imagen de Flutter (~2 GB, una sola vez). Después abr
 
 **Para probarlo en el celular** (el juego es móvil-first): buscá la IP de tu PC en la red local (`ipconfig` → IPv4, algo como `192.168.1.40`) y entrá desde el navegador del teléfono a `http://<esa-ip>:8080`. En iPhone, Safari → *Compartir → Agregar a inicio* para que se sienta como una app.
 
-Al abrir la app vas a ver un **menú para elegir historia**: hoy hay dos — "Los nombres que devora el cielo" (campaña híbrida curada, con creación de personaje) y "El Sendero del Qi" (modo libre, sin chargen). Dentro de una partida, la flecha arriba a la izquierda vuelve al menú sin perder el progreso (la misma sesión sigue en memoria; volver a entrar a la misma historia la retoma donde quedó).
+Al abrir la app vas a ver un **menú para elegir historia**: hoy hay tres — **"El último tren no espera a los vivos"** (historia completa curada, **sin IA**: 100% preescrita, cero llamadas de red durante la partida, jugable sin conexión una vez cargada), "Los nombres que devora el cielo" (campaña híbrida curada, con creación de personaje) y "El Sendero del Qi" (modo libre, sin chargen). Dentro de una partida, la flecha arriba a la izquierda vuelve al menú sin perder el progreso (la misma sesión sigue en memoria; volver a entrar a la misma historia la retoma donde quedó).
 
-Por defecto usa el **`FakeNarratorAdapter`** ([lib/main.dart](lib/main.dart)): JSON fijo, sin red, sin costo. El narrador real (Gemini → Groq) ya existe como Edge Function desplegada y funcionando, pero todavía no está conectado al cliente — eso es un paso deliberado, para no gastar cuota mientras iteramos la UI/UX.
+Por defecto usa el **`FakeNarratorAdapter`** ([lib/main.dart](lib/main.dart)): JSON fijo, sin red, sin costo. El narrador real (Gemini → Groq) ya existe como Edge Function desplegada y funcionando, pero todavía no está conectado al cliente — eso es un paso deliberado, para no gastar cuota mientras iteramos la UI/UX. "El último tren..." ni siquiera usa este adaptador: su motor nunca invoca al narrador (`ai_runtime_required: false`).
 
 ### Correr los tests
 
@@ -62,7 +62,9 @@ Eso elimina el problema clásico de que "el modelo se olvida", inventa ítems o 
 2. **Historia pre-armada** — campañas escritas a mano, con ramas fijas y calidad garantizada.
 3. **Híbrido** *(modo por defecto)* — un esqueleto de hitos pre-escritos + relleno generativo dinámico entre ellos. Coherencia de una historia curada, libertad de una generada.
 
-Hoy hay una campaña híbrida real jugando este tercer modo: **"Los nombres que devora el cielo"** (`assets/worlds/xianxia_lianshu.json`), con creación de personaje estructurada, un grafo de 19 nodos (hitos fijos, corredores acotados, hubs de actividades y resoluciones), conflictos extendidos y progresión por rango con hitos. Su vertical slice recomendado (apertura → corredor → hub → hito con conflicto) es jugable de punta a punta. El resto del grafo ya está cargado como contenido pero todavía no fue ejercitado turno a turno en la UI.
+El modo 2 (historia pre-armada) ya tiene una instancia real y completa: **"El último tren no espera a los vivos"** (`assets/worlds/curated_zombie_01_ultimo_tren.json`), post-apocalíptico zombi. 103 nodos, prólogo + 10 capítulos, 6 finales + 2 cierres de fracaso + epílogo modular, ~14.700 palabras de prosa autorada. Cero IA en runtime: cada elección, tirada y consecuencia está preescrita, así que el narrador nunca se invoca y la partida funciona sin conexión.
+
+El modo 3 (híbrido) tiene **"Los nombres que devora el cielo"** (`assets/worlds/xianxia_lianshu.json`), con creación de personaje estructurada, un grafo de 19 nodos (hitos fijos, corredores acotados, hubs de actividades y resoluciones), conflictos extendidos y progresión por rango con hitos. Su vertical slice recomendado (apertura → corredor → hub → hito con conflicto) es jugable de punta a punta. El resto del grafo ya está cargado como contenido pero todavía no fue ejercitado turno a turno en la UI.
 
 **Mundos iniciales (5, según el GDD):** Isekai, Xianxia (cultivo), Superhéroes, Cyberpunk, Post-apocalíptico. Isekai y Xianxia son mundos distintos — comparten la premisa de "otro mundo" pero no el género. Por ahora solo Xianxia tiene contenido: un mundo freeform simple (`xianxia.json`, el de la prueba de concepto original) y la campaña híbrida de arriba. Los otros 4 mundos siguen siendo diseño, no código.
 
@@ -133,7 +135,7 @@ Detalle completo en [`CLAUDE.md`](CLAUDE.md).
 
 ## Estado del proyecto
 
-🚧 Fase 1 en curso — motor híbrido completo y una campaña real jugable en su vertical slice; narrador real desplegado pero el cliente aún juega con `FakeNarratorAdapter`. Proyecto personal, desarrollado con [Claude Code](https://claude.com/claude-code).
+🚧 Fase 1 en curso — motor híbrido completo, una historia curada 100% sin IA jugable de punta a punta ("El último tren no espera a los vivos") y una campaña híbrida real jugable en su vertical slice; narrador real desplegado pero el cliente aún juega con `FakeNarratorAdapter`. Proyecto personal, desarrollado con [Claude Code](https://claude.com/claude-code).
 
 ## Licencia
 
