@@ -23,7 +23,18 @@ Todo el toolchain (Flutter y Deno) corre **dentro de Docker** — no hace falta 
 
 La primera vez descarga la imagen de Flutter (~2 GB, una sola vez). Después abrí **http://localhost:8080** en el navegador.
 
-**Para probarlo en el celular** (el juego es móvil-first): buscá la IP de tu PC en la red local (`ipconfig` → IPv4, algo como `192.168.1.40`) y entrá desde el navegador del teléfono a `http://<esa-ip>:8080`. En iPhone, Safari → *Compartir → Agregar a inicio* para que se sienta como una app.
+**Para probarlo en el celular** (el juego es móvil-first), usá el build de release en vez del de arriba:
+
+```powershell
+.\tool\run-web-static.ps1
+```
+```bash
+./tool/run-web-static.sh
+```
+
+Por qué uno distinto: `run-web.ps1`/`.sh` corren `flutter run -d web-server`, que levanta el servicio de debug de Flutter (DWDS/VM Service) — ese servicio solo acepta conexiones por `localhost`, así que en modo debug la app se queda esperando esa conexión para terminar de arrancar y el celular ve pantalla en blanco. `run-web-static` compila un build de release y lo sirve estático, sin ese servicio de por medio, así que funciona igual desde cualquier dispositivo de la red. La contra: no hay hot-reload, hay que repetir el comando después de cada cambio de código.
+
+Buscá la IP de tu PC en la red local (`ipconfig` → IPv4, algo como `192.168.1.40`) y entrá desde el navegador del teléfono a `http://<esa-ip>:8080`. En iPhone, Safari → *Compartir → Agregar a inicio* para que se sienta como una app. Si aun así ves pantalla en blanco, revisá que el celular esté en la misma red WiFi que la PC (no una red de invitados con "aislamiento de clientes") y que el Firewall de Windows no esté bloqueando la conexión entrante al puerto 8080 de Docker.
 
 Al abrir la app vas a ver un **menú para elegir historia**, agrupado en tres módulos — *historias completas* (sin IA), *historias pre-armadas* (híbridas, con narrador de IA) e *historias con narrador por IA* (freeform, deshabilitado por ahora). Hoy hay tres historias cargadas: **"El último tren no espera a los vivos"** (historia completa curada, **sin IA**: 100% preescrita, cero llamadas de red durante la partida, jugable sin conexión una vez cargada), "Los nombres que devora el cielo" (campaña híbrida, con creación de personaje, narrada por el modelo real) y "El Sendero del Qi" (modo libre, sin chargen, también con narrador real). Dentro de una partida, la flecha arriba a la izquierda vuelve al menú sin perder el progreso (la misma sesión sigue en memoria y persistida en Supabase; volver a entrar a la misma historia la retoma donde quedó). El ícono de reiniciar en cada tarjeta abandona esa sesión y empieza una limpia.
 

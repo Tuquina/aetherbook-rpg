@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'widgets/atmosphere.dart';
+import 'world_select_screen.dart'
+    show StoryModule, StoryModuleInfo, storyModuleStyle;
 
 /// The Codex — how the game works (GDD §9: rules always within reach). Explains
 /// that the story is alive but the state is authoritative, what the Fate Rolls
@@ -18,6 +20,7 @@ class CodexScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: AetherBackground(
+        particles: false,
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
@@ -60,8 +63,8 @@ class _CodexBody extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(
           AetherSpace.lg, AetherSpace.sm, AetherSpace.lg, AetherSpace.huge),
-      children: const [
-        _Section(
+      children: [
+        const _Section(
           icon: Icons.auto_stories_rounded,
           title: 'Un mundo que te escucha',
           body:
@@ -72,25 +75,37 @@ class _CodexBody extends StatelessWidget {
               'determinista. La IA nunca inventa un resultado: solo narra, con '
               'estilo, lo que el motor ya resolvió.',
         ),
-        _Section(
+        const _Section(
+          icon: Icons.route_rounded,
+          title: 'Tres formas de jugar',
+          body:
+              'No todas las historias se cuentan igual. Cada una pertenece a '
+              'uno de estos tres tipos, elegidos desde el menú principal:',
+          child: _StoryModesExplainer(),
+        ),
+        const _Section(
           icon: Icons.casino_rounded,
           title: 'Las Tiradas del Destino',
           body:
-              'Cuando intentás algo de resultado incierto, el motor lo resuelve '
-              'con una tirada:',
+              'Cuando intentás algo de resultado incierto —ya sea escribiendo tu '
+              'propia acción o eligiendo una opción marcada con una tirada—, el '
+              'motor lo resuelve así:',
           child: _FateExplainer(),
         ),
-        _Section(
+        const _Section(
           icon: Icons.hub_rounded,
           title: 'Todo deja huella',
           body:
               'El resultado de cada tirada cambia el estado del mundo: ganás '
               'experiencia, tus recursos suben o bajan, se encienden marcas de '
-              'trama (secretos revelados, vínculos, decisiones). Y ese estado '
+              'trama (secretos revelados, vínculos, decisiones). Ese estado '
               'moldea lo que viene: lo que hacés hoy abre o cierra caminos '
-              'mañana. El mundo recuerda.',
+              'mañana, y puede cambiar quién sobrevive o cómo termina la '
+              'historia. Cuando una decisión no tiene vuelta atrás, el juego te '
+              'lo advierte y te pide confirmar antes de resolverla — el mundo '
+              'recuerda, así que elegir importa.',
         ),
-        _Section(
+        const _Section(
           icon: Icons.trending_up_rounded,
           title: 'Progresión',
           body:
@@ -98,15 +113,25 @@ class _CodexBody extends StatelessWidget {
               'reino. Cada reino no es solo un número más alto: desbloquea '
               'opciones, técnicas y caminos que antes te estaban vedados.',
         ),
-        _Section(
+        const _Section(
           icon: Icons.local_fire_department_rounded,
           title: 'Recursos',
           body:
               'El qi, la salud y demás recursos son finitos. Gastarlos tiene '
               'consecuencias, y quedarte sin ellos también. Administrarlos es '
-              'parte de sobrevivir y de decidir cuándo arriesgar.',
+              'parte de sobrevivir y de decidir cuándo arriesgar. Los ves '
+              'siempre a mano, arriba de la pantalla de juego.',
         ),
-        _Section(
+        const _Section(
+          icon: Icons.inventory_2_rounded,
+          title: 'Tu inventario',
+          body:
+              'Lo que encontrás, te dan o conseguís durante la partida queda '
+              'registrado con nombre y descripción propios — no son solo '
+              'objetos sueltos. Se accede desde el ícono de mochila en la '
+              'barra de estado, arriba de la pantalla de juego.',
+        ),
+        const _Section(
           icon: Icons.balance_rounded,
           title: 'La economía de decisiones',
           body:
@@ -114,6 +139,60 @@ class _CodexBody extends StatelessWidget {
               'o traicionar, atesorar tu humanidad o perseguir el poder. El '
               'mundo responde a esa moneda invisible, y la historia se ramifica '
               'según en qué gastás.',
+        ),
+      ],
+    );
+  }
+}
+
+/// Restates the three story-type cards from `WorldSelectScreen` — same
+/// copy, icon and accent color per module (via `storyModuleStyle`), so a
+/// player who opens the Codex mid-story sees the exact same framing they
+/// picked from at the menu, not a second, drifting description of it.
+class _StoryModesExplainer extends StatelessWidget {
+  const _StoryModesExplainer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (final module in StoryModule.values)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AetherSpace.md),
+            child: _modeRow(module),
+          ),
+      ],
+    );
+  }
+
+  Widget _modeRow(StoryModule module) {
+    final style = storyModuleStyle(module);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          margin: const EdgeInsets.only(top: 2),
+          decoration: BoxDecoration(
+            color: style.accent.withValues(alpha: 0.16),
+            shape: BoxShape.circle,
+            border: Border.all(color: style.accent.withValues(alpha: 0.5)),
+          ),
+          child: Icon(style.icon, color: style.bright, size: 16),
+        ),
+        const SizedBox(width: AetherSpace.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(module.title,
+                  style: AetherType.label.copyWith(color: style.bright)),
+              const SizedBox(height: 2),
+              Text(module.description,
+                  style: AetherType.body.copyWith(fontSize: 14.5)),
+            ],
+          ),
         ),
       ],
     );
