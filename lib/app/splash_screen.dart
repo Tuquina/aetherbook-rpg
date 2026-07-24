@@ -87,13 +87,20 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ),
                       const SizedBox(height: AetherSpace.xl),
-                      _Wordmark(),
-                      const SizedBox(height: AetherSpace.md),
+                      AnimatedBuilder(
+                        animation: _c,
+                        builder: (context, _) => _Wordmark(shimmer: _c.value),
+                      ),
+                      const SizedBox(height: AetherSpace.lg),
+                      const _OrnamentDivider(),
+                      const SizedBox(height: AetherSpace.lg),
                       Text(
                         'Un multiverso que se escribe con vos',
                         textAlign: TextAlign.center,
                         style: AetherType.body.copyWith(
-                            color: AetherColors.parchmentDim, fontSize: 15),
+                            color: AetherColors.parchmentDim,
+                            fontSize: 15,
+                            fontStyle: FontStyle.italic),
                       ),
                       const Spacer(flex: 3),
                       _PrimaryButton(label: 'Comenzar', onTap: _begin),
@@ -120,24 +127,103 @@ class _SplashScreenState extends State<SplashScreen>
 
 // ── Wordmark ──────────────────────────────────────────────────────────────
 
+/// The title treatment: a heavy serif slab with a soft ember glow sitting
+/// behind it and a slow gold shimmer sweeping across the letterforms — the
+/// single most ceremonial element on screen, so it earns its own painter
+/// instead of a plain styled [Text].
 class _Wordmark extends StatelessWidget {
+  const _Wordmark({required this.shimmer});
+
+  /// 0..1 loop position, reused from the tome's animation so the whole
+  /// screen breathes on one clock instead of several out-of-sync timers.
+  final double shimmer;
+
+  static const _text = 'AETHERBOOK';
+  static const _style = TextStyle(
+    fontFamily: 'Georgia',
+    fontSize: 40,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 5,
+    color: Colors.white,
+  );
+
   @override
   Widget build(BuildContext context) {
-    return ShaderMask(
-      shaderCallback: (rect) => const LinearGradient(
-        colors: [AetherColors.gold, AetherColors.goldBright, AetherColors.gold],
-        stops: [0, 0.5, 1],
-      ).createShader(rect),
-      child: const Text(
-        'AETHERBOOK',
-        style: TextStyle(
-          fontFamily: 'Georgia',
-          fontSize: 38,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 4,
-          color: Colors.white,
+    // The shimmer highlight travels left-to-right and loops; a wide,
+    // soft-edged band rather than a hard line so it reads as a gleam, not a
+    // scan.
+    final sweep = (shimmer * 2.6) - 0.8;
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Ember glow, blurred well past the glyph edges.
+        Text(
+          _text,
+          style: _style.copyWith(
+            color: AetherColors.gold.withValues(alpha: 0.55),
+            shadows: [
+              Shadow(
+                  color: AetherColors.gold.withValues(alpha: 0.6),
+                  blurRadius: 28),
+            ],
+          ),
         ),
-      ),
+        ShaderMask(
+          shaderCallback: (rect) => LinearGradient(
+            colors: const [
+              AetherColors.goldSoft,
+              AetherColors.goldBright,
+              Colors.white,
+              AetherColors.goldBright,
+              AetherColors.goldSoft,
+            ],
+            stops: [
+              (sweep - 0.35).clamp(0.0, 1.0),
+              (sweep - 0.12).clamp(0.0, 1.0),
+              sweep.clamp(0.0, 1.0),
+              (sweep + 0.12).clamp(0.0, 1.0),
+              (sweep + 0.35).clamp(0.0, 1.0),
+            ],
+          ).createShader(rect),
+          child: Text(_text, style: _style),
+        ),
+      ],
+    );
+  }
+}
+
+/// A small heraldic rule under the wordmark — two hairlines flanking a
+/// diamond — the kind of flourish that signals "this is a tome", not a form.
+class _OrnamentDivider extends StatelessWidget {
+  const _OrnamentDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    Widget line() => Container(
+          width: 42,
+          height: 1,
+          color: AetherColors.hairlineStrong,
+        );
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        line(),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AetherSpace.sm),
+          child: Transform.rotate(
+            angle: math.pi / 4,
+            child: Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                color: AetherColors.gold,
+                boxShadow: AetherShadow.glow(AetherColors.gold, strength: 0.6),
+              ),
+            ),
+          ),
+        ),
+        line(),
+      ],
     );
   }
 }
@@ -174,17 +260,26 @@ class _PrimaryButtonState extends State<_PrimaryButton> {
             gradient: const LinearGradient(
                 colors: [AetherColors.gold, AetherColors.goldBright]),
             borderRadius: AetherRadius.allMd,
-            boxShadow: AetherShadow.glow(AetherColors.gold, strength: 0.35),
+            boxShadow: AetherShadow.glow(AetherColors.gold,
+                strength: _pressed ? 0.5 : 0.35),
           ),
-          child: Text(
-            widget.label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AetherColors.void_,
-              fontWeight: FontWeight.w800,
-              fontSize: 16,
-              letterSpacing: 0.5,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.auto_stories_rounded,
+                  color: AetherColors.void_, size: 19),
+              const SizedBox(width: AetherSpace.sm),
+              Text(
+                widget.label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AetherColors.void_,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
           ),
         ),
       ),
