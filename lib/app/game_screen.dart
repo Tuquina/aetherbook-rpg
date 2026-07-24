@@ -134,6 +134,7 @@ class _GameScreenState extends State<GameScreen> {
     final c = widget.controller;
     return Scaffold(
       body: AetherBackground(
+        particles: false,
         child: ListenableBuilder(
           listenable: c,
           builder: (context, _) {

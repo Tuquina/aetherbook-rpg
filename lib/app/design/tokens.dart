@@ -62,6 +62,25 @@ abstract final class AetherColors {
   /// Critical success — the accent gold itself, the highest band.
   static const Color critical = goldBright;
   static const Color criticalDim = Color(0x33EAC978);
+
+  // ── Module accents (game-like variety) ─────────────────────────────────
+  // Each story module (GDD §1: freeform / curada / híbrida) gets its own
+  // signature color so the menu reads like a game's mode select, not a
+  // monochrome list. Gold stays the app's one true brand accent everywhere
+  // else (buttons, focus, the fate system); these two only tint their
+  // module's own card, icon and glow.
+
+  /// "Historias completas" — hand-authored, curated tales. A warm ember,
+  /// like a hearth: finished, safe, ready to sit down and read.
+  static const Color ember = Color(0xFFD9713F);
+  static const Color emberBright = Color(0xFFF2A468);
+  static const Color emberGlow = Color(0x33D9713F);
+
+  /// "Historias pre-armadas" — hybrid campaigns, a fixed skeleton dressed
+  /// turn to turn by the AI. A cool arcane teal: structure lit by magic.
+  static const Color arcane = Color(0xFF4FA3B8);
+  static const Color arcaneBright = Color(0xFF7FD0E3);
+  static const Color arcaneGlow = Color(0x334FA3B8);
 }
 
 /// Spacing scale (4-based). Use these, never raw numbers, for padding & gaps.
