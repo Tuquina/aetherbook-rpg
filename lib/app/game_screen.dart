@@ -35,10 +35,20 @@ class _GameScreenState extends State<GameScreen> {
   final ScrollController _scroll = ScrollController();
   String _lastNarration = '';
 
+  /// Whether the choices for the *current* turn are allowed to show yet. On
+  /// mobile, a reader can blow past the prose to the buttons at the bottom
+  /// without ever reading it — so each new turn starts with choices hidden
+  /// behind a "keep reading" hint, and they unlock (and then stay put, no
+  /// re-hiding on scrolling back up) once the player reaches the bottom of
+  /// the narration. Short text that doesn't overflow the viewport at all
+  /// unlocks immediately — there's nothing to scroll through.
+  bool _choicesRevealed = false;
+
   @override
   void initState() {
     super.initState();
     widget.controller.addListener(_onControllerChange);
+    _scroll.addListener(_onScroll);
     if (!widget.controller.isReady) {
       widget.controller.start(widget.worldSlug);
     }
@@ -47,23 +57,36 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void dispose() {
     widget.controller.removeListener(_onControllerChange);
+    _scroll.removeListener(_onScroll);
     _freeAction.dispose();
     _scroll.dispose();
     super.dispose();
   }
 
   /// Scroll the narration back to the top when a new turn arrives, so the
-  /// Fate Roll and fresh prose are in view.
+  /// Fate Roll and fresh prose are in view, and re-arm the reveal gate for
+  /// it.
   void _onControllerChange() {
     final narration = widget.controller.narration;
     if (narration != _lastNarration) {
       _lastNarration = narration;
+      setState(() => _choicesRevealed = false);
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scroll.hasClients) {
-          _scroll.animateTo(0,
-              duration: AetherMotion.slow, curve: AetherMotion.standard);
+        if (!_scroll.hasClients) return;
+        _scroll.animateTo(0,
+            duration: AetherMotion.slow, curve: AetherMotion.standard);
+        if (_scroll.position.maxScrollExtent <= 0 && mounted) {
+          setState(() => _choicesRevealed = true);
         }
       });
+    }
+  }
+
+  void _onScroll() {
+    if (_choicesRevealed || !_scroll.hasClients) return;
+    final position = _scroll.position;
+    if (position.pixels >= position.maxScrollExtent - 24) {
+      setState(() => _choicesRevealed = true);
     }
   }
 
@@ -120,11 +143,14 @@ class _GameScreenState extends State<GameScreen> {
                     Expanded(
                       child: _NarrationView(controller: c, scroll: _scroll),
                     ),
-                    _ChoicesBar(
-                      controller: c,
-                      freeAction: _freeAction,
-                      onSubmitFree: _submitFreeAction,
-                    ),
+                    if (c.isLoading || _choicesRevealed)
+                      _ChoicesBar(
+                        controller: c,
+                        freeAction: _freeAction,
+                        onSubmitFree: _submitFreeAction,
+                      )
+                    else
+                      const _KeepReadingHint(),
                   ],
                 ),
               ),
@@ -185,6 +211,7 @@ class _NarrationView extends StatelessWidget {
   Widget build(BuildContext context) {
     final resolution = controller.lastResolution;
     return SingleChildScrollView(
+      key: const Key('narrationScroll'),
       controller: scroll,
       padding: const EdgeInsets.fromLTRB(
           AetherSpace.xl, AetherSpace.xl, AetherSpace.xl, AetherSpace.lg),
@@ -233,6 +260,38 @@ class _NarrationView extends StatelessWidget {
                 style: AetherType.body.copyWith(color: AetherColors.failure)),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Sits where [_ChoicesBar] would, before the player has scrolled through
+/// the current turn's prose — a quiet nudge, not a wall, so the app doesn't
+/// look broken when the buttons are simply not there yet.
+class _KeepReadingHint extends StatelessWidget {
+  const _KeepReadingHint();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AetherSpace.lg, vertical: AetherSpace.lg),
+      decoration: const BoxDecoration(
+        color: AetherColors.surface,
+        border: Border(top: BorderSide(color: AetherColors.hairline)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Seguí leyendo',
+                style: AetherType.caption.copyWith(color: AetherColors.parchmentFaint)),
+            const SizedBox(width: AetherSpace.xs),
+            const Icon(Icons.keyboard_arrow_down_rounded,
+                size: 18, color: AetherColors.parchmentFaint),
+          ],
+        ),
       ),
     );
   }
