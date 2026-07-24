@@ -51,6 +51,16 @@ class _GameScreenState extends State<GameScreen> {
     _scroll.addListener(_onScroll);
     if (!widget.controller.isReady) {
       widget.controller.start(widget.worldSlug);
+    } else {
+      // ChargenScreen already called start() and handed us a ready
+      // controller — its notifyListeners() for that first turn fired before
+      // this State existed to hear it, so _onControllerChange never runs for
+      // it. Arm the reveal gate for whatever's already loaded instead of
+      // leaving it permanently gated behind a turn change that already
+      // happened (campaign-bible bug: short opening prose that fits without
+      // scrolling never revealed the choices bar at all).
+      _lastNarration = widget.controller.narration;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _armRevealGate());
     }
   }
 
@@ -75,10 +85,18 @@ class _GameScreenState extends State<GameScreen> {
         if (!_scroll.hasClients) return;
         _scroll.animateTo(0,
             duration: AetherMotion.slow, curve: AetherMotion.standard);
-        if (_scroll.position.maxScrollExtent <= 0 && mounted) {
-          setState(() => _choicesRevealed = true);
-        }
+        _armRevealGate();
       });
+    }
+  }
+
+  /// Reveals the choices immediately when the current narration doesn't
+  /// overflow the viewport — there's nothing to scroll through, so gating
+  /// on a scroll gesture that can never happen would strand the player.
+  void _armRevealGate() {
+    if (!_scroll.hasClients || !mounted) return;
+    if (_scroll.position.maxScrollExtent <= 0) {
+      setState(() => _choicesRevealed = true);
     }
   }
 

@@ -61,4 +61,32 @@ void main() {
     expect(find.textContaining('vs dificultad 12'), findsOneWidget);
     expect(find.text('ÉXITO'), findsOneWidget);
   });
+
+  testWidgets(
+      'reveals choices for an already-started controller with short opening '
+      'prose, exactly how ChargenScreen hands off to GameScreen', (tester) async {
+    // ChargenScreen awaits controller.start() itself and only then navigates
+    // to GameScreen with an already-`isReady` controller — GameScreen never
+    // sees the notifyListeners() call for that first turn, since it didn't
+    // exist yet to be listening. A short seed narration (like this world's)
+    // fits on screen without any scrolling, so if the "keep reading" reveal
+    // gate isn't armed independently of that missed notification, the
+    // player is stuck forever with no way to open it.
+    final controller = GameController(
+      worldRepository: _InMemoryWorldRepository(),
+      narrator: const FakeNarratorAdapter(latency: Duration.zero),
+      dice: const FixedDice(10),
+    );
+    await controller.start('xianxia');
+    expect(controller.isReady, isTrue);
+
+    await tester.pumpWidget(MaterialApp(home: GameScreen(controller: controller)));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.textContaining('sendero de piedra'), findsOneWidget);
+    expect(find.text('Meditar'), findsOneWidget,
+        reason: 'choices must be revealed immediately for prose that never '
+            'needed scrolling in the first place');
+  });
 }
