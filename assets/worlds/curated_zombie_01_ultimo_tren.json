@@ -1078,7 +1078,7 @@
 
       "c2_n01_bifurcacion": {
         "type": "fixed_anchor",
-        "narration": "A ocho kilómetros de La Cámara, la ruta se divide alrededor de un cartel caído.\n\nHacia el norte, la autopista llega al depósito vial en seis horas. Está abierta, expuesta y cubierta de vehículos de la evacuación.\n\nHacia el este, el Barrio Bajo permite avanzar entre edificios hasta la avenida ferroviaria. Lleva nueve horas. Hay una farmacia, un supermercado y demasiadas ventanas.\n\nEn el guardarraíl alguien pintó: \"NO SIGAN LAS CAMPANAS\".\n\nLa pintura es reciente.",
+        "narration": "A ocho kilómetros de La Cámara, la ruta se divide alrededor de un cartel caído que nadie se molestó en levantar. El grupo camina en fila desde el amanecer, sin hablar mucho, guardando el aire para cuando haga falta.\n\nHacia el norte, la autopista llega al depósito vial en seis horas. Está abierta, expuesta, cubierta de metal oxidado de la evacuación — se ve todo desde lejos, y desde lejos también los ven a ellos.\n\nHacia el este, el Barrio Bajo permite avanzar entre edificios hasta la avenida ferroviaria. Lleva nueve horas y esconde tanto como protege: una farmacia, un supermercado, demasiadas ventanas oscuras que podrían tener algo mirando desde adentro.\n\nEn el guardarraíl, con pintura que todavía no perdió el brillo, alguien escribió: \"NO SIGAN LAS CAMPANAS\".\n\nNadie en el grupo sabe todavía qué campanas son. Van a averiguarlo igual.",
         "choices": [
           {
             "label": "Tomar la autopista",
@@ -1103,7 +1103,7 @@
 
       "c2_n02_autopista": {
         "type": "fixed_anchor",
-        "narration": "Los autos empiezan separados. Después forman dos filas. Luego seis. Cerca del peaje, la evacuación se convirtió en una sola masa de metal que ocupa banquinas y zanja.\n\nLos cuerpos dentro llevan cinturón. El frío los mantiene doblados sobre volantes, sillitas infantiles y puertas que nunca abrieron.\n\nEl grupo avanza sin tocar carrocerías.\n\nA mitad del embotellamiento, una luz parpadea dentro de un autobús escolar.\n\nNo es electricidad. Alguien cubre y descubre una linterna.\n\nDentro hay tres supervivientes: Irene Paz, cuarenta y dos años; su hijo Leo, once; Esteban, sesenta y siete, con la pierna fracturada. Llevan dos días atrapados. Ocho quietos dormidos bloquean la salida trasera.",
+        "narration": "Los autos empiezan separados, uno cada tanto, como si la gente todavía hubiera tenido tiempo de elegir su lugar. Después forman dos filas. Luego seis. Cerca del peaje, la evacuación entera se soldó en una sola masa de metal oxidado que ocupa banquina y zanja por igual, capó contra baúl hasta donde alcanza la vista.\n\nLos cuerpos de adentro todavía llevan puesto el cinturón. El frío los mantiene doblados sobre volantes, sobre sillitas infantiles vacías, contra puertas que nunca llegaron a abrirse. El grupo avanza entre ellos sin tocar una sola carrocería, sin necesidad de decirse por qué.\n\nA mitad del embotellamiento, algo parpadea dentro de un autobús escolar.\n\nNo es electricidad — nada en esta ruta tiene electricidad desde hace trece meses. Es alguien cubriendo y descubriendo una linterna con la mano, un código improvisado por quien ya no espera que nadie lo entienda y lo intenta de todos modos.\n\nDentro hay tres supervivientes: Irene Paz, cuarenta y dos años; su hijo Leo, once; Esteban, sesenta y siete, con la pierna fracturada apoyada sobre una mochila. Llevan dos días atrapados, racionando el aire de un autobús cerrado. Ocho quietos dormidos bloquean la salida trasera, apilados unos contra otros como si el frío también los hubiera hecho buscar calor.",
         "extended_conflict": {"successes_required": 3, "failures_allowed": 2, "repeat_attribute_penalty": -2},
         "choices": [
           {
@@ -1200,7 +1200,7 @@
 
       "c2_n03_barrio_bajo": {
         "type": "fixed_anchor",
-        "narration": "En el Barrio Bajo, las puertas están abiertas y las calles vacías.\n\nLa inundación del último verano dejó una línea de barro a un metro de altura. Los quietos quedaron dentro de casas y comercios cuando el agua bajó. Algunos permanecen de pie detrás de vidrieras, cubiertos de polvo, como clientes esperando.\n\nCada tres minutos suena una campana en algún lugar del centro.\n\nUna sola nota.\n\nDespués, silencio.\n\nEl grupo puede explorar la farmacia o el supermercado, no ambos sin gastar cuatro horas.",
+        "narration": "En el Barrio Bajo, las puertas están abiertas de par en par y las calles, vacías de un modo que se siente decidido, no accidental.\n\nLa inundación del último verano dejó una línea de barro seca a un metro de altura, marcando cada fachada como una cicatriz horizontal. Los quietos quedaron atrapados dentro de casas y comercios cuando el agua bajó, y algunos siguen de pie detrás de las vidrieras, cubiertos de polvo, con la cabeza ladeada hacia la calle — como clientes esperando a que alguien abra un negocio que ya nadie va a atender.\n\nCada tres minutos suena una campana en algún lugar del centro.\n\nUna sola nota, clara, casi amable.\n\nDespués, silencio otra vez.\n\nEl grupo puede explorar la farmacia o el supermercado, no ambos sin gastar cuatro horas que el reloj de Aurora no va a devolver.",
         "choices": [
           {
             "label": "Entrar a la farmacia",
@@ -1385,7 +1385,7 @@
 
       "c2_n05_noche_taller": {
         "type": "fixed_anchor",
-        "narration": "Cierran el portón antes de que caiga la temperatura.\n\nEl taller huele a caucho y aceite viejo. Damián tapa con tela los vidrios de la oficina. Los demás comen sin encender fuego.\n\nA las 22:14, algo marca la hora sin que nadie lo pida. C-17 recibió la señal exactamente a esa hora.\n\nDesde la ruta llega un golpe distante. Después otro. Los quietos chocan contra vehículos mientras siguen una campana que el grupo ya no oye.",
+        "narration": "Cierran el portón antes de que caiga la temperatura, y el frío entra igual, por debajo, por donde el cemento se rajó hace años.\n\nEl taller huele a caucho viejo y aceite rancio, un olor que se pega a la ropa y no sale ni con agua hirviendo. Damián tapa con tela los vidrios de la oficina, midiendo cada movimiento contra la oscuridad de afuera. Los demás comen sin encender fuego, en silencio, pasándose una lata de mano en mano.\n\nA las 22:14, sin que nadie lo pida, algo en el cuerpo de Damián marca la hora sola. C-17 recibió la señal exactamente a esa hora, hace trece meses, y una parte de él nunca dejó de contar desde entonces.\n\nDesde la ruta llega un golpe distante contra chapa. Después otro. Los quietos chocan contra los autos vacíos, siguiendo una campana que el grupo, esta noche, ya no alcanza a oír.",
         "choices": [
           {
             "label": "Descansar gastando un suministro",
@@ -1456,7 +1456,7 @@
 
       "c3_n01_subestacion": {
         "type": "fixed_anchor",
-        "narration": "La subestación controla el cruce entre la vía de San Gregorio y el ramal de Los Silos.\n\nAlguien reforzó las ventanas con chapas de silo. Sobre el techo, un hombre apunta con rifle.\n\n—Dejen las mochilas y vuelvan por donde vinieron.\n\nDamián reconoce a Yago Ríos por la bufanda verde. Lo vio una vez, durante el intercambio que terminó con acusaciones y un disparo al aire.\n\nLa conversación dura cuatro frases antes de que un cable bajo los pies de Yago ceda.\n\nLa pasarela se inclina. Yago cae dentro del patio de transformadores. Su rifle dispara al aire.\n\nDesde el canal de drenaje responden cuerpos.",
+        "narration": "La subestación controla el cruce entre la vía de San Gregorio y el ramal de Los Silos — la única llave que abre las dos rutas a la vez, y por eso alguien la sigue defendiendo.\n\nLas ventanas están reforzadas con chapas de silo, soldadas sin mucho arte pero con toda la firmeza necesaria. Sobre el techo, recortado contra un cielo del color del cemento, un hombre apunta con rifle.\n\n—Dejen las mochilas y vuelvan por donde vinieron.\n\nDamián reconoce a Yago Ríos por la bufanda verde antes de reconocerlo por la cara. Lo vio una sola vez, durante un intercambio que terminó en acusaciones cruzadas y un disparo al aire que nadie quiso explicar después.\n\nLa conversación dura apenas cuatro frases antes de que un cable, bajo los pies de Yago, ceda con un chasquido seco.\n\nLa pasarela se inclina. Yago cae dentro del patio de transformadores, y su rifle dispara al aire una vez más, esta vez sin querer.\n\nDesde el canal de drenaje, algo responde al ruido. Varios cuerpos, en realidad — moviéndose ya hacia la luz.",
         "conditional_inserts": [
           {"text": "Ramiro, si acompaña, retira el seguro de su arma antes de que nadie diga nada.", "gate": {"type": "flag", "key": "team_has_ramiro"}}
         ],
@@ -1585,7 +1585,7 @@
 
       "c3_n03_pacto_silos": {
         "type": "fixed_anchor",
-        "narration": "Los Silos se ven desde tres kilómetros: seis cilindros blancos, una torre y una bandera azul para indicar viento.\n\nEl portón está hecho con dos cosechadoras enfrentadas. Detrás hay personas delgadas, no hambrientas. Cada una lleva un pañuelo húmedo sobre la boca.\n\nCelia Ordóñez recibe al grupo dentro de una balanza para camiones. Sobre la mesa hay tres vasos de agua. Ninguno está lleno.\n\n—Ustedes tienen filtros —dice—. Nosotros tenemos diésel. Y ahora los dos sabemos que viene un tren.",
+        "narration": "Los Silos se ven desde tres kilómetros: seis cilindros blancos que todavía reflejan luz, una torre de riego oxidada y una bandera azul que alguien cose de nuevo cada vez que el viento la deshilacha, solo para saber de dónde sopla.\n\nEl portón está hecho con dos cosechadoras enfrentadas, óxido contra óxido. Detrás hay personas delgadas, no hambrientas — hay una diferencia, y se nota en cómo caminan. Cada una lleva un pañuelo húmedo sobre la boca y nariz, como una máscara que ya nadie se molesta en explicar.\n\nCelia Ordóñez recibe al grupo dentro de una balanza para camiones, el metal frío colándose por las suelas. Sobre la mesa hay tres vasos de agua. Ninguno está lleno.\n\n—Ustedes tienen filtros —dice, sin preámbulo, con la voz de alguien que dejó de perder tiempo hace mucho—. Nosotros tenemos diésel. Y ahora los dos sabemos que viene un tren.",
         "conditional_inserts": [
           {"text": "Yago, si fue ayudado, entra detrás del grupo sin necesitar ayuda para caminar.", "gate": {"type": "flag", "key": "yago_helped"}},
           {"text": "Yago, capturado, entra con las manos atadas. Los guardias de Los Silos apuntan sin dudar.", "gate": {"type": "flag", "key": "yago_captured"}},
