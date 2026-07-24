@@ -34,12 +34,28 @@ class AetherBackground extends StatefulWidget {
 
 class _AetherBackgroundState extends State<AetherBackground>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 26),
-  )..repeat();
+  // Null (never even created) when `widget.particles` is false
+  // (game_screen.dart, codex_screen.dart) — an AnimationController that
+  // `..repeat()`s forever but is never painted would still tick in the
+  // background for nothing, and an indefinitely-repeating animation never
+  // "settles", so it would also hang any pumpAndSettle()-based widget test
+  // on that screen. Created in initState, not as a lazy `late final` field
+  // default: when it *was* unconditional-but-lazy, its first access ended up
+  // happening inside dispose() (nothing in build() touched it when particles
+  // was false), which crashes — vsync can't ask a deactivated element for a
+  // ticker ("Looking up a deactivated widget's ancestor is unsafe").
+  AnimationController? _c;
+  List<_Mote> _motes = const [];
 
-  late List<_Mote> _motes = _seedMotes(widget.accent);
+  @override
+  void initState() {
+    super.initState();
+    if (widget.particles) {
+      _c = AnimationController(vsync: this, duration: const Duration(seconds: 26))
+        ..repeat();
+      _motes = _seedMotes(widget.accent);
+    }
+  }
 
   static List<_Mote> _seedMotes(Color accent) {
     final rng = math.Random(7); // fixed seed: identical layout every launch.
@@ -59,19 +75,22 @@ class _AetherBackgroundState extends State<AetherBackground>
   @override
   void didUpdateWidget(covariant AetherBackground old) {
     super.didUpdateWidget(old);
-    if (old.accent != widget.accent) _motes = _seedMotes(widget.accent);
+    if (_c != null && old.accent != widget.accent) {
+      _motes = _seedMotes(widget.accent);
+    }
   }
 
   @override
   void dispose() {
-    _c.dispose();
+    _c?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.of(context).disableAnimations;
-    if (reduceMotion && _c.isAnimating) _c.stop();
+    final c = _c;
+    if (reduceMotion && c != null && c.isAnimating) c.stop();
 
     return DecoratedBox(
       decoration: const BoxDecoration(
@@ -85,13 +104,13 @@ class _AetherBackgroundState extends State<AetherBackground>
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (widget.particles && !reduceMotion)
+          if (c != null && !reduceMotion)
             Positioned.fill(
               child: IgnorePointer(
                 child: AnimatedBuilder(
-                  animation: _c,
+                  animation: c,
                   builder: (context, _) => CustomPaint(
-                    painter: _MoteFieldPainter(t: _c.value, motes: _motes),
+                    painter: _MoteFieldPainter(t: c.value, motes: _motes),
                   ),
                 ),
               ),
