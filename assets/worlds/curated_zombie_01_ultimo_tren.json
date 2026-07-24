@@ -97,8 +97,19 @@
   ],
 
   "graph": {
-    "start_node": "p0_perfil",
+    "start_node": "intro_fiebre_lazaro",
     "nodes": {
+      "intro_fiebre_lazaro": {
+        "type": "fixed_anchor",
+        "narration": "En la reja de entrada a La Cámara alguien clavó un cartel el primer invierno, con la pintura que quedaba en el depósito de mantenimiento, y nadie lo bajó desde entonces:\n\nFIEBRE LÁZARO. TRECE MESES. NO HAY CURA CONOCIDA, NO HAY VACUNA CONOCIDA. UN MORDIDO SE CONVIERTE ENTRE SEIS Y CUARENTA Y OCHO HORAS. LOS LLAMAMOS QUIETOS PORQUE ES LO QUE SON CUANDO NADIE LOS PROVOCA — CAMINAN POCO, DUERMEN DE PIE, RECUERDAN EL SONIDO ANTES QUE LA CARA. DECILES ASÍ DELANTE DE LOS CHICOS. LA OTRA PALABRA YA NO SE USA ACÁ.\n\nDebajo, con otra letra, alguien agregó después: NO ES EL FIN DEL MUNDO. ES EL FIN DE UN HORARIO DE TRENES.\n\nLa Cámara fue, antes de la Caída, un depósito frigorífico de la red ferroviaria: paredes de un metro, generador propio, capacidad para guardar carne a treinta bajo cero. Hoy guarda personas — sesenta y tres, entre quienes duermen del lado caliente del panel aislante y quienes hacen guardia del otro. Damián Salvatierra fue operador de señales en la estación central antes de que existiera la palabra \"antes\". Ahora reparte turnos de guardia, cuenta litros de diésel y decide, algunas noches, quién duerme cerca del generador y quién no.\n\nHace cuatro días llegó, por una radio que no debería captar nada a esa distancia, la primera señal clara en trece meses: un convoy llamado Aurora viene hacia el este, con lugar para veinte personas más. Va a llegar a la estación de San Gregorio — del otro lado de una ciudad muerta y un túnel que Damián conoce mejor de lo que le gustaría admitir.\n\nEsto es lo que pasa la noche que el generador se detiene.",
+        "choices": [
+          {
+            "label": "Empezar",
+            "target": "p0_perfil",
+            "result_text": "Esa noche, como todas, Damián se acuesta vestido."
+          }
+        ]
+      },
       "p0_perfil": {
         "type": "fixed_anchor",
         "narration": "Damián Salvatierra despierta a las 03:12 porque el generador deja de vibrar bajo el piso de la cabina — esa vibración constante que dejó de notar hace meses y que ahora, ausente, lo saca del sueño como una mano en el hombro.\n\nSe incorpora vestido, con las botas puestas: duerme así desde la Caída, y ya ni se pregunta por qué. La lámpara de emergencia tiñe de rojo las tuberías del techo. El termómetro de la pared marca cuatro grados y sigue bajando. Del otro lado del panel aislante duermen sesenta y dos personas que todavía dicen \"cortó la luz\" en vez de \"empezamos a morir\", y Damián no las corrige, porque hace tiempo dejó de tener sentido explicarles cuánto tarda el frío en convertirse en agua congelada dentro de las cañerías, comida podrida en la cámara y la tos seca que siempre empieza entre los más viejos.\n\nCuenta hasta cinco, como todas las noches. A tres, el generador tose. A cinco, agarra impulso y vuelve con un golpe asmático que hace vibrar el termómetro. Las luces se encienden. En el dormitorio común alguien aplaude, agradecido, y otra voz —más aguda, más cansada— pide que se calle antes de despertar a los chicos.\n\nEn la mesa lo esperan las mismas tres cosas de siempre: la llave maestra del ferrocarril, una taza con café requemado y usado dos veces, y el objeto que Damián no consiguió tirar en trece meses.\n\nAbril duerme sentada junto a la radio, con la soldadora todavía fría en el regazo y una mancha de estaño fresco en el pulgar. Anotó tres frecuencias en la libreta y, debajo, una sola frase: \"Nada durante seis horas\". Damián le saca la herramienta de las manos con el cuidado de quien ya hizo ese gesto cien veces, y está por taparla con una manta cuando la radio del ferrocarril suelta un clic.\n\nNo trae voz. Solo una portadora débil, regular, como si alguien respirara del otro lado de una pared muy vieja.",

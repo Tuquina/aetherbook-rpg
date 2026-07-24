@@ -31,6 +31,7 @@ World _loadWorld() {
 /// not a distinct id — splitting them keeps every branch fully authored
 /// with no runtime "guess which flag is missing" logic.
 const _expectedNodeIds = <String>{
+  'intro_fiebre_lazaro',
   'p0_perfil',
   'p0_postura',
   'p1_alarma_camara',
@@ -212,8 +213,8 @@ void main() {
   });
 
   group('curated_zombie_01_ultimo_tren.json — story graph', () {
-    test('starts at p0_perfil', () {
-      expect(_loadWorld().storyGraph!.startNodeId, 'p0_perfil');
+    test('starts at intro_fiebre_lazaro', () {
+      expect(_loadWorld().storyGraph!.startNodeId, 'intro_fiebre_lazaro');
     });
 
     test('every authored node is a FixedAnchorNode (no AI-driven corridors/hubs yet)', () {
