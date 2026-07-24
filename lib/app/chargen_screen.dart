@@ -21,6 +21,7 @@ class ChargenScreen extends StatefulWidget {
     required this.worldSlug,
     required this.world,
     this.forceNew = false,
+    this.alwaysCreateNew = false,
   });
 
   final GameController controller;
@@ -31,6 +32,13 @@ class ChargenScreen extends StatefulWidget {
   /// reached via "reiniciar historia" and any existing session for this
   /// world should be abandoned rather than resumed.
   final bool forceNew;
+
+  /// Passed through to `GameController.start` — true when this chargen was
+  /// reached by picking a genre on `CreateStoryScreen` ("creá tu propia
+  /// historia"): that flow always creates one more story rather than
+  /// resuming or abandoning an existing one, since a player can have several
+  /// active sessions for the same freeform world at once (CLAUDE.md Fase 2).
+  final bool alwaysCreateNew;
 
   @override
   State<ChargenScreen> createState() => _ChargenScreenState();
@@ -79,6 +87,7 @@ class _ChargenScreenState extends State<ChargenScreen> {
         personalItem: _personalItemController.text.trim(),
       ),
       forceNew: widget.forceNew,
+      alwaysCreateNew: widget.alwaysCreateNew,
     );
 
     if (!mounted) return;

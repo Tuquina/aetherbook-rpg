@@ -47,6 +47,26 @@ Character characterFromRow(Map<String, dynamic> row) {
   );
 }
 
+/// A `game_sessions` row joined with its `characters` row (via the embedded
+/// `characters(name)` select `SupabaseGameStateAdapter.listActiveSessions`
+/// asks for) into a [GameSessionSummary]. PostgREST returns an embedded
+/// to-one relationship as a single object (`characters.session_id` is
+/// `unique`, so the FK is recognized as one-to-one) — but this also accepts
+/// a one-element list defensively, in case a future schema/client version
+/// embeds it differently.
+GameSessionSummary gameSessionSummaryFromRow(Map<String, dynamic> row) {
+  final rawCharacter = row['characters'];
+  final characterRow = rawCharacter is List
+      ? (rawCharacter.isNotEmpty ? rawCharacter.first as Map : null)
+      : rawCharacter as Map?;
+  return GameSessionSummary(
+    id: row['id'] as String,
+    worldSlug: row['world_slug'] as String,
+    characterName: characterRow?['name'] as String? ?? '???',
+    updatedAt: DateTime.parse(row['updated_at'] as String),
+  );
+}
+
 /// The `game_sessions` columns that track graph position — read alongside
 /// the session row in `loadLatestSession`, written by `saveGraphPosition`.
 Map<String, Object?> graphPositionToRow({

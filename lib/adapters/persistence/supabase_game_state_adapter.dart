@@ -29,9 +29,25 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
         .order('created_at', ascending: false)
         .limit(1)
         .maybeSingle();
-
     if (sessionRow == null) return null;
+    return _loadFullSession(sessionRow);
+  }
 
+  @override
+  Future<GameSession?> loadSession(String sessionId) async {
+    final sessionRow = await _client
+        .from('game_sessions')
+        .select()
+        .eq('id', sessionId)
+        .maybeSingle();
+    if (sessionRow == null) return null;
+    return _loadFullSession(sessionRow);
+  }
+
+  /// Shared tail of [loadLatestSession]/[loadSession] once the
+  /// `game_sessions` row itself is in hand: fetches its character and full
+  /// turn log and assembles the domain [GameSession].
+  Future<GameSession?> _loadFullSession(Map<String, dynamic> sessionRow) async {
     final sessionId = sessionRow['id'] as String;
 
     final characterRow = await _client
@@ -43,7 +59,7 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
     // A session row with no matching character is a partial write — e.g. a
     // prior createSession that inserted the session but then failed before
     // inserting the character (a missing-column error, a dropped
-    // connection). Treat it as if no active session exists so start() falls
+    // connection). Treat it as if no session exists so the caller falls
     // through to createSession and gets a clean one, instead of crashing on
     // every future load of this world.
     if (characterRow == null) return null;
@@ -56,7 +72,7 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
 
     return GameSession(
       id: sessionId,
-      worldSlug: worldSlug,
+      worldSlug: sessionRow['world_slug'] as String,
       character: characterFromRow(characterRow),
       turns: [for (final row in turnRows) turnFromRow(row)],
       currentNodeId: sessionRow['current_node_id'] as String?,
@@ -64,6 +80,18 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
       extendedConflictProgress:
           extendedConflictProgressFromRow(sessionRow['extended_conflict_progress']),
     );
+  }
+
+  @override
+  Future<List<GameSessionSummary>> listActiveSessions(List<String> worldSlugs) async {
+    if (worldSlugs.isEmpty) return const [];
+    final rows = await _client
+        .from('game_sessions')
+        .select('id, world_slug, updated_at, characters(name)')
+        .inFilter('world_slug', worldSlugs)
+        .eq('status', 'active')
+        .order('updated_at', ascending: false);
+    return [for (final row in rows) gameSessionSummaryFromRow(row)];
   }
 
   @override

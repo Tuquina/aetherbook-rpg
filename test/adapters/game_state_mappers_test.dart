@@ -231,4 +231,41 @@ void main() {
       expect(turn.suggestedChoices, isEmpty);
     });
   });
+
+  group('gameSessionSummaryFromRow', () {
+    test('reads the embedded characters(name) as a single object', () {
+      final summary = gameSessionSummaryFromRow({
+        'id': 'session-1',
+        'world_slug': 'cyberpunk',
+        'updated_at': '2026-07-24T10:00:00.000Z',
+        'characters': {'name': 'Vex'},
+      });
+      expect(summary.id, 'session-1');
+      expect(summary.worldSlug, 'cyberpunk');
+      expect(summary.characterName, 'Vex');
+      expect(summary.updatedAt, DateTime.parse('2026-07-24T10:00:00.000Z'));
+    });
+
+    test('also accepts the embed as a one-element list, defensively', () {
+      final summary = gameSessionSummaryFromRow({
+        'id': 'session-2',
+        'world_slug': 'postapoc',
+        'updated_at': '2026-07-24T10:00:00.000Z',
+        'characters': [
+          {'name': 'Ash'},
+        ],
+      });
+      expect(summary.characterName, 'Ash');
+    });
+
+    test('falls back to "???" when the character row is missing', () {
+      final summary = gameSessionSummaryFromRow({
+        'id': 'session-3',
+        'world_slug': 'isekai',
+        'updated_at': '2026-07-24T10:00:00.000Z',
+        'characters': null,
+      });
+      expect(summary.characterName, '???');
+    });
+  });
 }

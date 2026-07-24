@@ -7,6 +7,27 @@ import 'widgets/atmosphere.dart';
 import 'world_select_screen.dart'
     show StoryModule, StoryModuleInfo, StoryModuleStyle, storyModuleStyle;
 
+/// Display label for a world's `theme` slug, shown as a card's overline
+/// instead of the raw JSON value (e.g. `postapoc_zombie`). Keyed by `theme`,
+/// not by the world's `slug` — the two aren't always the same string (e.g.
+/// `curated_zombie_01_ultimo_tren`'s theme is `postapoc_zombie`), and the new
+/// freeform genre worlds (Fase 2) deliberately use a *different* `postapoc`
+/// theme so the two post-apocalyptic offerings — one curated campaign, one
+/// open-ended genre — never get confused with each other in the UI. Falls
+/// back to the raw slug, uppercased, for a theme this map hasn't described
+/// yet — purely presentational, never blocks a world from being playable.
+const _themeLabels = {
+  'postapoc_zombie': 'Postapocalíptica · supervivencia tras el colapso',
+  'xianxia': 'Xianxia · cultivo y ascensión inmortal',
+  'isekai': 'Isekai · transportado a otro mundo',
+  'superheroes': 'Superhéroes · poderes y responsabilidad',
+  'cyberpunk': 'Cyberpunk · neón, implantes y corporaciones',
+  'postapoc': 'Post-apocalíptico · un mundo caído, sin guion',
+};
+
+String themeLabelFor(String theme) =>
+    _themeLabels[theme] ?? theme.toUpperCase();
+
 /// Reached by tapping one of the three module cards on [WorldSelectScreen]:
 /// shows that module's title + explanation up top, then the campaigns that
 /// belong to it. Selecting or restarting a campaign is delegated back to the
@@ -50,7 +71,7 @@ class StoryModuleScreen extends StatelessWidget {
                           Padding(
                             padding:
                                 const EdgeInsets.only(bottom: AetherSpace.md),
-                            child: _StoryCard(
+                            child: StoryCard(
                               world: world,
                               accent: style.accent,
                               onTap: () => onTap(world),
@@ -142,30 +163,31 @@ class _ModuleBanner extends StatelessWidget {
 
 /// A single campaign's card: name, tone, catalog blurb, duration/warning,
 /// and the tap target that leads into it. Carries the parent module's
-/// accent so every card on a given screen reads as one family.
-class _StoryCard extends StatelessWidget {
-  const _StoryCard({
+/// accent so every card on a given screen reads as one family. Public (used
+/// by `CreateStoryScreen` too, for the freeform module's genre cards).
+class StoryCard extends StatelessWidget {
+  const StoryCard({
+    super.key,
     required this.world,
     required this.accent,
     required this.onTap,
-    required this.onRestart,
+    this.onRestart,
   });
 
   final World world;
   final Color accent;
   final VoidCallback onTap;
-  final VoidCallback onRestart;
 
-  static const _themeLabels = {
-    'postapoc_zombie': 'Postapocalíptica · supervivencia tras el colapso',
-    'xianxia': 'Xianxia · cultivo y ascensión inmortal',
-  };
+  /// `null` hides the "reiniciar historia" affordance entirely — the
+  /// freeform module's genre cards always create a new story rather than
+  /// restarting one, so there's nothing to reset.
+  final VoidCallback? onRestart;
 
-  String get _themeLabel => _themeLabels[world.theme] ?? world.theme.toUpperCase();
+  String get _themeLabel => themeLabelFor(world.theme);
 
   @override
   Widget build(BuildContext context) {
-    return _Pressable(
+    return Pressable(
       onTap: onTap,
       child: (pressed) => AnimatedContainer(
         duration: AetherMotion.fast,
@@ -235,14 +257,15 @@ class _StoryCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AetherSpace.sm),
-            IconButton(
-              onPressed: onRestart,
-              tooltip: 'Reiniciar historia',
-              icon: const Icon(Icons.replay_rounded, size: 20),
-              color: AetherColors.parchmentFaint,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            ),
+            if (onRestart != null)
+              IconButton(
+                onPressed: onRestart,
+                tooltip: 'Reiniciar historia',
+                icon: const Icon(Icons.replay_rounded, size: 20),
+                color: AetherColors.parchmentFaint,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              ),
             Icon(Icons.chevron_right, color: accent),
           ],
         ),
@@ -254,17 +277,18 @@ class _StoryCard extends StatelessWidget {
 /// Shared press-scale wrapper: every tappable card in the story-select flow
 /// dips slightly and hands its pressed state to [child] so the accent border
 /// can brighten with it — one tactile feel across module and story cards.
-class _Pressable extends StatefulWidget {
-  const _Pressable({required this.child, required this.onTap});
+/// Public (used by `CreateStoryScreen` too).
+class Pressable extends StatefulWidget {
+  const Pressable({super.key, required this.child, required this.onTap});
 
   final Widget Function(bool pressed) child;
   final VoidCallback onTap;
 
   @override
-  State<_Pressable> createState() => _PressableState();
+  State<Pressable> createState() => _PressableState();
 }
 
-class _PressableState extends State<_Pressable> {
+class _PressableState extends State<Pressable> {
   bool _pressed = false;
 
   void _set(bool v) {

@@ -1,45 +1,78 @@
 {
   "slug": "xianxia",
-  "name": "El Sendero del Qi",
+  "name": "Xianxia",
   "theme": "xianxia",
   "tone": "épico y contemplativo",
-  "system_prompt": "Sos el Game Master de un mundo xianxia de cultivo. Narrás en segunda persona, en español, con tono épico y contemplativo. NUNCA inventes stats ni resuelvas tiradas: recibís el resultado mecánico ya calculado y solo lo narrás con estilo. Devolvés SOLO JSON válido, sin markdown, sin backticks, sin preámbulo.",
+  "system_prompt": "Sos el Game Master de una historia xianxia de cultivo, sectas y ascensión espiritual, generada en el momento junto al jugador — no hay guion previo. Narrás en segunda persona, en español, con tono épico y contemplativo. NUNCA inventes stats ni resuelvas tiradas: recibís el resultado mecánico ya calculado y solo lo narrás con estilo. Tu trabajo también es GUIAR: proponé rumbos concretos de la trama (sectas, rivales, técnicas, secretos), pero dejá que las acciones del jugador decidan hacia dónde va. Devolvés SOLO JSON válido, sin markdown, sin backticks, sin preámbulo.",
   "image_style_suffix": "arte xianxia, tinta china, dorado etéreo, montañas brumosas",
+  "catalog_description": "Cultivo, sectas y ascensión espiritual. Elegís tu origen y tu juramento — el camino lo escribe cada decisión.",
+
   "progression": {
     "enabled": true,
     "unit_label": "reino",
     "base_exp_per_level": 300
   },
+
   "resolution": {
     "default_difficulty": 12,
     "critical_margin": 5,
     "primary_attribute": "espiritu",
     "attribute_keywords": {
-      "cuerpo": ["forzar", "pelear", "escalar", "cargar", "empujar", "correr", "explorar", "trepar", "saltar", "esquivar"],
-      "mente": ["leer", "recordar", "descifrar", "estudiar", "planificar", "analizar", "manuscrito", "calcular", "observar"],
-      "espiritu": ["meditar", "sentir", "invocar", "rezar", "percibir", "flujo", "qi", "cultivar", "canalizar"]
+      "cuerpo": ["forzar", "pelear", "escalar", "cargar", "empujar", "correr", "esquivar", "resistir", "saltar", "trepar"],
+      "agudeza": ["leer", "recordar", "descifrar", "estudiar", "planificar", "analizar", "observar", "calcular", "reconocer", "investigar"],
+      "espiritu": ["meditar", "sentir", "invocar", "percibir", "flujo", "qi", "cultivar", "canalizar", "estabilizar", "concentrarme"],
+      "presencia": ["hablar", "convencer", "negociar", "exigir", "confrontar", "engañar", "impresionar", "liderar", "invocar mi linaje", "intimidar"]
     }
   },
+
+  "attributes": ["cuerpo", "agudeza", "espiritu", "presencia"],
+  "chargen_vow_label": "Juramento",
+
+  "origins": [
+    {
+      "id": "discipulo_sin_secta",
+      "display_name": "Discípulo sin secta",
+      "base_attributes": {"espiritu": 3, "agudeza": 2},
+      "tag_id": "sin_maestro",
+      "narrative_connection": "Aprendiste robando técnicas con la vista, sin maestro que te corrigiera. Pasiva: +2 al intentar imitar algo que ya viste hacer una vez."
+    },
+    {
+      "id": "heredera_casa_caida",
+      "display_name": "Heredero de una casa caída",
+      "base_attributes": {"presencia": 3, "cuerpo": 2},
+      "tag_id": "sangre_noble",
+      "narrative_connection": "Tu apellido todavía abre puertas, aunque tu familia ya no exista. Pasiva: +2 al invocar tu linaje ante desconocidos."
+    },
+    {
+      "id": "sobreviviente_masacre",
+      "display_name": "Sobreviviente de una masacre de secta",
+      "base_attributes": {"cuerpo": 3, "espiritu": 2},
+      "tag_id": "unico_sobreviviente",
+      "narrative_connection": "Viste morir a todos los que conocías, y sobreviviste sin saber bien cómo. Pasiva: +2 para detectar una emboscada o traición antes de que ocurra."
+    }
+  ],
+
+  "vows": [
+    {"id": "nunca_mas_arrodillarme", "text": "Nunca más voy a arrodillarme ante nadie."},
+    {"id": "encontrar_a_los_responsables", "text": "Voy a encontrar a los responsables de lo que perdí."},
+    {"id": "superar_a_quien_me_abandono", "text": "Voy a superar a quien me abandonó."},
+    {"id": "proteger_a_los_que_quedan", "text": "Voy a proteger a los que todavía me quedan."}
+  ],
+
   "starting_character": {
-    "name": "Discípulo Errante",
+    "name": "Cultivador",
     "level": 1,
     "exp": 0,
-    "attributes": {
-      "cuerpo": 3,
-      "mente": 4,
-      "espiritu": 2
-    },
-    "resources": {
-      "qi": 10,
-      "salud": 20
-    }
+    "attributes": {"cuerpo": 1, "agudeza": 1, "espiritu": 1, "presencia": 1},
+    "resources": {"qi": 10, "salud": 20}
   },
+
   "seed": {
-    "narration": "El viento de la Montaña de los Nueve Ecos arrastra pétalos de durazno sobre el sendero de piedra. Sos un discípulo errante, sin secta ni maestro, con apenas una chispa de qi encendida en tu núcleo. Ante vos, tres caminos se abren en la niebla del amanecer.",
+    "narration": "{{name}}: el viento arrastra pétalos de durazno sobre un sendero de piedra que no elegiste vos, pero que ya es tuyo. El qi a tu alrededor responde apenas, sensible a lo que decidas hacer primero.\n\nAdelante se abren tres caminos en la niebla del amanecer, y nadie más que vos sabe todavía qué clase de cultivador vas a ser.",
     "choices": [
-      "Sentarte a meditar y sentir el flujo del qi",
-      "Explorar el sendero que sube hacia el templo",
-      "Leer el manuscrito raído que llevas contigo"
+      "Sentarte a meditar y sentir el flujo del qi antes de moverte",
+      "Seguir el sendero que sube hacia el templo distante",
+      "Buscar a la primera persona que veas y preguntar dónde estás"
     ]
   }
 }

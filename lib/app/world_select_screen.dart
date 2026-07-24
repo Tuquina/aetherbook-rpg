@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../core/state/game_session.dart';
 import '../core/world/world.dart';
 import 'chargen_screen.dart';
 import 'codex_screen.dart';
+import 'create_story_screen.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'game_controller.dart';
@@ -14,11 +16,17 @@ import 'widgets/atmosphere.dart';
 /// adding its slug here once its content JSON exists in `assets/worlds/` —
 /// everything shown about it (name, tone, whether it's curated) is always
 /// read live from the world itself via [GameController.loadWorldInfo],
-/// never duplicated in this list.
+/// never duplicated in this list. The 5 freeform genres (Fase 2 — "creá tu
+/// propia historia") land in `StoryModule.aiNarrator` automatically, purely
+/// from content (no `graph` key in their JSON), same as every other module.
 const _availableWorldSlugs = [
   'curated_zombie_01_ultimo_tren',
   'xianxia_lianshu',
+  'isekai',
   'xianxia',
+  'superheroes',
+  'cyberpunk',
+  'postapoc',
 ];
 
 /// The three story types the menu groups campaigns into (GDD §1: freeform,
@@ -32,7 +40,7 @@ extension StoryModuleInfo on StoryModule {
   String get title => switch (this) {
         StoryModule.complete => 'Historias completas',
         StoryModule.preArmada => 'Historias pre-armadas',
-        StoryModule.aiNarrator => 'Historias con narrador por IA',
+        StoryModule.aiNarrator => 'Creá tu propia historia',
       };
 
   String get description => switch (this) {
@@ -41,7 +49,7 @@ extension StoryModuleInfo on StoryModule {
         StoryModule.preArmada =>
           'Una campaña pre-diseñada, con hitos fijos, que un narrador de IA viste turno a turno según tus elecciones.',
         StoryModule.aiNarrator =>
-          'Toda la historia se genera en tiempo real, sin guion previo. Próximamente.',
+          'Elegís un género, armás tu personaje y la IA narra lo que sigue turno a turno, sin guion previo. Podés tener varias historias a la vez.',
       };
 
   /// The one-line teaser shown on the picker card — a shorter cousin of
@@ -49,12 +57,11 @@ extension StoryModuleInfo on StoryModule {
   String get teaser => switch (this) {
         StoryModule.complete => 'Escrita a mano, de punta a punta.',
         StoryModule.preArmada => 'Rieles fijos, vestidos por IA en vivo.',
-        StoryModule.aiNarrator => 'Generada en tiempo real. Próximamente.',
+        StoryModule.aiNarrator => 'Elegís el género, la IA narra en vivo.',
       };
 
-  /// Only the freeform, fully-generated mode is gated off for now — the
-  /// other two are real, playable content.
-  bool get enabled => this != StoryModule.aiNarrator;
+  /// All three modules are real, playable content.
+  bool get enabled => true;
 }
 
 /// Purely presentational styling for a module — icon and accent color, kept
@@ -88,9 +95,9 @@ StoryModuleStyle storyModuleStyle(StoryModule module) => switch (module) {
         ),
       StoryModule.aiNarrator => const StoryModuleStyle(
           icon: Icons.smart_toy_rounded,
-          accent: AetherColors.parchmentFaint,
-          bright: AetherColors.parchmentDim,
-          glow: Color(0x117E7565),
+          accent: AetherColors.nova,
+          bright: AetherColors.novaBright,
+          glow: AetherColors.novaGlow,
         ),
     };
 
@@ -149,7 +156,7 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
     }
   }
 
-  void _goToChargen(World world, {bool forceNew = false}) {
+  void _goToChargen(World world, {bool forceNew = false, bool alwaysCreateNew = false}) {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: AetherMotion.slow,
@@ -158,11 +165,69 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
           worldSlug: world.slug,
           world: world,
           forceNew: forceNew,
+          alwaysCreateNew: alwaysCreateNew,
         ),
         transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
       ),
     );
+  }
+
+  /// Picking a genre on [CreateStoryScreen] always starts a brand-new story
+  /// — never resumes or overwrites one already in progress, since a player
+  /// can have several active sessions for the same freeform world at once
+  /// (CLAUDE.md Fase 2).
+  void _selectGenre(World world) =>
+      _goToChargen(world, alwaysCreateNew: true);
+
+  /// Resumes one exact saved story from [CreateStoryScreen]'s "tus
+  /// historias" list — unlike [_select], never goes through chargen (the
+  /// character already exists) and never guesses "the latest" (there can be
+  /// several; this one is the one the player tapped).
+  Future<void> _resumeStory(GameSessionSummary summary) async {
+    final controller = widget.controller;
+    await controller.start(summary.worldSlug, sessionId: summary.id);
+    if (!mounted) return;
+    if (controller.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AetherColors.surfaceRaised,
+          content: Text(controller.error!,
+              style: const TextStyle(color: AetherColors.parchment)),
+        ),
+      );
+      return;
+    }
+    _goToGame(summary.worldSlug);
+  }
+
+  /// Confirms and abandons one saved story — [CreateStoryScreen] awaits this
+  /// and reloads its own list once it resolves.
+  Future<void> _abandonStory(GameSessionSummary summary) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AetherColors.surface,
+        title: Text(summary.characterName, style: AetherType.title),
+        content: Text(
+          'Vas a abandonar esta historia. No se puede deshacer. ¿Confirmás?',
+          style: AetherType.body,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Abandonar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await widget.controller.abandonStory(summary.id);
   }
 
   /// "Reiniciar historia" — abandons whatever session already exists for
@@ -215,13 +280,16 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
   }
 
   void _openModule(StoryModule module, List<World> worlds) {
-    if (!module.enabled) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AetherColors.surfaceRaised,
-          content: Text('El narrador 100% por IA todavía no tiene mundos cargados.',
-              style: TextStyle(color: AetherColors.parchment)),
+    if (module == StoryModule.aiNarrator) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => CreateStoryScreen(
+            controller: widget.controller,
+            worlds: worlds,
+            onSelectGenre: _selectGenre,
+            onResumeStory: _resumeStory,
+            onAbandonStory: _abandonStory,
+          ),
         ),
       );
       return;

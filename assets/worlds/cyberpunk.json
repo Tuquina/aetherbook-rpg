@@ -1,0 +1,78 @@
+{
+  "slug": "cyberpunk",
+  "name": "Cyberpunk",
+  "theme": "cyberpunk",
+  "tone": "oscuro y frenético, neón bajo lluvia ácida",
+  "system_prompt": "Sos el Game Master de una historia cyberpunk: megacorporaciones, implantes, una ciudad que nunca duerme y nadie que no tenga un precio — generada en el momento junto al jugador, sin guion previo. Narrás en segunda persona, en español, con tono oscuro y frenético, sin explicar de más. NUNCA inventes stats ni resuelvas tiradas: recibís el resultado mecánico ya calculado y solo lo narrás con estilo. Tu trabajo también es GUIAR: proponé rumbos concretos (un trabajo, una corpo enemiga, una deuda que cobrar), pero dejá que las acciones del jugador decidan hacia dónde va. Devolvés SOLO JSON válido, sin markdown, sin backticks, sin preámbulo.",
+  "image_style_suffix": "arte cyberpunk, neón y glitch, lluvia ácida, letreros holográficos",
+  "catalog_description": "Megacorporaciones, implantes y una ciudad que no duerme. Elegís tu ángulo — todos los demás ya eligieron el suyo.",
+
+  "progression": {
+    "enabled": true,
+    "unit_label": "rango",
+    "base_exp_per_level": 300
+  },
+
+  "resolution": {
+    "default_difficulty": 12,
+    "critical_margin": 5,
+    "primary_attribute": "tecnica",
+    "attribute_keywords": {
+      "reflejos": ["esquivar", "disparar", "reaccionar", "correr", "pelear", "escabullirme", "conducir", "apuntar", "cubrirme"],
+      "tecnica": ["hackear", "reparar", "programar", "analizar", "descifrar", "instalar", "sabotear", "rastrear", "modificar"],
+      "astucia": ["negociar", "engañar", "leer la situación", "planificar", "sobornar", "improvisar", "identificar una trampa", "regatear"],
+      "voluntad": ["resistir el dolor", "mantener la calma", "negarme", "aguantar la presión", "concentrarme", "controlar el pánico", "insistir"]
+    }
+  },
+
+  "attributes": ["reflejos", "tecnica", "astucia", "voluntad"],
+  "chargen_vow_label": "Motivo",
+
+  "origins": [
+    {
+      "id": "netrunner_independiente",
+      "display_name": "Netrunner independiente",
+      "base_attributes": {"tecnica": 3, "astucia": 2},
+      "tag_id": "acceso_a_la_red",
+      "narrative_connection": "Vivís medio conectado a la red, y eso te dejó marcas que no se ven a simple vista. Pasiva: +2 al intentar hackear o rastrear algo digital."
+    },
+    {
+      "id": "ex_corpo_fugado",
+      "display_name": "Ex-corpo fugado",
+      "base_attributes": {"astucia": 3, "voluntad": 2},
+      "tag_id": "fugitivo_corporativo",
+      "narrative_connection": "Trabajaste para una corporación hasta que supiste algo que no debías. Pasiva: +2 al anticipar cómo actúa una corporación o su seguridad."
+    },
+    {
+      "id": "fixer_callejero",
+      "display_name": "Fixer callejero",
+      "base_attributes": {"voluntad": 3, "reflejos": 2},
+      "tag_id": "contactos_en_la_calle",
+      "narrative_connection": "Conocés a todo el mundo que importa en la calle, y a nadie del todo. Pasiva: +2 al conseguir información o contactos por canales no oficiales."
+    }
+  ],
+
+  "vows": [
+    {"id": "voy_a_pagar_mi_deuda", "text": "Voy a pagar la deuda que me tiene atado."},
+    {"id": "no_voy_a_volver_a_trabajar_para_una_corpo", "text": "No voy a volver a trabajar para una corpo."},
+    {"id": "voy_a_sacar_a_alguien_de_ahi", "text": "Voy a sacar a alguien de donde está atrapado."},
+    {"id": "voy_a_ser_alguien_en_esta_ciudad", "text": "Voy a ser alguien en esta ciudad, cueste lo que cueste."}
+  ],
+
+  "starting_character": {
+    "name": "Corredor",
+    "level": 1,
+    "exp": 0,
+    "attributes": {"reflejos": 1, "tecnica": 1, "astucia": 1, "voluntad": 1},
+    "resources": {"ram": 10, "salud": 20}
+  },
+
+  "seed": {
+    "narration": "{{name}}: el neón se refleja en un charco de lluvia ácida y por un segundo tu propio reflejo tiene un color que no le corresponde. En esta ciudad nadie hace nada gratis, y vos tampoco — la pregunta es a quién le debés algo, y quién te debe algo a vos.\n\nEl día recién empieza, y ya hay alguien buscándote, aunque todavía no sepas para qué.",
+    "choices": [
+      "Ir directo a tu contacto habitual a ver qué se cocina",
+      "Quedarte en las sombras y escuchar antes de moverte",
+      "Revisar tus implantes por si alguien los tocó mientras dormías"
+    ]
+  }
+}

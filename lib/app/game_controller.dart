@@ -195,6 +195,24 @@ class GameController extends ChangeNotifier {
     return await persistence.loadLatestSession(worldSlug) != null;
   }
 
+  /// The player's own saved stories across [worldSlugs] — the "tus
+  /// historias" list on the freeform "creá tu propia historia" module
+  /// (CLAUDE.md Fase 2), where several sessions per world slug are expected.
+  /// Empty (never an error) when there's no persistence configured — same
+  /// in-memory-only degradation as everything else in this class.
+  Future<List<GameSessionSummary>> listCreatedStories(List<String> worldSlugs) {
+    final persistence = _persistence;
+    if (persistence == null) return Future.value(const []);
+    return persistence.listActiveSessions(worldSlugs);
+  }
+
+  /// Abandons one specific saved story from the "tus historias" list, by id
+  /// — the delete affordance next to a `GameSessionSummary`. A no-op without
+  /// persistence configured (nothing to abandon in memory-only mode).
+  Future<void> abandonStory(String sessionId) async {
+    await _persistence?.abandonSession(sessionId);
+  }
+
   /// Loads a world and sets up the opening scene — resumed from a persisted
   /// session if [persistence] is configured and one already exists, or from
   /// the world's seed/graph start otherwise. [chargenInput] is required to
@@ -206,10 +224,27 @@ class GameController extends ChangeNotifier {
   /// resuming — the "reiniciar historia" affordance on [WorldSelectScreen],
   /// for a player who wants to play a curated campaign again from the top
   /// rather than pick up where they left off.
+  ///
+  /// [sessionId], when set, resumes that *exact* session regardless of
+  /// [worldSlug] — used by the "creá tu propia historia" module's "tus
+  /// historias" list, where a player can have several sessions for the same
+  /// freeform world at once (unlike every other module, which only ever
+  /// expects one). If that session can't be found, this sets [error] and
+  /// returns rather than silently falling through to create a brand-new one
+  /// in its place.
+  ///
+  /// [alwaysCreateNew], when `true`, skips the "resume the latest" check
+  /// entirely and always creates a fresh session — the other half of the
+  /// same "several stories per world" model: picking a genre to start a new
+  /// story must never resume (or, worse, silently reuse) one already in
+  /// progress. Mutually exclusive with [sessionId] in practice (a caller
+  /// wants to resume one specific thing, or start a new one — never both).
   Future<void> start(
     String worldSlug, {
     CreateCharacterInput? chargenInput,
     bool forceNew = false,
+    String? sessionId,
+    bool alwaysCreateNew = false,
   }) async {
     _isLoading = true;
     _error = null;
@@ -232,17 +267,33 @@ class GameController extends ChangeNotifier {
       final persistence = _persistence;
       GameSession session;
       if (persistence != null) {
-        var existing = await persistence.loadLatestSession(worldSlug);
-        if (forceNew && existing != null) {
-          final staleId = existing.id;
-          if (staleId != null) await persistence.abandonSession(staleId);
-          existing = null;
+        if (sessionId != null) {
+          final existing = await persistence.loadSession(sessionId);
+          if (existing == null) {
+            _error = 'No se pudo cargar esa historia — puede que ya no exista.';
+            _isLoading = false;
+            notifyListeners();
+            return;
+          }
+          session = existing;
+        } else if (alwaysCreateNew) {
+          session = await persistence.createSession(
+            worldSlug: world.slug,
+            character: _initialCharacter(world, chargenInput),
+          );
+        } else {
+          var existing = await persistence.loadLatestSession(worldSlug);
+          if (forceNew && existing != null) {
+            final staleId = existing.id;
+            if (staleId != null) await persistence.abandonSession(staleId);
+            existing = null;
+          }
+          session = existing ??
+              await persistence.createSession(
+                worldSlug: world.slug,
+                character: _initialCharacter(world, chargenInput),
+              );
         }
-        session = existing ??
-            await persistence.createSession(
-              worldSlug: world.slug,
-              character: _initialCharacter(world, chargenInput),
-            );
       } else {
         session = GameSession(
           worldSlug: world.slug,
@@ -272,7 +323,13 @@ class GameController extends ChangeNotifier {
         _choices = const [];
         _tone = world.tone;
       } else {
-        _narration = world.seedNarration;
+        // Interpolated (not raw world.seedNarration): a freeform world's
+        // opening scene should be able to greet the character the player
+        // just built in chargen — e.g. a genre's "{{name}}, contame quién
+        // sos" framing (CLAUDE.md Fase 2) — the same InterpolateCopy already
+        // used for curated/hybrid nodes below.
+        _narration = _interpolate(world.seedNarration,
+            character: session.character, protagonistName: session.character.name);
         _choices = world.seedChoices;
         _tone = world.tone;
       }

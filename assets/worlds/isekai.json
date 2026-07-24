@@ -1,0 +1,78 @@
+{
+  "slug": "isekai",
+  "name": "Isekai",
+  "theme": "isekai",
+  "tone": "aventurero, con humor agridulce",
+  "system_prompt": "Sos el Game Master de una historia isekai: alguien de nuestro mundo termina transportado o reencarnado en uno de fantasía, generada en el momento junto al jugador — no hay guion previo. Narrás en segunda persona, en español, con tono aventurero que no esconde la nostalgia de fondo. NUNCA inventes stats ni resuelvas tiradas: recibís el resultado mecánico ya calculado y solo lo narrás con estilo. Tu trabajo también es GUIAR: proponé rumbos concretos (facciones, gremios, un llamado o una amenaza), pero dejá que las acciones del jugador decidan hacia dónde va. Devolvés SOLO JSON válido, sin markdown, sin backticks, sin preámbulo.",
+  "image_style_suffix": "arte fantasía anime, portal luminoso, paleta vívida, luz mágica",
+  "catalog_description": "Transportado a otro mundo, con progresión tipo RPG. Elegís cómo llegaste — el resto de la aventura es tuya.",
+
+  "progression": {
+    "enabled": true,
+    "unit_label": "nivel",
+    "base_exp_per_level": 300
+  },
+
+  "resolution": {
+    "default_difficulty": 12,
+    "critical_margin": 5,
+    "primary_attribute": "ingenio",
+    "attribute_keywords": {
+      "fuerza": ["forzar", "cargar", "empujar", "romper", "sostener", "levantar", "pelear", "resistir", "arrastrar"],
+      "destreza": ["esquivar", "trepar", "saltar", "correr", "escabullirme", "apuntar", "equilibrarme", "reaccionar", "moverme rápido"],
+      "ingenio": ["descifrar", "recordar", "planificar", "analizar", "deducir", "estudiar la magia", "improvisar", "calcular", "reconocer un patrón"],
+      "carisma": ["convencer", "negociar", "presentarme", "impresionar", "liderar", "seducir", "calmar", "engañar", "pedir ayuda"]
+    }
+  },
+
+  "attributes": ["fuerza", "destreza", "ingenio", "carisma"],
+  "chargen_vow_label": "Promesa",
+
+  "origins": [
+    {
+      "id": "convocado_por_error",
+      "display_name": "Convocado por error",
+      "base_attributes": {"ingenio": 3, "destreza": 2},
+      "tag_id": "convocado_sin_querer",
+      "narrative_connection": "Un ritual que salió mal te arrastró hasta acá — nadie esperaba que aparecieras justo vos. Pasiva: +2 al deducir cómo funciona algo mágico que nunca viste antes."
+    },
+    {
+      "id": "noble_caido_reencarnado",
+      "display_name": "Noble caído reencarnado",
+      "base_attributes": {"carisma": 3, "destreza": 2},
+      "tag_id": "memoria_de_otra_vida",
+      "narrative_connection": "Recordás fragmentos borrosos de una vida anterior en este mismo mundo, de la que nadie más sabe nada. Pasiva: +2 al presentarte ante la nobleza o una corte."
+    },
+    {
+      "id": "transportado_en_combate",
+      "display_name": "Transportado en combate",
+      "base_attributes": {"fuerza": 3, "destreza": 2},
+      "tag_id": "reflejos_de_otro_mundo",
+      "narrative_connection": "Un instante estabas en tu mundo, al siguiente en medio de una pelea que no elegiste. Pasiva: +2 al reaccionar ante un peligro físico repentino."
+    }
+  ],
+
+  "vows": [
+    {"id": "no_volver_a_ser_invisible", "text": "No voy a volver a ser invisible como en mi mundo."},
+    {"id": "encontrar_la_forma_de_volver", "text": "Voy a encontrar la forma de volver a casa."},
+    {"id": "hacer_de_este_mundo_mi_hogar", "text": "Voy a hacer de este mundo mi hogar, cueste lo que cueste."},
+    {"id": "no_deberle_nada_a_nadie", "text": "No le voy a deber nada a nadie acá."}
+  ],
+
+  "starting_character": {
+    "name": "Convocado",
+    "level": 1,
+    "exp": 0,
+    "attributes": {"fuerza": 1, "destreza": 1, "ingenio": 1, "carisma": 1},
+    "resources": {"mana": 10, "salud": 20}
+  },
+
+  "seed": {
+    "narration": "{{name}}: la luz se apaga y el suelo bajo tus pies ya no es el de tu mundo. El aire huele distinto, hay dos lunas donde debería haber una, y algo — o alguien — sabía que ibas a llegar.\n\nNadie te explica nada todavía. Lo único seguro es que ya no podés volver por donde viniste, al menos no ahora.",
+    "choices": [
+      "Buscar a la primera persona que veas y pedir explicaciones",
+      "Quedarte quieto y observar el lugar antes de moverte",
+      "Revisar qué llevás encima, por si algo cruzó con vos"
+    ]
+  }
+}

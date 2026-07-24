@@ -1,0 +1,78 @@
+{
+  "slug": "superheroes",
+  "name": "Superhéroes",
+  "theme": "superheroes",
+  "tone": "dramático y heroico, con dilemas morales",
+  "system_prompt": "Sos el Game Master de una historia de superhéroes: poderes recién descubiertos, una ciudad que no pidió un héroe, y consecuencias reales por cada elección — generada en el momento junto al jugador, sin guion previo. Narrás en segunda persona, en español, con tono dramático y heroico, sin caer en la parodia. NUNCA inventes stats ni resuelvas tiradas: recibís el resultado mecánico ya calculado y solo lo narrás con estilo. Tu trabajo también es GUIAR: proponé rumbos concretos (villanos, dilemas, una identidad secreta en riesgo), pero dejá que las acciones del jugador decidan hacia dónde va. Devolvés SOLO JSON válido, sin markdown, sin backticks, sin preámbulo.",
+  "image_style_suffix": "arte cómic, líneas dinámicas, colores saturados, sombreado dramático",
+  "catalog_description": "Poderes recién descubiertos y una ciudad que no pidió un héroe. Elegís tu origen — el peso de la máscara lo decidís vos.",
+
+  "progression": {
+    "enabled": true,
+    "unit_label": "nivel de poder",
+    "base_exp_per_level": 300
+  },
+
+  "resolution": {
+    "default_difficulty": 12,
+    "critical_margin": 5,
+    "primary_attribute": "voluntad",
+    "attribute_keywords": {
+      "fuerza": ["forzar", "levantar", "romper", "golpear", "cargar", "resistir", "sostener", "contener", "empujar"],
+      "agilidad": ["esquivar", "saltar", "correr", "trepar", "reaccionar", "volar", "escabullirme", "moverme rápido", "equilibrarme"],
+      "intelecto": ["analizar", "planificar", "deducir", "hackear", "investigar", "identificar", "improvisar", "calcular", "reconocer un patrón"],
+      "voluntad": ["resistir el miedo", "concentrarme", "controlar mi poder", "negarme", "insistir", "aguantar", "mantener la calma", "decidir"]
+    }
+  },
+
+  "attributes": ["fuerza", "agilidad", "intelecto", "voluntad"],
+  "chargen_vow_label": "Código",
+
+  "origins": [
+    {
+      "id": "mutacion_accidental",
+      "display_name": "Mutación accidental",
+      "base_attributes": {"fuerza": 3, "agilidad": 2},
+      "tag_id": "poder_inestable",
+      "narrative_connection": "Un accidente despertó algo en vos que todavía no controlás del todo. Pasiva: +2 al intentar algo físico que nunca intentaste antes con tu poder."
+    },
+    {
+      "id": "legado_familiar_de_heroes",
+      "display_name": "Legado familiar de héroes",
+      "base_attributes": {"voluntad": 3, "intelecto": 2},
+      "tag_id": "apellido_heroico",
+      "narrative_connection": "Tu familia lleva generaciones bajo una máscara distinta cada vez. Pasiva: +2 al usar equipo o contactos heredados de esa tradición."
+    },
+    {
+      "id": "experimento_escapado",
+      "display_name": "Experimento escapado",
+      "base_attributes": {"intelecto": 3, "agilidad": 2},
+      "tag_id": "fugitivo_de_laboratorio",
+      "narrative_connection": "Escapaste de un laboratorio que todavía te está buscando. Pasiva: +2 para anticipar cómo piensa una organización que te persigue."
+    }
+  ],
+
+  "vows": [
+    {"id": "nunca_voy_a_matar", "text": "Nunca voy a cruzar la línea de matar, pase lo que pase."},
+    {"id": "voy_a_proteger_a_los_que_no_pueden", "text": "Voy a proteger a quienes no pueden protegerse solos."},
+    {"id": "nadie_va_a_saber_quien_soy", "text": "Nadie va a saber quién soy en realidad."},
+    {"id": "voy_a_demostrar_que_merezco_esto", "text": "Voy a demostrar que merezco este poder."}
+  ],
+
+  "starting_character": {
+    "name": "Enmascarado",
+    "level": 1,
+    "exp": 0,
+    "attributes": {"fuerza": 1, "agilidad": 1, "intelecto": 1, "voluntad": 1},
+    "resources": {"energia": 10, "salud": 20}
+  },
+
+  "seed": {
+    "narration": "{{name}}: todavía te tiemblan las manos por lo que acaba de pasar. Hace un rato eras nadie en particular; ahora hay algo en vos que no debería ser posible, y la ciudad sigue igual de indiferente a tu alrededor, sin saber lo que acaba de cambiar.\n\nNadie te dio un manual. Lo primero que hagas con esto va a decir quién sos.",
+    "choices": [
+      "Probar hasta dónde llega tu poder, en privado",
+      "Buscar a alguien de confianza y contarle lo que pasó",
+      "Salir a la calle a ver si podés ayudar a alguien ahora mismo"
+    ]
+  }
+}

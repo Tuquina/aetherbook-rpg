@@ -67,7 +67,7 @@ abstract final class AetherColors {
   // Each story module (GDD §1: freeform / curada / híbrida) gets its own
   // signature color so the menu reads like a game's mode select, not a
   // monochrome list. Gold stays the app's one true brand accent everywhere
-  // else (buttons, focus, the fate system); these two only tint their
+  // else (buttons, focus, the fate system); these three only tint their
   // module's own card, icon and glow.
 
   /// "Historias completas" — hand-authored, curated tales. A warm ember,
@@ -81,6 +81,12 @@ abstract final class AetherColors {
   static const Color arcane = Color(0xFF4FA3B8);
   static const Color arcaneBright = Color(0xFF7FD0E3);
   static const Color arcaneGlow = Color(0x334FA3B8);
+
+  /// "Creá tu propia historia" — freeform worlds, no script at all. A vivid
+  /// violet: unscripted, alive, the wildest of the three.
+  static const Color nova = Color(0xFF9B5DE0);
+  static const Color novaBright = Color(0xFFC191F5);
+  static const Color novaGlow = Color(0x339B5DE0);
 }
 
 /// Spacing scale (4-based). Use these, never raw numbers, for padding & gaps.

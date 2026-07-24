@@ -13,6 +13,22 @@ abstract class GameStateRepositoryPort {
   /// yet (a new game should be started).
   Future<GameSession?> loadLatestSession(String worldSlug);
 
+  /// Loads one specific session by id, character and full turn history
+  /// included, or `null` if it doesn't exist (or isn't this user's — RLS
+  /// handles that transparently, same as every other method here). Unlike
+  /// [loadLatestSession] (always "the newest for this world slug"), this
+  /// resumes an exact entry — used by the "creá tu propia historia" module's
+  /// "tus historias" list, where a player can have several active sessions
+  /// for the same world slug at once (CLAUDE.md Fase 2).
+  Future<GameSession?> loadSession(String sessionId);
+
+  /// All active sessions across [worldSlugs] for the current user, newest
+  /// first, as lightweight summaries (no turn history — see
+  /// [GameSessionSummary]). Powers the "tus historias" list for the freeform
+  /// module, where — unlike every other module — more than one active
+  /// session per world slug is expected and intentional.
+  Future<List<GameSessionSummary>> listActiveSessions(List<String> worldSlugs);
+
   /// Creates a new session with its starting [character] and returns the
   /// resulting [GameSession] (with its persisted `id` set).
   Future<GameSession> createSession({

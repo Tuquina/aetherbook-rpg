@@ -1,0 +1,79 @@
+{
+  "slug": "postapoc",
+  "name": "Post-apocalíptico",
+  "theme": "postapoc",
+  "tone": "crudo, con una esperanza que cuesta sostener",
+  "system_prompt": "Sos el Game Master de una historia post-apocalíptica genérica: el mundo que conocíamos colapsó, y lo que queda es supervivencia, comunidades frágiles y decisiones sin opción buena — generada en el momento junto al jugador, sin guion previo. Narrás en segunda persona, en español, con tono crudo pero no gratuito. NUNCA inventes stats ni resuelvas tiradas: recibís el resultado mecánico ya calculado y solo lo narrás con estilo. Tu trabajo también es GUIAR: proponé rumbos concretos (una comunidad, una amenaza, un recurso escaso), pero dejá que las acciones del jugador decidan hacia dónde va. Devolvés SOLO JSON válido, sin markdown, sin backticks, sin preámbulo.",
+  "image_style_suffix": "arte post-apocalíptico, paleta apagada y terrosa, polvo y ruinas",
+  "catalog_description": "El mundo que conocíamos colapsó. Elegís cómo sobreviviste hasta ahora — lo que sigue depende de cuánto te quede de humano.",
+  "content_warning": "Contiene temas de violencia y supervivencia extrema.",
+
+  "progression": {
+    "enabled": true,
+    "unit_label": "reputación",
+    "base_exp_per_level": 300
+  },
+
+  "resolution": {
+    "default_difficulty": 12,
+    "critical_margin": 5,
+    "primary_attribute": "instinto",
+    "attribute_keywords": {
+      "fuerza": ["forzar", "cargar", "romper", "pelear", "empujar", "arrastrar", "resistir", "sostener", "defenderme"],
+      "instinto": ["percibir peligro", "rastrear", "escuchar", "oler", "reaccionar", "esconderme", "cazar", "orientarme", "detectar"],
+      "ingenio": ["craftear", "reparar", "improvisar", "planificar", "analizar", "encontrar una salida", "racionar", "descifrar"],
+      "voluntad": ["resistir", "aguantar", "negarme", "mantener la calma", "insistir", "no rendirme", "confiar", "decidir"]
+    }
+  },
+
+  "attributes": ["fuerza", "instinto", "ingenio", "voluntad"],
+  "chargen_vow_label": "Motivo para seguir",
+
+  "origins": [
+    {
+      "id": "nacido_despues_del_colapso",
+      "display_name": "Nacido después del colapso",
+      "base_attributes": {"instinto": 3, "ingenio": 2},
+      "tag_id": "nacido_en_las_ruinas",
+      "narrative_connection": "No conociste otra cosa que este mundo roto — para vos, esto es lo normal. Pasiva: +2 al identificar peligros o recursos en un entorno en ruinas."
+    },
+    {
+      "id": "sobreviviente_ultima_ciudad",
+      "display_name": "Sobreviviente de la última ciudad",
+      "base_attributes": {"voluntad": 3, "fuerza": 2},
+      "tag_id": "memoria_del_antes",
+      "narrative_connection": "Recordás cómo era todo antes de que cayera la última ciudad que quedaba en pie. Pasiva: +2 al usar o reconocer tecnología de antes del colapso."
+    },
+    {
+      "id": "ex_soldado_faccion_caida",
+      "display_name": "Ex-soldado de una facción caída",
+      "base_attributes": {"fuerza": 3, "instinto": 2},
+      "tag_id": "entrenamiento_militar",
+      "narrative_connection": "Peleaste para una facción que ya no existe, y el entrenamiento no se olvida así nomás. Pasiva: +2 en cualquier enfrentamiento armado directo."
+    }
+  ],
+
+  "vows": [
+    {"id": "voy_a_encontrar_a_los_mios", "text": "Voy a encontrar a los míos, estén donde estén."},
+    {"id": "no_voy_a_perder_lo_humano", "text": "No voy a perder lo que me queda de humano en esto."},
+    {"id": "voy_a_construir_algo_que_dure", "text": "Voy a construir algo que dure más que yo."},
+    {"id": "voy_a_sobrevivir_sin_importar_el_costo", "text": "Voy a sobrevivir sin importar el costo."}
+  ],
+
+  "starting_character": {
+    "name": "Sobreviviente",
+    "level": 1,
+    "exp": 0,
+    "attributes": {"fuerza": 1, "instinto": 1, "ingenio": 1, "voluntad": 1},
+    "resources": {"suministros": 10, "salud": 20}
+  },
+
+  "seed": {
+    "narration": "{{name}}: el polvo todavía no se asienta del todo sobre lo que alguna vez fue algo. Llevás encima solo lo que pudiste cargar, y el silencio que queda cuando no hay motores ni voces de fondo todavía se siente raro, años después de que empezara todo esto.\n\nEn algún lugar hay otros sobrevivientes. La pregunta es si vas a buscarlos, o si ya aprendiste que es más seguro estar solo.",
+    "choices": [
+      "Revisar qué te queda antes de decidir hacia dónde ir",
+      "Buscar señales de otros sobrevivientes cerca",
+      "Encontrar un lugar seguro para pasar la noche antes de nada"
+    ]
+  }
+}

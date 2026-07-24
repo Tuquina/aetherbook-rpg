@@ -34,8 +34,12 @@ const _world = World(
 );
 
 class _FakeWorldRepository implements WorldRepositoryPort {
+  const _FakeWorldRepository([this.world = _world]);
+
+  final World world;
+
   @override
-  Future<World> loadWorld(String slug) async => _world;
+  Future<World> loadWorld(String slug) async => world;
 }
 
 /// In-memory fake of the persistence port — records every call so tests can
@@ -48,8 +52,27 @@ class _FakeGameStateRepository implements GameStateRepositoryPort {
   final List<int> savedDigestUpToTurn = [];
   int createSessionCalls = 0;
 
+  /// Sessions resolvable by id via [loadSession] — separate from [seeded]
+  /// (which only ever answers [loadLatestSession]) since the two now model
+  /// genuinely different lookups: "the newest session for this world" vs.
+  /// "this exact session, whichever world it's for".
+  final Map<String, GameSession> sessionsById = {};
+
+  /// What [listActiveSessions] returns — set by a test, empty by default.
+  List<GameSessionSummary> summariesToReturn = const [];
+  final List<List<String>> listActiveSessionsCalls = [];
+
   @override
   Future<GameSession?> loadLatestSession(String worldSlug) async => seeded;
+
+  @override
+  Future<GameSession?> loadSession(String sessionId) async => sessionsById[sessionId];
+
+  @override
+  Future<List<GameSessionSummary>> listActiveSessions(List<String> worldSlugs) async {
+    listActiveSessionsCalls.add(worldSlugs);
+    return summariesToReturn;
+  }
 
   @override
   Future<GameSession> createSession({
@@ -262,6 +285,163 @@ void main() {
         );
 
         expect(await controller.hasPersistedSession('xianxia'), isFalse);
+      });
+    });
+
+    group('several stories per world (Fase 2 "creá tu propia historia")', () {
+      test('alwaysCreateNew: true creates a new session without touching an existing one',
+          () async {
+        final persistence = _FakeGameStateRepository()
+          ..seeded = GameSession(
+            id: 'older-story',
+            worldSlug: 'xianxia',
+            character: _character.copyWith(level: 3, exp: 200),
+          );
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          persistence: persistence,
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('xianxia', alwaysCreateNew: true);
+
+        expect(persistence.createSessionCalls, 1);
+        expect(persistence.abandonedSessionIds, isEmpty,
+            reason: 'the older story must survive — several can coexist');
+        expect(controller.narration, contains('sendero de piedra'));
+      });
+
+      test('sessionId resumes that exact session, not the latest one', () async {
+        final persistence = _FakeGameStateRepository()
+          ..seeded = GameSession(
+            id: 'latest-story',
+            worldSlug: 'xianxia',
+            character: _character.copyWith(level: 1, name: 'Última'),
+          )
+          ..sessionsById['older-story'] = GameSession(
+            id: 'older-story',
+            worldSlug: 'xianxia',
+            character: _character.copyWith(level: 4, name: 'Vieja'),
+            turns: const [
+              Turn(
+                index: 0,
+                playerAction: 'Meditar',
+                narration: 'La historia vieja sigue acá.',
+                tone: 'sereno',
+                suggestedChoices: ['Seguir'],
+              ),
+            ],
+          );
+
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          persistence: persistence,
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('xianxia', sessionId: 'older-story');
+
+        expect(persistence.createSessionCalls, 0);
+        expect(controller.character!.name, 'Vieja');
+        expect(controller.narration, 'La historia vieja sigue acá.');
+      });
+
+      test('an unknown sessionId sets an error instead of creating a new story',
+          () async {
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          persistence: _FakeGameStateRepository(),
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('xianxia', sessionId: 'does-not-exist');
+
+        expect(controller.error, isNotNull);
+        expect(controller.isReady, isFalse);
+      });
+
+      test('a freeform world\'s opening narration is interpolated with the '
+          'chosen character name', () async {
+        const worldWithGreeting = World(
+          slug: 'cyberpunk',
+          name: 'Cyberpunk',
+          theme: 'cyberpunk',
+          tone: 'oscuro',
+          systemPrompt: '',
+          imageStyleSuffix: '',
+          defaultDifficulty: 12,
+          criticalMargin: 5,
+          primaryAttribute: 'tecnica',
+          startingCharacter: _character,
+          seedNarration: '{{name}}: la ciudad no duerme.',
+          seedChoices: ['Salir'],
+        );
+        final controller = GameController(
+          worldRepository: const _FakeWorldRepository(worldWithGreeting),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          dice: const FixedDice(10),
+        );
+
+        // No chargenInput needed — this world has no origins to pick from,
+        // so start() falls back to `world.startingCharacter` (name
+        // "Discípulo", same as every other test in this file's `_character`
+        // fixture), which is exactly enough to prove the seed narration gets
+        // interpolated against whichever character actually starts the game.
+        await controller.start('cyberpunk');
+
+        expect(controller.narration, 'Discípulo: la ciudad no duerme.');
+      });
+
+      test('listCreatedStories delegates to persistence.listActiveSessions', () async {
+        final expected = [
+          GameSessionSummary(
+            id: 's1',
+            worldSlug: 'cyberpunk',
+            characterName: 'Vex',
+            updatedAt: DateTime(2026, 7, 24),
+          ),
+        ];
+        final persistence = _FakeGameStateRepository()..summariesToReturn = expected;
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          persistence: persistence,
+          dice: const FixedDice(10),
+        );
+
+        final result = await controller.listCreatedStories(['cyberpunk', 'isekai']);
+
+        expect(result, expected);
+        expect(persistence.listActiveSessionsCalls, [
+          ['cyberpunk', 'isekai']
+        ]);
+      });
+
+      test('listCreatedStories is empty without persistence configured', () async {
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          dice: const FixedDice(10),
+        );
+
+        expect(await controller.listCreatedStories(['cyberpunk']), isEmpty);
+      });
+
+      test('abandonStory delegates to persistence.abandonSession', () async {
+        final persistence = _FakeGameStateRepository();
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          persistence: persistence,
+          dice: const FixedDice(10),
+        );
+
+        await controller.abandonStory('some-story');
+
+        expect(persistence.abandonedSessionIds, ['some-story']);
       });
     });
   });
