@@ -288,16 +288,16 @@
         "choices": [
           {
             "label": "Sacar los medicamentos (con desventaja)",
-            "target": "p1_alarm_close_medicina_pendiente",
+            "target": "p1_pre_close",
             "check_attribute": "tecnica",
             "check_difficulty": 12,
             "disadvantage_when": {"type": "all", "gates": []},
             "on_failure": {
-              "result_text": "Damián no llega a tiempo. El panel cae sobre la última estantería y sella lo que quedaba adentro.",
+              "result_text": "Damián no llega a tiempo. El panel cae sobre la última estantería y sella lo que quedaba adentro.\n\nTampoco llegó nadie a la válvula de diésel: setecientos litros corren bajo la cerca antes de que alguien improvise un dique con sacos de arena.",
               "effects": [{"type": "meter", "key": "diesel_liters", "value": -700}]
             },
             "on_success": {
-              "result_text": "Damián corta la electricidad y arrastra las cajas justo antes de que el panel ceda. La cañería de diésel sigue perdiendo sin nadie que la atienda.",
+              "result_text": "Damián corta la electricidad y arrastra las cajas justo antes de que el panel ceda. La cañería de diésel sigue perdiendo sin nadie que la atienda: setecientos litros corren bajo la cerca antes de que alguien improvise un dique con sacos de arena.",
               "effects": [
                 {"type": "flag", "key": "saved_medicine", "value": true},
                 {"type": "relationship", "key": "lucia", "value": 1},
@@ -354,33 +354,26 @@
         ]
       },
 
-      "p1_alarm_close_medicina_pendiente": {
-        "type": "fixed_anchor",
-        "narration": "Damián no llega a cerrar la válvula de diésel. Setecientos litros corren bajo la cerca antes de que alguien improvise un dique con sacos de arena.",
-        "choices": [
-          {"label": "Continuar", "target": "p1_pre_close", "result_text": "Saúl marca la pérdida en la libreta sin decir una palabra. No hace falta."}
-        ]
-      },
-
       "p1_frente2_after_medicina": {
         "type": "fixed_anchor",
         "narration": "La alarma por fin despierta a La Cámara. Quedan dos problemas abiertos: la puerta norte y el diésel.",
         "choices": [
           {
             "label": "Ayudar a Ramiro en la puerta norte (con desventaja)",
-            "target": "p1_alarm_close_diesel_pendiente",
+            "target": "p1_pre_close",
             "check_attribute": "cuerpo",
             "check_difficulty": 12,
             "disadvantage_when": {"type": "all", "gates": []},
             "on_failure": {
-              "result_text": "Damián llega tarde. Tres quietos entran al patio antes de que la puerta cierre.",
-              "effects": [{"type": "flag", "key": "p1_gate_combat_pending", "value": true}]
+              "result_text": "Damián llega tarde. Tres quietos entran al patio antes de que la puerta cierre.\n\nNadie llegó a la válvula de diésel tampoco: setecientos litros corren bajo la cerca antes de que alguien improvise un dique con sacos de arena.",
+              "effects": [{"type": "flag", "key": "p1_gate_combat_pending", "value": true}, {"type": "meter", "key": "diesel_liters", "value": -700}]
             },
             "on_success": {
-              "result_text": "Damián y Ramiro cierran la puerta norte justo a tiempo. Nadie fue a atender el diésel.",
+              "result_text": "Damián y Ramiro cierran la puerta norte justo a tiempo. Nadie fue a atender el diésel: setecientos litros corren bajo la cerca antes de que alguien improvise un dique con sacos de arena.",
               "effects": [
                 {"type": "flag", "key": "saved_north_gate", "value": true},
-                {"type": "relationship", "key": "ramiro", "value": 1}
+                {"type": "relationship", "key": "ramiro", "value": 1},
+                {"type": "meter", "key": "diesel_liters", "value": -700}
               ]
             }
           },
@@ -429,33 +422,27 @@
         ]
       },
 
-      "p1_alarm_close_diesel_pendiente": {
-        "type": "fixed_anchor",
-        "narration": "Nadie llegó a la válvula de diésel. Setecientos litros corren bajo la cerca antes de que alguien improvise un dique con sacos de arena.",
-        "choices": [
-          {"label": "Continuar", "target": "p1_pre_close", "result_text": "Saúl marca la pérdida en la libreta sin decir una palabra. No hace falta.", "effects": [{"type": "meter", "key": "diesel_liters", "value": -700}]}
-        ]
-      },
-
       "p1_frente2_after_diesel": {
         "type": "fixed_anchor",
         "narration": "La alarma por fin despierta a La Cámara. Quedan dos problemas abiertos: la puerta norte y la medicina.",
         "choices": [
           {
             "label": "Ayudar a Ramiro en la puerta norte (con desventaja)",
-            "target": "p1_alarm_close_medicina_pendiente_2",
+            "target": "p1_pre_close",
             "check_attribute": "cuerpo",
             "check_difficulty": 12,
             "disadvantage_when": {"type": "all", "gates": []},
             "on_failure": {
-              "result_text": "Damián llega tarde. Tres quietos entran al patio antes de que la puerta cierre.",
-              "effects": [{"type": "flag", "key": "p1_gate_combat_pending", "value": true}]
+              "result_text": "Damián llega tarde. Tres quietos entran al patio antes de que la puerta cierre.\n\nNadie llegó a la enfermería tampoco. El panel del techo cae sobre la última estantería; Lucía salva lo que puede cargar en los brazos, pero no es suficiente y los dos lo saben.",
+              "effects": [{"type": "flag", "key": "p1_gate_combat_pending", "value": true}, {"type": "resource", "key": "supplies", "value": -2}, {"type": "flag", "key": "medical_stock_critical", "value": true}]
             },
             "on_success": {
-              "result_text": "Damián y Ramiro cierran la puerta norte justo a tiempo. Nadie fue a la enfermería.",
+              "result_text": "Damián y Ramiro cierran la puerta norte justo a tiempo. Nadie fue a la enfermería: el panel del techo cae sobre la última estantería, y Lucía salva lo que puede cargar en los brazos, pero no es suficiente y los dos lo saben.",
               "effects": [
                 {"type": "flag", "key": "saved_north_gate", "value": true},
-                {"type": "relationship", "key": "ramiro", "value": 1}
+                {"type": "relationship", "key": "ramiro", "value": 1},
+                {"type": "resource", "key": "supplies", "value": -2},
+                {"type": "flag", "key": "medical_stock_critical", "value": true}
               ]
             }
           },
@@ -505,14 +492,6 @@
               ]
             }
           }
-        ]
-      },
-
-      "p1_alarm_close_medicina_pendiente_2": {
-        "type": "fixed_anchor",
-        "narration": "Nadie llegó a la enfermería. El panel del techo cae sobre la última estantería. Lucía salva lo que puede cargar en los brazos.",
-        "choices": [
-          {"label": "Continuar", "target": "p1_pre_close", "result_text": "Lucía cuenta lo que quedó. No es suficiente y los dos lo saben.", "effects": [{"type": "resource", "key": "supplies", "value": -2}, {"type": "flag", "key": "medical_stock_critical", "value": true}]}
         ]
       },
 
@@ -2978,11 +2957,16 @@
 
       "c8_n04_ocho_minutos": {
         "type": "fixed_anchor",
-        "narration": "Las puertas del coche trasero se abren.\n\nUna franja amarilla divide el andén del escalón.\n\nLa lista empieza a convertirse en cuerpos: bolsos, manos, personas que miran atrás. Cada nombre pronunciado deja a alguien del otro lado.\n\nDamián puede subir ahora, supervisar el embarque, revisar el combustible o contener el andén.",
+        "narration": "Una franja amarilla divide el andén del escalón.\n\nDamián puede revisar la cuarentena o contener el andén mientras el contador sigue corriendo.",
+        "conditional_inserts": [
+          {"text": "Las puertas del coche trasero se abren. La lista empieza a convertirse en cuerpos: bolsos, manos, personas que miran atrás. Cada nombre pronunciado deja a alguien del otro lado. Damián puede supervisar el embarque o revisar el combustible cargado.", "gate": {"type": "flag", "key": "diesel_deal"}},
+          {"text": "El coche trasero permanece cerrado. No hay lista que convertir en cuerpos: nadie de La Cámara sube esta noche.", "gate": {"type": "flag", "key": "diesel_deal", "equals": false}}
+        ],
         "choices": [
           {
             "label": "Supervisar el embarque",
             "target": "c8_n04b_cierre",
+            "gate": {"type": "flag", "key": "diesel_deal"},
             "check_attribute": "humanidad",
             "check_difficulty": 12,
             "on_success": {"result_text": "La política elegida se respeta al pie de la letra."},
@@ -2992,6 +2976,7 @@
           {
             "label": "Revisar el combustible cargado",
             "target": "c8_n04b_cierre",
+            "gate": {"type": "flag", "key": "diesel_deal"},
             "check_attribute": "tecnica",
             "check_difficulty": 12,
             "on_success": {"result_text": "El trato se cumple exactamente como se acordó."},
