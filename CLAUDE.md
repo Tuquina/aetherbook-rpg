@@ -144,22 +144,23 @@ La Fase 0 (prueba de concepto) está completa y superada. Hoy la app tiene, adem
 
 - [x] Proyecto Flutter (iOS/Android/web) con estructura ports-and-adapters.
 - [x] `core/engine` con `ResolvePlayerAction` (atributo + d20 vs dificultad, tres bandas, ventaja/desventaja) + tests.
-- [x] `NarratorPort` + `FakeNarratorAdapter`; narrador real (`GeminiNarratorAdapter` + `GroqNarratorAdapter` de fallback vía `FallbackNarratorAdapter`) desplegado como Edge Function y verificado — el cliente sigue en `FakeNarratorAdapter` a propósito, para no gastar cuota mientras se itera la UI/UX.
+- [x] `NarratorPort` conectado de punta a punta: `HttpNarratorAdapter` (Gemini → Groq de fallback vía `FallbackNarratorAdapter`, desplegado como Edge Function) es el adaptador real que usa el cliente (`lib/main.dart`) — `FakeNarratorAdapter` sigue existiendo solo para tests, nunca gasta cuota ahí.
 - [x] Persistencia real en Supabase (Auth anónimo + RLS por sesión), con degradación a memoria si falla.
-- [x] Memoria de tres niveles: corto plazo literal, diario resumido cada ~5 turnos vía Groq (Edge Function `memory-digest`), estado largo plazo en Postgres.
+- [x] Memoria de tres niveles: corto plazo literal, diario resumido cada ~5 turnos vía Groq (Edge Function `memory-digest`, conectada al cliente con `HttpMemoryDigestAdapter`), estado largo plazo en Postgres.
+- [x] Posición dentro del grafo (nodo actual, turnos de corredor, progreso de conflicto extendido) persistida en Supabase (`game_sessions.current_node_id`/`corridor_turns_used`/`extended_conflict_progress`) — una campaña curada u híbrida sobrevive un refresh o cerrar la app.
 - [x] `core/narrative` con los 4 tipos de nodo de una campaña híbrida real (`fixed_anchor`, `bounded_corridor`, `state_hub`, `resolution`), gates, conflictos extendidos y combate por `guard`.
 - [x] Chargen estructurado (`CreateCharacter`: origen, punto libre, juramento, objeto personal) y progresión por rango con hitos (`RankProgression`), no solo EXP lineal.
 - [x] Contrato del narrador v2 (choices con intención/chequeo esperado, deltas con motivo) y un clasificador de acción libre (`ClassifyFreeAction`) ya construidos — este último todavía no reemplaza al inferidor por keyword en el loop de juego.
-- [x] Una campaña híbrida real cargada como contenido declarativo: **"Los nombres que devora el cielo"** (`assets/worlds/xianxia_lianshu.json`, 19 nodos, reparto, técnicas, 7 finales). Su vertical slice recomendado (apertura curada → corredor → hub → hito con conflicto extendido) es jugable de punta a punta, verificado con test automatizado contra el contenido real y con una sesión manual en navegador.
-- [x] Menú inicial para elegir historia (`WorldSelectScreen`) y navegación de vuelta al menú desde dentro de una partida, sin perder la sesión en memoria.
+- [x] Una campaña híbrida real cargada como contenido declarativo: **"Los nombres que devora el cielo"** (`assets/worlds/xianxia_lianshu.json`, 19 nodos, reparto, técnicas, 7 finales). Su vertical slice recomendado (apertura curada → corredor → hub → hito con conflicto extendido) es jugable de punta a punta, verificado con test automatizado contra el contenido real y con una sesión manual en navegador. Ahora se narra con el modelo real, no con JSON fijo.
+- [x] Una historia curada 100% sin IA cargada como segundo mundo: **"El último tren no espera a los vivos"** (`assets/worlds/curated_zombie_01_ultimo_tren.json`, ~103 nodos, prólogo + 10 capítulos, 6 finales + 2 fracasos + epílogo modular). `ai_runtime_required: false` y `free_text_actions: false`: el narrador nunca se invoca para esta campaña, cero llamadas de red en partida.
+- [x] Menú inicial para elegir historia (`WorldSelectScreen`), agrupado en 3 módulos (historias completas / pre-armadas / narrador por IA — este último deshabilitado hasta que haya contenido freeform real), y navegación de vuelta al menú desde dentro de una partida, sin perder la sesión en memoria. Incluye "reiniciar historia" (abandona la sesión persistida y empieza una limpia).
 
 Lo que falta para cerrar la Fase 1 (todo lo demás del roadmap del GDD sigue siendo Fase 2+):
 
-- Cablear el resto de los 19 nodos de la campaña cargada (finales, epílogo, elección de técnica al subir de rango) — el contenido ya existe, falta ejercitarlo turno a turno en la UI.
+- Cablear el resto de los 19 nodos de la campaña híbrida (finales, epílogo, elección de técnica al subir de rango) — el contenido ya existe, falta ejercitarlo turno a turno en la UI.
 - Reemplazar el inferidor de atributo por keyword por `ClassifyFreeAction` para la acción libre dentro de un nodo curado.
-- Persistir la posición dentro del grafo (nodo actual, turnos de corredor, progreso de conflicto extendido) en Supabase — hoy solo vive en memoria, así que una campaña curada no sobrevive un refresh.
-- Inventario real.
-- Los otros 4 mundos del GDD (Isekai, Superhéroes, Cyberpunk, Post-apocalíptico) todavía no tienen contenido — eso es explícitamente Fase 2.
+- Inventario real (hoy `character.lists['inventory']` guarda IDs de ítems pero no hay pantalla ni modelo de ítem con nombre/descripción — el Codex no lo muestra).
+- Los otros 4 mundos del GDD (Isekai, Superhéroes, Cyberpunk, Post-apocalíptico genérico de fase 2) todavía no tienen contenido — eso es explícitamente Fase 2. (El post-apocalíptico zombi de "El último tren..." es una historia curada completa, no el mundo freeform/híbrido de Fase 2.)
 
 ---
 
