@@ -224,5 +224,45 @@ void main() {
       await controller.choose('Meditar');
       expect(controller.error, isNull);
     });
+
+    group('hasPersistedSession', () {
+      test('true when a session already exists for that world', () async {
+        final persistence = _FakeGameStateRepository()
+          ..seeded = GameSession(
+            id: 'existing-session',
+            worldSlug: 'xianxia',
+            character: _character,
+          );
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          persistence: persistence,
+          dice: const FixedDice(10),
+        );
+
+        expect(await controller.hasPersistedSession('xianxia'), isTrue);
+      });
+
+      test('false when no session exists yet for that world', () async {
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          persistence: _FakeGameStateRepository(),
+          dice: const FixedDice(10),
+        );
+
+        expect(await controller.hasPersistedSession('xianxia'), isFalse);
+      });
+
+      test('false without persistence configured (Fase 0 in-memory mode)', () async {
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          dice: const FixedDice(10),
+        );
+
+        expect(await controller.hasPersistedSession('xianxia'), isFalse);
+      });
+    });
   });
 }

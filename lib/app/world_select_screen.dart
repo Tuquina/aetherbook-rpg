@@ -121,7 +121,12 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
     _availableWorldSlugs.map(widget.controller.loadWorldInfo),
   );
 
-  void _select(World world) {
+  /// `Future<void>` even though this is wired up as a `ValueChanged<World>`
+  /// (`void Function(World)`) callback — Dart allows that assignment since an
+  /// async function's return type is compatible with a `void`-returning
+  /// function type, and the caller (a story card's `onTap`) has no need to
+  /// await it.
+  Future<void> _select(World world) async {
     if (!_moduleFor(world).enabled) return;
     final controller = widget.controller;
     // Already the active session in memory (e.g. the player used the back
@@ -130,7 +135,14 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
       _goToGame(world.slug);
       return;
     }
-    if (world.origins.isNotEmpty) {
+    // A world with chargen origins only actually needs the chargen form when
+    // there's no session to resume yet — otherwise `start()` would discard
+    // whatever the player just filled in and load the existing session
+    // anyway, so asking them to fill it out is just noise.
+    final needsChargen = world.origins.isNotEmpty &&
+        !await controller.hasPersistedSession(world.slug);
+    if (!mounted) return;
+    if (needsChargen) {
       _goToChargen(world);
     } else {
       _goToGame(world.slug);

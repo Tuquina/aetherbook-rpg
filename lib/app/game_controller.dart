@@ -180,6 +180,21 @@ class GameController extends ChangeNotifier {
   /// start playing, without duplicating the world-selection logic here.
   Future<World> loadWorldInfo(String worldSlug) => _worldRepository.loadWorld(worldSlug);
 
+  /// Whether a persisted session already exists for [worldSlug] — used by
+  /// `WorldSelectScreen` to skip the chargen form when there's actual
+  /// progress to resume. A world that declares chargen origins otherwise
+  /// always routes through `ChargenScreen` on reselection, even when the
+  /// player already has an advanced session for it: `start()` discards
+  /// `chargenInput` and loads the existing session anyway once it finds one,
+  /// so the form was never doing anything except forcing the player to
+  /// needlessly refill it. `false` (never chargen-skipping) when there's no
+  /// persistence configured at all — same as Fase 0's in-memory-only mode.
+  Future<bool> hasPersistedSession(String worldSlug) async {
+    final persistence = _persistence;
+    if (persistence == null) return false;
+    return await persistence.loadLatestSession(worldSlug) != null;
+  }
+
   /// Loads a world and sets up the opening scene — resumed from a persisted
   /// session if [persistence] is configured and one already exists, or from
   /// the world's seed/graph start otherwise. [chargenInput] is required to
