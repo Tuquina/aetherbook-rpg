@@ -296,7 +296,7 @@
 
       "p1_frente2_after_puerta": {
         "type": "fixed_anchor",
-        "narration": "La alarma por fin despierta a La Cámara. Las personas corren hacia puestos ensayados, pero los problemas que Damián no eligió siguen abiertos: la medicina y el diésel.",
+        "narration": "Recién ahora la alarma despierta a La Cámara entera, con un retraso que nadie va a explicar hasta mañana. Gente en ropa de dormir corre hacia puestos que ensayaron cien veces y nunca creyeron necesitar de verdad. Damián resolvió un frente. Quedan dos, y solo llega a uno.",
         "choices": [
           {
             "label": "Sacar los medicamentos (con desventaja)",
@@ -368,7 +368,7 @@
 
       "p1_frente2_after_medicina": {
         "type": "fixed_anchor",
-        "narration": "La alarma por fin despierta a La Cámara. Quedan dos problemas abiertos: la puerta norte y el diésel.",
+        "narration": "Recién ahora la alarma despierta a La Cámara entera. La medicina está a salvo, pero eso no cambia nada del otro lado del patio, donde Ramiro grita órdenes que el viento se lleva antes de que lleguen a nadie. Quedan dos frentes abiertos, y Damián solo llega a uno: la puerta norte o el diésel.",
         "choices": [
           {
             "label": "Ayudar a Ramiro en la puerta norte (con desventaja)",
@@ -436,7 +436,7 @@
 
       "p1_frente2_after_diesel": {
         "type": "fixed_anchor",
-        "narration": "La alarma por fin despierta a La Cámara. Quedan dos problemas abiertos: la puerta norte y la medicina.",
+        "narration": "Recién ahora la alarma despierta a La Cámara entera, tarde para servir de mucho. El diésel está a salvo, o lo que queda de él. Quedan dos frentes abiertos, y Damián solo llega a uno: la puerta norte o la enfermería, donde Lucía ya está gritando nombres de cajas que nadie más sabe identificar.",
         "choices": [
           {
             "label": "Ayudar a Ramiro en la puerta norte (con desventaja)",
@@ -509,26 +509,26 @@
 
       "p1_pre_close": {
         "type": "fixed_anchor",
-        "narration": "Los dos frentes atendidos quedan resueltos, cada uno con su costo.",
+        "narration": "Los dos frentes que Damián alcanzó a cubrir quedan resueltos, cada uno con su costo cobrado ya, sin descuento. En algún lugar del patio, alguien todavía grita un nombre que no es el suyo.",
         "choices": [
           {
             "label": "Continuar",
             "target": "p1_combat_tutorial",
             "gate": {"type": "flag", "key": "p1_gate_combat_pending"},
-            "result_text": "El tercer frente nunca quedó cubierto."
+            "result_text": "El tercer frente nunca tuvo quién lo cubriera, y ahora hay que pagar eso también."
           },
           {
             "label": "Continuar",
             "target": "p1_alarm_close",
             "gate": {"type": "flag", "key": "p1_gate_combat_pending", "equals": false},
-            "result_text": "Los tres frentes quedaron cubiertos. La noche todavía puede contarse como una victoria."
+            "result_text": "Contra todo pronóstico, los tres frentes quedaron cubiertos. Esta noche, al menos esta, se puede contar como una victoria."
           }
         ]
       },
 
       "p1_combat_tutorial": {
         "type": "fixed_anchor",
-        "narration": "Tres quietos cruzan el patio antes de que alguien cierre la última puerta. No corren. Caminan hacia el sonido más cercano, que ahora es Damián.",
+        "narration": "Tres quietos cruzan el patio antes de que alguien alcance a cerrar la última puerta. No corren — nunca corren, y de algún modo eso es peor. Caminan hacia el sonido más cercano, con la cabeza ladeada como quien todavía escucha algo que ya no está. El sonido más cercano, ahora, es Damián.",
         "extended_conflict": {"successes_required": 3, "failures_allowed": 3, "repeat_attribute_penalty": -2},
         "choices": [
           {
@@ -569,7 +569,7 @@
 
       "p1_alarm_close": {
         "type": "fixed_anchor",
-        "narration": "Cuando el patio queda en silencio, La Cámara cuenta.\n\nSesenta y tres vivos.\n\nNadie dice cuántos cuerpos hay contra la puerta. Saúl apaga la bocina con una barra. Lucía reparte mantas. Ramiro busca la cuerda de la alarma y encuentra un corte limpio.\n\nAlguien la cortó antes de que la camioneta llegara.\n\nDamián vuelve a la cabina para revisar la radio. Abril está inclinada sobre el receptor.\n\n—No era estática —dice—. Alguien está llamando por el canal de operaciones.",
+        "narration": "Cuando el patio por fin queda en silencio, La Cámara hace lo que hace siempre después: cuenta.\n\nSesenta y tres vivos.\n\nNadie dice en voz alta cuántos cuerpos quedaron contra la puerta — se sabrá al amanecer, cuando alguien tenga que ir a moverlos. Saúl apaga la bocina de la camioneta a barrazos, sin apuro, como quien termina un trabajo más. Lucía reparte mantas sin preguntar quién las necesita más. Ramiro busca la cuerda de la alarma de latas y la encuentra cortada limpio, un solo tajo, no un desgaste.\n\nAlguien la cortó antes de que la camioneta llegara.\n\nNadie dice esa parte en voz alta tampoco.\n\nDamián vuelve a la cabina a revisar la radio, más por costumbre que por esperanza. Abril sigue inclinada sobre el receptor donde la dejó, pero ahora tiene los hombros tensos de un modo distinto.\n\n—No era estática —dice, sin darse vuelta—. Alguien está llamando por el canal de operaciones.",
         "conditional_inserts": [
           {"text": "Los tres quietos que entraron al patio ya no se mueven. Cuestan una noche de guardia extra que nadie va a dormir.", "gate": {"type": "flag", "key": "p1_gate_combat_pending"}}
         ],
@@ -595,7 +595,7 @@
           {
             "label": "\"Primero hay que confirmar que sea real.\"",
             "target": "c1_n01_consejo",
-            "result_text": "—Primero hay que confirmar que sea real —dice Damián.\n\nAbril asiente, pero algo en su cara se cierra un poco.\n\nLa repetición continúa mientras el resto de La Cámara se reúne detrás de la puerta.\n\nVeinte lugares.\n\nDamián mira la llave maestra sobre la mesa. Hace trece meses la usó para abrir una ruta. Desde entonces no ha vuelto a San Gregorio.\n\nAfuera, el frío mantiene quietos a los muertos.\n\nDentro, la esperanza despierta a todos.",
+            "result_text": "—Primero hay que confirmar que sea real —dice Damián.\n\nAbril asiente, pero algo en su cara se cierra un poco, como una puerta que no llega a golpear.\n\nLa repetición sigue mientras el resto de La Cámara se reúne detrás de la puerta, todavía en ropa de dormir, todavía sin saber por qué los despertaron dos veces la misma noche.\n\nVeinte lugares.\n\nDamián mira la llave maestra sobre la mesa. Hace trece meses la usó para abrir una ruta. Desde entonces no volvió a San Gregorio, ni en sueños si puede evitarlo.\n\nAfuera, el frío sigue haciendo lo único que sabe hacer: mantener quietos a los muertos. Adentro, nadie va a volver a dormir esta noche — la esperanza tiene ese efecto, y Damián ya lo había olvidado.",
             "effects": [
               {"type": "flag", "key": "verify_aurora", "value": true},
               {"type": "flag", "key": "aurora_message_heard", "value": true},
@@ -608,7 +608,7 @@
           {
             "label": "\"Primero hay que confirmar que sea real.\"",
             "target": "c1_n01_consejo",
-            "result_text": "—Primero hay que confirmar que sea real —dice Damián.\n\nLa repetición continúa mientras el resto de La Cámara se reúne detrás de la puerta.\n\nVeinte lugares.\n\nDamián mira la llave maestra sobre la mesa. Hace trece meses la usó para abrir una ruta. Desde entonces no ha vuelto a San Gregorio.\n\nAfuera, el frío mantiene quietos a los muertos.\n\nDentro, la esperanza despierta a todos.",
+            "result_text": "—Primero hay que confirmar que sea real —dice Damián.\n\nLa repetición sigue mientras el resto de La Cámara se reúne detrás de la puerta, todavía en ropa de dormir, todavía sin saber por qué los despertaron dos veces la misma noche.\n\nVeinte lugares.\n\nDamián mira la llave maestra sobre la mesa. Hace trece meses la usó para abrir una ruta. Desde entonces no volvió a San Gregorio, ni en sueños si puede evitarlo.\n\nAfuera, el frío sigue haciendo lo único que sabe hacer: mantener quietos a los muertos. Adentro, nadie va a volver a dormir esta noche.",
             "effects": [
               {"type": "flag", "key": "verify_aurora", "value": true},
               {"type": "flag", "key": "aurora_message_heard", "value": true},
@@ -620,7 +620,7 @@
           {
             "label": "\"Si se detiene, vamos a tener que elegir.\"",
             "target": "c1_n01_consejo",
-            "result_text": "—Si se detiene, vamos a tener que elegir —dice Damián.\n\nAbril no responde. Escribe la palabra \"veinte\" con más fuerza de la necesaria.\n\nLa repetición continúa mientras el resto de La Cámara se reúne detrás de la puerta.\n\nDamián mira la llave maestra sobre la mesa. Hace trece meses la usó para abrir una ruta. Desde entonces no ha vuelto a San Gregorio.\n\nAfuera, el frío mantiene quietos a los muertos.\n\nDentro, la esperanza despierta a todos.",
+            "result_text": "—Si se detiene, vamos a tener que elegir —dice Damián.\n\nAbril no responde. Escribe la palabra \"veinte\" con más fuerza de la necesaria, el lápiz casi rompiendo el papel.\n\nLa repetición sigue mientras el resto de La Cámara se reúne detrás de la puerta.\n\nDamián mira la llave maestra sobre la mesa. Hace trece meses la usó para abrir una ruta. Desde entonces no volvió a San Gregorio.\n\nEl frío, afuera, sigue conteniendo a los muertos como siempre lo hizo. Pero adentro nadie va a dormir esta noche, y por primera vez en trece meses la culpa no es del frío.",
             "effects": [
               {"type": "flag", "key": "capacity_disclosed_early", "value": true},
               {"type": "flag", "key": "aurora_message_heard", "value": true},
@@ -632,7 +632,7 @@
           {
             "label": "\"La vía diecisiete está cerrada.\"",
             "target": "c1_n01_consejo",
-            "result_text": "—La vía diecisiete está cerrada —dice Damián.\n\nSaúl reconoce el miedo detrás de la frase técnica. No dice nada todavía, pero algo en su postura cambia.\n\nLa repetición continúa mientras el resto de La Cámara se reúne detrás de la puerta.\n\nDamián mira la llave maestra sobre la mesa.\n\nAfuera, el frío mantiene quietos a los muertos. Dentro, la esperanza despierta a todos.",
+            "result_text": "—La vía diecisiete está cerrada —dice Damián.\n\nSaúl reconoce el miedo detrás de la frase técnica; lo escuchó salir de esa misma boca hace trece meses, con otras palabras. No dice nada todavía, pero algo en su postura cambia — los hombros de un hombre que se prepara para sostener un peso, no para pelear.\n\nLa repetición sigue mientras el resto de La Cámara se reúne detrás de la puerta.\n\nDamián mira la llave maestra sobre la mesa.\n\nEl frío sigue conteniendo a los muertos, afuera, indiferente a todo esto. Adentro, algo que llevaba trece meses dormido acaba de despertar.",
             "effects": [
               {"type": "flag", "key": "aurora_message_heard", "value": true},
               {"type": "flag", "key": "proof_aurora_real", "value": true},
