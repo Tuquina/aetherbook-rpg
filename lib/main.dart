@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'adapters/content/asset_world_repository.dart';
-import 'adapters/memory/fake_memory_digest_adapter.dart';
-import 'adapters/narrator/fake_narrator_adapter.dart';
+import 'adapters/memory/http_memory_digest_adapter.dart';
+import 'adapters/narrator/http_narrator_adapter.dart';
 import 'adapters/persistence/supabase_game_state_adapter.dart';
 import 'app/game_controller.dart';
 import 'app/splash_screen.dart';
@@ -15,6 +15,8 @@ import 'ports/game_state_repository_port.dart';
 // keys, which never leave the Edge Function).
 const _supabaseUrl = 'https://hsgdldztcolteyodiscu.supabase.co';
 const _supabasePublishableKey = 'sb_publishable_5i-67CN7D7hDUY-w-iT3YQ_uBtaa_Gw';
+final _narratorEndpoint = Uri.parse('$_supabaseUrl/functions/v1/narrator');
+final _memoryDigestEndpoint = Uri.parse('$_supabaseUrl/functions/v1/memory-digest');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,15 +25,22 @@ Future<void> main() async {
 
   // Composition root: this is the ONLY place that knows about concrete
   // adapters. Everything downstream depends on ports (CLAUDE.md §4). Both AI
-  // ports stay on their Fakes for now — zero quota spent while iterating on
-  // UI/UX — even though the real Gemini/Groq-backed adapters already exist,
-  // are deployed, and are verified working (HttpNarratorAdapter,
-  // HttpMemoryDigestAdapter). Swapping them in later happens here.
+  // ports now hit the real, deployed Edge Functions (Gemini -> Groq fallback
+  // for the narrator, Groq for the memory digest) — Fase 1's last quota-side
+  // gate. `xianxia_lianshu` ("Los nombres que devora el cielo") is the world
+  // that actually depends on this; `curated_zombie_01_ultimo_tren` never
+  // calls either port regardless (`ai_runtime_required: false`).
   final controller = GameController(
     worldRepository: const AssetWorldRepository(),
-    narrator: const FakeNarratorAdapter(),
+    narrator: HttpNarratorAdapter(
+      endpoint: _narratorEndpoint,
+      publishableKey: _supabasePublishableKey,
+    ),
     persistence: persistence,
-    memoryDigest: const FakeMemoryDigestAdapter(),
+    memoryDigest: HttpMemoryDigestAdapter(
+      endpoint: _memoryDigestEndpoint,
+      publishableKey: _supabasePublishableKey,
+    ),
   );
 
   runApp(AetherbookApp(controller: controller));
