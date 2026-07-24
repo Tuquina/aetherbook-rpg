@@ -1123,6 +1123,7 @@
       "c5_n03_ritual_final": {
         "type": "resolution",
         "narration": "Al entrar, el peso del Registro se hace audible: millones de filamentos vibrando bajo el Río de Ceniza. Es hora de elegir qué queda del cielo cuando dejás de dejarlo decidir por vos.",
+        "epilogue_node_id": "e_epilogo",
         "final_technique_rules": [
           {
             "gate": {"type": "all", "gates": [{"type": "meter", "key": "karma", "min": 2}, {"type": "meter", "key": "public_trust", "min": 2}]},
