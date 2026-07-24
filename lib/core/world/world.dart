@@ -53,6 +53,7 @@ class World {
     this.relationshipMax = 3,
     this.hasFreeAttributePoint = true,
     this.chargenVowLabel = 'Juramento',
+    this.hasCustomizableName = true,
   });
 
   final String slug;
@@ -192,6 +193,15 @@ class World {
   /// the UI showing a mismatched label.
   final String chargenVowLabel;
 
+  /// Whether `ChargenScreen` asks the player to name their character at all
+  /// (default `true`, matching every existing world). `false` for a world
+  /// whose protagonist is a specific, already-named person the narration
+  /// refers to by name throughout (e.g. "Damián Salvatierra") — asking for a
+  /// player name there would only produce a UI that shows one name while
+  /// every line of prose uses another. `startingCharacter.name` is used as
+  /// the fixed name in that case.
+  final bool hasCustomizableName;
+
   CharacterOrigin originById(String id) => origins.firstWhere(
         (o) => o.id == id,
         orElse: () => throw ArgumentError('unknown origin: $id'),
@@ -299,6 +309,7 @@ class World {
       hasFreeAttributePoint:
           json['chargen_free_attribute_point'] as bool? ?? true,
       chargenVowLabel: json['chargen_vow_label'] as String? ?? 'Juramento',
+      hasCustomizableName: json['chargen_customizable_name'] as bool? ?? true,
     );
   }
 

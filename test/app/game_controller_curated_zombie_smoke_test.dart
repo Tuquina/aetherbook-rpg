@@ -114,7 +114,7 @@ void main() {
       expect(controller.character!.resource('ammo'), 0);
       expect(controller.character!.list('inventory'), isEmpty);
 
-      await _pick(controller, 'Ojos de ruta');
+      await _pick(controller, 'Revisar el revólver');
       expect(controller.currentNode!.id, 'p0_postura');
       expect(controller.character!.resource('ammo'), 3); // Ojos de ruta starting ammo
       expect(controller.character!.list('inventory'), contains('revolver_servicio'));
@@ -161,7 +161,7 @@ void main() {
           vowId: 'placa_operador',
         ),
       );
-      await _pick(controller, 'Corazón de guardia');
+      await _pick(controller, 'Cargar el botiquín');
       final node = controller.currentNode as FixedAnchorNode;
       final anyRequiresConfirmation = node.choices.any((c) => c.requiresConfirmation);
       // p0_postura's choices are all reversible narrative beats — this just

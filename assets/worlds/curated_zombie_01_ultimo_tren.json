@@ -14,6 +14,7 @@
 
   "chargen_free_attribute_point": false,
   "chargen_vow_label": "Recuerdo conservado",
+  "chargen_customizable_name": false,
 
   "relationship_magnitude_cap": 3,
   "relationship_min": -3,
@@ -100,7 +101,7 @@
     "nodes": {
       "p0_perfil": {
         "type": "fixed_anchor",
-        "narration": "A las 03:12, Damián Salvatierra despierta porque el generador deja de vibrar.\n\nNo es un sonido lo que lo saca del sueño. Es la ausencia.\n\nAbre los ojos en la cabina de mantenimiento, vestido y con las botas puestas. La lámpara de emergencia tiñe de rojo las tuberías. Sobre la pared, el termómetro marca cuatro grados. Del otro lado del panel aislante duermen sesenta y dos personas que todavía creen que la electricidad es una comodidad.\n\nDamián sabe cuánto tardará en convertirse en agua congelada, comida podrida y tos.\n\nCuenta hasta cinco. El generador vuelve con un golpe asmático. Las luces se encienden. Alguien aplaude desde el dormitorio común y otra persona le exige que se calle.\n\nEn la mesa están la llave maestra del ferrocarril, una taza con café usado dos veces y el objeto que Damián no ha podido tirar en trece meses.\n\nAbril duerme en una silla junto a la radio abierta. Tiene una soldadora fría sobre el regazo y una marca de estaño en el pulgar. En la libreta escribió tres frecuencias y una frase: \"Nada durante seis horas\".\n\nDamián le quita la herramienta con cuidado. Cuando va a cubrirla con una manta, la radio ferroviaria emite un clic.\n\nNo hay voz. Solo una portadora débil y regular, como una respiración detrás de una pared.",
+        "narration": "Damián Salvatierra despierta a las 03:12 porque el generador deja de vibrar bajo el piso de la cabina — esa vibración constante que dejó de notar hace meses y que ahora, ausente, lo saca del sueño como una mano en el hombro.\n\nSe incorpora vestido, con las botas puestas: duerme así desde la Caída, y ya ni se pregunta por qué. La lámpara de emergencia tiñe de rojo las tuberías del techo. El termómetro de la pared marca cuatro grados y sigue bajando. Del otro lado del panel aislante duermen sesenta y dos personas que todavía dicen \"cortó la luz\" en vez de \"empezamos a morir\", y Damián no las corrige, porque hace tiempo dejó de tener sentido explicarles cuánto tarda el frío en convertirse en agua congelada dentro de las cañerías, comida podrida en la cámara y la tos seca que siempre empieza entre los más viejos.\n\nCuenta hasta cinco, como todas las noches. A tres, el generador tose. A cinco, agarra impulso y vuelve con un golpe asmático que hace vibrar el termómetro. Las luces se encienden. En el dormitorio común alguien aplaude, agradecido, y otra voz —más aguda, más cansada— pide que se calle antes de despertar a los chicos.\n\nEn la mesa lo esperan las mismas tres cosas de siempre: la llave maestra del ferrocarril, una taza con café requemado y usado dos veces, y el objeto que Damián no consiguió tirar en trece meses.\n\nAbril duerme sentada junto a la radio, con la soldadora todavía fría en el regazo y una mancha de estaño fresco en el pulgar. Anotó tres frecuencias en la libreta y, debajo, una sola frase: \"Nada durante seis horas\". Damián le saca la herramienta de las manos con el cuidado de quien ya hizo ese gesto cien veces, y está por taparla con una manta cuando la radio del ferrocarril suelta un clic.\n\nNo trae voz. Solo una portadora débil, regular, como si alguien respirara del otro lado de una pared muy vieja.",
         "conditional_inserts": [
           {"text": "El reloj de Elena, sobre la mesa, marca una hora que dejó de importar hace trece meses. Damián lo mira antes de mirar cualquier otra cosa.", "gate": {"type": "var", "key": "vow_id", "equals": "reloj_elena"}},
           {"text": "Junto a la taza está el boleto que le sacó a Abril del tren C-17. Lo dobla siempre por la misma línea.", "gate": {"type": "var", "key": "vow_id", "equals": "boleto_abril"}},
@@ -108,7 +109,7 @@
         ],
         "choices": [
           {
-            "label": "Manos de taller — multiherramienta y reparación precisa",
+            "label": "Guardar la multiherramienta y salir",
             "target": "p0_postura",
             "gate": {"type": "var", "key": "origin_id", "equals": "manos_de_taller"},
             "result_text": "Damián ajusta el peso de la multiherramienta ferroviaria en el bolsillo del mono de trabajo. La llave maestra, la radio portátil y el objeto que no ha podido tirar en trece meses quedan donde puede alcanzarlos sin mirar.",
@@ -119,7 +120,7 @@
             ]
           },
           {
-            "label": "Corazón de guardia — botiquín compacto y nadie atrás",
+            "label": "Cargar el botiquín y salir",
             "target": "p0_postura",
             "gate": {"type": "var", "key": "origin_id", "equals": "corazon_de_guardia"},
             "result_text": "Damián carga el botiquín compacto junto a la llave maestra y la radio portátil. Cuenta las vendas por costumbre, no porque hoy vaya a necesitarlas.",
@@ -130,7 +131,7 @@
             ]
           },
           {
-            "label": "Ojos de ruta — revólver de servicio y salida más cercana",
+            "label": "Revisar el revólver y salir",
             "target": "p0_postura",
             "gate": {"type": "var", "key": "origin_id", "equals": "ojos_de_ruta"},
             "result_text": "Damián revisa el tambor del revólver de servicio antes de guardarlo. Tres cartuchos, la llave maestra, la radio portátil. Ya localizó dos salidas de la cabina sin proponérselo.",
@@ -146,7 +147,7 @@
 
       "p0_postura": {
         "type": "fixed_anchor",
-        "narration": "Abril se despierta cuando la radio hace su segundo clic. Se frota un ojo con el dorso de la mano manchada de estaño.\n\n—¿Otra vez el generador?\n\n—Ya volvió.\n\nElla mira la mesa, después a él.\n\n—Alguien mencionó el C-17 ayer. En la fila de la cena. Vos cambiaste de tema tan rápido que hasta Saúl se dio cuenta.\n\nNo es una pregunta todavía. Es una puerta que Abril deja abierta.",
+        "narration": "Abril se despierta con el segundo clic de la radio y se frota un ojo con el dorso de la mano, todavía manchada de estaño de anoche.\n\n—¿Otra vez el generador?\n\n—Ya volvió.\n\nElla mira la mesa —la llave, la taza, el objeto que él nunca explica— y después lo mira a él, con esa atención de mecánica que revisa un motor antes de preguntar qué falla.\n\n—Alguien mencionó el C-17 ayer. En la fila de la cena. Vos cambiaste de tema tan rápido que hasta Saúl se dio cuenta.\n\nTodavía no es una acusación. Es una puerta que Abril deja abierta, esperando a ver si él la cruza solo.",
         "choices": [
           {
             "label": "\"El sistema falló.\"",
@@ -188,7 +189,7 @@
 
       "p1_alarma_camara": {
         "type": "fixed_anchor",
-        "narration": "El segundo clic llega desde el patio.\n\nDespués, metal contra metal.\n\nDamián aparta la cortina de la cabina. Más allá de los ventanales empañados, la cadena de la puerta norte se tensa y vuelve a caer. Una mano gris atraviesa el espacio entre las hojas. Otra aparece debajo. Los quietos no golpean para entrar: empujan porque algo detrás sigue avanzando.\n\nLa alarma de latas no sonó.\n\n—Tío —dice Abril.\n\nYa está de pie, con la ballesta descargada.\n\nUna camioneta de reparto se deslizó contra el cerco durante la noche. Su bocina permanece hundida bajo el pecho del conductor muerto. El sonido reunió a una treintena. En el patio, Ramiro corre hacia la puerta con dos guardias. Lucía arrastra una caja de medicamentos fuera de la enfermería. Saúl intenta cerrar la válvula del depósito de diésel: una cañería se partió cuando la camioneta golpeó el muro.\n\nTres problemas. Tiempo para llegar primero a uno.",
+        "narration": "El segundo clic llega desde el patio.\n\nDespués, metal contra metal — un sonido que Damián reconoce en el cuerpo antes de reconocerlo con la cabeza.\n\nAparta la cortina de la cabina. Más allá de los ventanales empañados, la cadena de la puerta norte se tensa, cede un centímetro, vuelve a tensarse. Una mano gris se cuela por el hueco entre las hojas. Después otra, más abajo. Los quietos no golpean para entrar — empujan, sin prisa ni furia, porque algo detrás de ellos sigue avanzando y no tiene manera de detenerse solo.\n\nLa alarma de latas, la que debería sonar antes que nada, no sonó.\n\n—Tío.\n\nAbril ya está de pie, la ballesta todavía descargada en las manos, y por primera vez en meses no parece una chica jugando a ser útil.\n\nAfuera, una camioneta de reparto se deslizó contra el cerco durante la noche; la bocina sigue hundida bajo el pecho del conductor muerto, sonando hasta que algo la calló. Atrajo a una treintena. Ahora Ramiro corre hacia la puerta con dos guardias, Lucía arrastra una caja de medicamentos fuera de la enfermería a los tirones, y Saúl pelea con la válvula del depósito de diésel — la cañería se partió cuando la camioneta golpeó el muro y el charco ya le moja las botas.\n\nTres frentes. Un solo cuerpo para llegar a alguno primero.",
         "choices": [
           {
             "label": "Ayudar a Ramiro en la puerta norte",

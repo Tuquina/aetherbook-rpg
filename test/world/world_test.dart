@@ -297,5 +297,16 @@ void main() {
       expect(world.hasFreeAttributePoint, isFalse);
       expect(world.chargenVowLabel, 'Recuerdo conservado');
     });
+
+    test('hasCustomizableName defaults to true', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(world.hasCustomizableName, isTrue);
+    });
+
+    test('a world with a fixed, already-named protagonist can disable it', () {
+      final json = baseWorldJson()..['chargen_customizable_name'] = false;
+      final world = World.fromJson(json);
+      expect(world.hasCustomizableName, isFalse);
+    });
   });
 }
