@@ -17,6 +17,8 @@ import '../core/engine/resolve_player_action.dart';
 import '../core/engine/resolve_story_choice.dart';
 import '../core/engine/state_delta.dart';
 import '../core/narrative/checkable.dart';
+import '../core/narrative/ending.dart';
+import '../core/narrative/epilogue_beat.dart';
 import '../core/narrative/extended_conflict.dart';
 import '../core/narrative/hub_activity.dart';
 import '../core/narrative/story_choice.dart';
@@ -160,6 +162,18 @@ class GameController extends ChangeNotifier {
     return node.availableActivities(character);
   }
 
+  /// The campaign's climax endings whose hard requirement is currently met —
+  /// empty unless [currentNode] is the `ResolutionNode` that declares them
+  /// (a pure epilogue node like `e_epilogo` declares none). Resolved via
+  /// [chooseEnding], never [chooseStoryChoice] — an ending has no
+  /// `targetNodeId` of its own; the engine always routes to the epilogue.
+  List<Ending> get availableEndings {
+    final node = currentNode;
+    final character = this.character;
+    if (node is! ResolutionNode || character == null) return const [];
+    return node.availableEndings(character);
+  }
+
   /// Loads a world's declarative data without starting a session — used by
   /// `SplashScreen`/`ChargenScreen` to decide whether a world needs
   /// structured chargen (campaign-bible §5) before the player can actually
@@ -264,12 +278,25 @@ class GameController extends ChangeNotifier {
     return world.startingCharacter;
   }
 
-  /// The node's own pre-written opening prose, if it has one — only a
-  /// `FixedAnchorNode` carries literal narration (campaign-bible's curated
-  /// hitos); corridors/hubs/resolutions have none and rely on the narrator.
-  /// Appends every `conditionalInserts` block whose gate [character]
-  /// satisfies, and interpolates `{{token}}` placeholders against it.
+  /// The node's own pre-written opening prose, if it has one. A
+  /// `FixedAnchorNode` carries literal narration plus every
+  /// `conditionalInserts` block whose gate [character] satisfies
+  /// (campaign-bible's curated hitos); corridors/hubs have none and rely on
+  /// the narrator. A `ResolutionNode` with [ResolutionNode.endings] shows its
+  /// own arrival prose (the endings themselves are offered separately via
+  /// `availableEndings`/`chooseEnding`, never narrated here); a pure epilogue
+  /// node (no endings) assembles [ResolutionNode.epilogueBeats] instead —
+  /// same "first satisfied beat per movement" rule as everywhere else in the
+  /// engine. Interpolates `{{token}}` placeholders against [character]
+  /// either way.
   String? _literalNarrationOf(StoryNode node, Character character) {
+    if (node is ResolutionNode) {
+      final text = node.endings.isNotEmpty
+          ? node.narration
+          : assembleEpilogueBeats(node.epilogueBeats, character).join('\n\n');
+      if (text.isEmpty) return null;
+      return _interpolate(text, character: character, protagonistName: character.name);
+    }
     if (node is! FixedAnchorNode) return null;
     final inserts = node.satisfiedInserts(character);
     if (node.narration.isEmpty && inserts.isEmpty) return null;
@@ -383,6 +410,100 @@ class GameController extends ChangeNotifier {
   /// choice, but it never advances `currentNodeId` — an activity only
   /// applies its effects and lets the player keep browsing the hub.
   Future<void> chooseHubActivity(HubActivity activity) => _chooseOption(activity);
+
+  /// Resolves an [Ending] chosen at the climax `ResolutionNode` (campaign-
+  /// bible §16). No ending declares its own attribute — unlike a
+  /// `StoryChoice`, the climax check is a campaign-wide thing, not a
+  /// per-option one — so this rolls `world.primaryAttribute` against
+  /// [Ending.difficultyFor] (which already bakes in how many soft
+  /// requirements [character] met). Grants the final technique via the
+  /// node's `finalTechniqueRules` (first satisfied rule wins, content is
+  /// expected to end that list in an `AlwaysGate` catch-all so one is always
+  /// granted), sets `flags['ending_<resolvedId>']` for the epilogue to react
+  /// to, and advances to `ResolutionNode.epilogueNodeId`.
+  ///
+  /// On failure, the resolved ending redirects through
+  /// [Ending.failureEndingIdFor] when the content declares a fallback (only
+  /// one ending in the campaign bible ever does — most endings have none,
+  /// meaning [Ending.id] itself). Either way the ending still happens: a
+  /// failed climax check costs more, it doesn't undo the scene or reset the
+  /// game — same rule every other check in this engine follows. The
+  /// narrator (or, for an AI-free world, `curatedResultText`) narrates from
+  /// [Ending.successReveals]/[Ending.costReveals] on success, or
+  /// [Ending.costReveals] plus the first [Ending.failureCostOptions] entry
+  /// (when the content declares more than one, the engine picks
+  /// deterministically rather than opening a second decision the campaign
+  /// bible never specified how to present) on failure.
+  Future<void> chooseEnding(Ending ending) async {
+    final world = _world;
+    final session = _session;
+    final node = currentNode;
+    final character = session?.character;
+    if (world == null ||
+        session == null ||
+        node is! ResolutionNode ||
+        character == null ||
+        _isLoading) {
+      return;
+    }
+    if (!ending.isAvailableTo(character)) return;
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    final resolution = _resolve(
+      attributeKey: world.primaryAttribute,
+      attribute: character.attribute(world.primaryAttribute),
+      difficulty: ending.difficultyFor(character),
+      criticalMargin: world.criticalMargin,
+    );
+
+    final resolvedEndingId =
+        resolution.isSuccess ? ending.id : ending.failureEndingIdFor(character);
+
+    final reveals = resolution.isSuccess
+        ? [...ending.successReveals, ...ending.costReveals]
+        : [
+            ...ending.costReveals,
+            if (ending.failureCostOptions.isNotEmpty) ending.failureCostOptions.first,
+          ];
+    final resultText =
+        reveals.isEmpty ? ending.visibleChoice : reveals.join(' ');
+
+    final effects = <StateDelta>[
+      StateDelta(type: StateDeltaType.flag, key: 'ending_$resolvedEndingId', value: true),
+    ];
+    for (final rule in node.finalTechniqueRules) {
+      if (rule.isSatisfiedBy(character)) {
+        effects.add(StateDelta(
+          type: StateDeltaType.varSet,
+          key: 'final_technique_id',
+          value: rule.techniqueId,
+        ));
+        break;
+      }
+    }
+
+    await _resolveTurn(
+      world: world,
+      session: session,
+      playerAction: ending.visibleChoice,
+      resolution: resolution,
+      curatedEffects: effects,
+      nodeContext: (
+        fixedReveals: [
+          if (node.narration.isNotEmpty) node.narration,
+          ...reveals,
+        ],
+        forbiddenReveals: const [],
+        goal: 'Narrar el desenlace "${ending.visibleChoice}" '
+            '(${resolution.isSuccess ? "el intento tuvo éxito" : "el intento falló, pero el final igual ocurre a mayor costo"}).',
+      ),
+      nextNodeId: node.epilogueNodeId,
+      curatedResultText: resultText,
+    );
+  }
 
   Future<void> _chooseOption(Checkable choice) async {
     final world = _world;

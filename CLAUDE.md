@@ -138,7 +138,7 @@ Nunca mandes el historial completo al modelo.
 
 ---
 
-## 11. Fase actual: Fase 1 — MVP jugable (en curso)
+## 11. Fase actual: Fase 1 — MVP jugable (completa)
 
 La Fase 0 (prueba de concepto) está completa y superada. Hoy la app tiene, además del loop mínimo original:
 
@@ -151,14 +151,15 @@ La Fase 0 (prueba de concepto) está completa y superada. Hoy la app tiene, adem
 - [x] `core/narrative` con los 4 tipos de nodo de una campaña híbrida real (`fixed_anchor`, `bounded_corridor`, `state_hub`, `resolution`), gates, conflictos extendidos y combate por `guard`.
 - [x] Chargen estructurado (`CreateCharacter`: origen, punto libre, juramento, objeto personal) y progresión por rango con hitos (`RankProgression`), no solo EXP lineal.
 - [x] Contrato del narrador v2 (choices con intención/chequeo esperado, deltas con motivo). `ClassifyFreeAction` reemplaza a `InferActionAttribute` en `GameController.choose()`: decide el atributo del chequeo igual que antes (mismo voto por keyword), y además rechaza en el motor — antes de narrar — un intento de autootorgarse algo (`canonCompatibility == invalid`) en vez de dejar que la IA lo interprete.
-- [x] Una campaña híbrida real cargada como contenido declarativo: **"Los nombres que devora el cielo"** (`assets/worlds/xianxia_lianshu.json`, 19 nodos, reparto, técnicas, 7 finales). Su vertical slice recomendado (apertura curada → corredor → hub → hito con conflicto extendido) es jugable de punta a punta, verificado con test automatizado contra el contenido real y con una sesión manual en navegador. Ahora se narra con el modelo real, no con JSON fijo.
+- [x] Una campaña híbrida real cargada como contenido declarativo: **"Los nombres que devora el cielo"** (`assets/worlds/xianxia_lianshu.json`, 19 nodos, reparto, técnicas, 7 finales). Se narra con el modelo real, no con JSON fijo. La campaña es jugable de punta a punta: `GameController.availableEndings`/`chooseEnding` resuelven el clímax (chequeo contra `Ending.difficultyFor`, con fallback de fracaso, otorgamiento de técnica final vía `finalTechniqueRules`) y avanzan al nodo de epílogo puro, que ensambla sus `epilogue_beats` (`assembleEpilogueBeats`, ya existía a nivel de dominio pero nunca estaba conectado a `GameController` — el `ResolutionNode` era un callejón sin salida real hasta ahora). Verificado con test automatizado que juega la ruta real más corta (huir del valle) desde chargen hasta el final "fugitivo degradado" y el epílogo, sin fixtures.
+- [x] Estado terminal explícito ("Fin de la historia") cuando un nodo curado no tiene nada más para ofrecer — antes la pantalla de opciones quedaba vacía en silencio al llegar al epílogo de cualquiera de las dos campañas.
 - [x] Una historia curada 100% sin IA cargada como segundo mundo: **"El último tren no espera a los vivos"** (`assets/worlds/curated_zombie_01_ultimo_tren.json`, ~103 nodos, prólogo + 10 capítulos, 6 finales + 2 fracasos + epílogo modular). `ai_runtime_required: false` y `free_text_actions: false`: el narrador nunca se invoca para esta campaña, cero llamadas de red en partida.
 - [x] Menú inicial para elegir historia (`WorldSelectScreen`), agrupado en 3 módulos (historias completas / pre-armadas / narrador por IA — este último deshabilitado hasta que haya contenido freeform real), y navegación de vuelta al menú desde dentro de una partida, sin perder la sesión en memoria. Incluye "reiniciar historia" (abandona la sesión persistida y empieza una limpia).
 - [x] Inventario real: `ItemDefinition` declarativo por mundo (`World.items`, id/nombre/descripción/categoría), `World.findItem` no-throwing para degradar con gracia un id sin describir, y `InventoryScreen` (accesible desde el ícono en `StatusBar`, con contador) que le pone nombre y descripción a lo que antes eran solo ids sueltos en `character.lists['inventory']`. Los 16 ítems de "El último tren..." están descriptos; test de contenido asegura que todo id otorgado por un `list_add` tenga descripción.
 
-Lo que falta para cerrar la Fase 1 (todo lo demás del roadmap del GDD sigue siendo Fase 2+):
+Con eso, la Fase 1 está funcionalmente completa: las dos campañas son jugables de punta a punta con el motor real. Queda como pulido, no como bloqueo:
 
-- Cablear el resto de los 19 nodos de la campaña híbrida (finales, epílogo, elección de técnica al subir de rango) — el contenido ya existe (pasa la validación estática completa: sin referencias colgantes, los 5 finales y el epílogo cubiertos), falta jugarlo con la UI real más allá del vertical slice recomendado para encontrar bugs de runtime que un test estático no ve.
+- Jugar manualmente (o con más tests de ruta) los otros 4 finales + el fracaso de "Los nombres que devora el cielo" que la ruta automatizada no ejercita (nuevo_pacto con su fallback a nuevo_pacto_fracturado, cielo_roto con dificultad escalonada por preparativos, etc.) — la lógica es genérica y ya está probada con éxito/fracaso/fallback/epílogo en `game_controller_ending_test.dart`, pero cada final real sigue siendo contenido propio que vale la pena recorrer.
 - Los otros 4 mundos del GDD (Isekai, Superhéroes, Cyberpunk, Post-apocalíptico genérico de fase 2) todavía no tienen contenido — eso es explícitamente Fase 2. (El post-apocalíptico zombi de "El último tren..." es una historia curada completa, no el mundo freeform/híbrido de Fase 2.)
 
 ---

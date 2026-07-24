@@ -228,10 +228,18 @@ final class StateHubNode extends StoryNode {
 final class ResolutionNode extends StoryNode {
   const ResolutionNode({
     required super.id,
+    this.narration = '',
     this.endings = const [],
     this.epilogueBeats = const [],
     this.finalTechniqueRules = const [],
+    this.epilogueNodeId,
   });
+
+  /// The scene's own scene-setting prose, shown once on arrival alongside
+  /// the available [endings] (same role as `FixedAnchorNode.narration`) —
+  /// empty for a pure epilogue node (`e_epilogo`), which has no arrival beat
+  /// of its own and narrates entirely from [epilogueBeats].
+  final String narration;
 
   final List<Ending> endings;
 
@@ -244,6 +252,13 @@ final class ResolutionNode extends StoryNode {
   /// (§7.5) — used by `c5_n03_ritual_final`, empty everywhere else.
   final List<FinalTechniqueRule> finalTechniqueRules;
 
+  /// Where `GameController.chooseEnding` advances to after resolving any of
+  /// [endings] — declared by content, same as `BoundedCorridorNode`'s own
+  /// `fallback_exit`, so the engine never hardcodes a campaign's epilogue
+  /// node id. `null` for a node with no endings (the epilogue itself has
+  /// nowhere further to go).
+  final String? epilogueNodeId;
+
   /// Endings whose hard requirement is currently satisfied. Soft
   /// requirements only affect [Ending.difficultyFor], never availability.
   List<Ending> availableEndings(Character character) => [
@@ -254,6 +269,7 @@ final class ResolutionNode extends StoryNode {
   factory ResolutionNode.fromJson(String id, Map<String, dynamic> json) {
     return ResolutionNode(
       id: id,
+      narration: json['narration'] as String? ?? '',
       endings: [
         for (final e in (json['endings'] as List? ?? const []))
           Ending.fromJson((e as Map).cast<String, dynamic>()),
@@ -266,6 +282,7 @@ final class ResolutionNode extends StoryNode {
         for (final r in (json['final_technique_rules'] as List? ?? const []))
           FinalTechniqueRule.fromJson((r as Map).cast<String, dynamic>()),
       ],
+      epilogueNodeId: json['epilogue_node_id'] as String?,
     );
   }
 }

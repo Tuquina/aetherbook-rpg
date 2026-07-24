@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/narrative/ending.dart';
 import '../core/narrative/story_choice.dart';
 import 'codex_screen.dart';
 import 'design/tokens.dart';
@@ -117,6 +118,17 @@ class _GameScreenState extends State<GameScreen> {
     widget.controller.choose(text);
   }
 
+  void _goToMenu() {
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        transitionDuration: AetherMotion.slow,
+        pageBuilder: (_, _, _) => WorldSelectScreen(controller: widget.controller),
+        transitionsBuilder: (_, anim, _, child) =>
+            FadeTransition(opacity: anim, child: child),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = widget.controller;
@@ -153,15 +165,7 @@ class _GameScreenState extends State<GameScreen> {
                         InventoryScreen.route(
                             world: c.world!, character: c.character!),
                       ),
-                      onBack: () => Navigator.of(context).pushReplacement(
-                        PageRouteBuilder(
-                          transitionDuration: AetherMotion.slow,
-                          pageBuilder: (_, _, _) =>
-                              WorldSelectScreen(controller: c),
-                          transitionsBuilder: (_, anim, _, child) =>
-                              FadeTransition(opacity: anim, child: child),
-                        ),
-                      ),
+                      onBack: _goToMenu,
                     ),
                     Expanded(
                       child: _NarrationView(controller: c, scroll: _scroll),
@@ -171,6 +175,7 @@ class _GameScreenState extends State<GameScreen> {
                         controller: c,
                         freeAction: _freeAction,
                         onSubmitFree: _submitFreeAction,
+                        onFinishStory: _goToMenu,
                       )
                     else
                       const _KeepReadingHint(),
@@ -288,6 +293,28 @@ class _NarrationView extends StatelessWidget {
   }
 }
 
+/// Sits where the choice buttons would be once the epilogue's the last
+/// thing left to read — the graph has nowhere further to go, so this is an
+/// explicit "you're done" instead of a silently empty choices bar.
+class _EndOfStory extends StatelessWidget {
+  const _EndOfStory({required this.onFinishStory});
+
+  final VoidCallback onFinishStory;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('Fin de la historia',
+            style: AetherType.overline.copyWith(color: AetherColors.goldSoft)),
+        const SizedBox(height: AetherSpace.md),
+        ChoiceButton(label: 'Volver al menú', onTap: onFinishStory),
+      ],
+    );
+  }
+}
+
 /// Sits where [_ChoicesBar] would, before the player has scrolled through
 /// the current turn's prose — a quiet nudge, not a wall, so the app doesn't
 /// look broken when the buttons are simply not there yet.
@@ -325,11 +352,17 @@ class _ChoicesBar extends StatelessWidget {
     required this.controller,
     required this.freeAction,
     required this.onSubmitFree,
+    required this.onFinishStory,
   });
 
   final GameController controller;
   final TextEditingController freeAction;
   final VoidCallback onSubmitFree;
+
+  /// Takes the player back to the story menu — used both when there's
+  /// nothing left to do at all (an unreachable dead end, shouldn't happen)
+  /// and, deliberately, as the only affordance once the epilogue is reached.
+  final VoidCallback onFinishStory;
 
   /// Resolves a tapped [StoryChoice], first asking for confirmation when it's
   /// marked irreversible (campaign-bible §20.3/§26.4) — a curated author's
@@ -364,6 +397,38 @@ class _ChoicesBar extends StatelessWidget {
     }
   }
 
+  /// Resolves a tapped climax [Ending] — always with confirmation. Unlike
+  /// `StoryChoice`, `Ending` declares no `requiresConfirmation` of its own:
+  /// every ending is the campaign's climax by definition, so the UI treats
+  /// all of them as irreversible rather than asking content to say so once
+  /// per ending.
+  Future<void> _tapEnding(BuildContext context, Ending ending) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AetherColors.surface,
+        title: Text(ending.visibleChoice, style: AetherType.title),
+        content: const Text(
+          'Esta es una decisión final — no hay vuelta atrás. ¿Confirmás?',
+          style: AetherType.body,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      controller.chooseEnding(ending);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final busy = controller.isLoading;
@@ -375,6 +440,16 @@ class _ChoicesBar extends StatelessWidget {
     // entirely via `World.allowFreeText`.
     final curated = controller.currentNode != null;
     final allowFreeText = controller.world?.allowFreeText ?? true;
+    // The graph's true dead end: a curated node with nothing left to tap —
+    // both campaigns' epilogues land here (the hybrid one's `ResolutionNode`
+    // with no `endings` of its own, and the AI-free campaign's closing
+    // `FixedAnchorNode` with an empty `choices` list). Free text is
+    // suppressed here too, regardless of `allowFreeText` — there's nothing
+    // left in the graph for a typed action to resolve against.
+    final atEpilogue = curated &&
+        controller.availableStoryChoices.isEmpty &&
+        controller.availableActivities.isEmpty &&
+        controller.availableEndings.isEmpty;
     return Container(
       padding: const EdgeInsets.fromLTRB(
           AetherSpace.lg, AetherSpace.md, AetherSpace.lg, AetherSpace.lg),
@@ -394,61 +469,72 @@ class _ChoicesBar extends StatelessWidget {
                   padding: EdgeInsets.symmetric(vertical: AetherSpace.lg),
                   child: DestinyWriting(),
                 )
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // A state_hub can offer many activities/exits at once
-                    // (unlike a freeform AI turn, capped at 3 suggestions) —
-                    // bounded + scrollable so it never overflows the screen.
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.sizeOf(context).height * 0.4,
-                      ),
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (curated) ...[
-                              for (final choice in controller.availableStoryChoices)
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(bottom: AetherSpace.md),
-                                  child: ChoiceButton(
-                                    label: choice.label,
-                                    onTap: () => _tapStoryChoice(context, choice),
-                                  ),
-                                ),
-                              for (final activity in controller.availableActivities)
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(bottom: AetherSpace.md),
-                                  child: ChoiceButton(
-                                    label: activity.label,
-                                    onTap: () =>
-                                        controller.chooseHubActivity(activity),
-                                  ),
-                                ),
-                            ] else
-                              for (final choice in controller.choices)
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(bottom: AetherSpace.md),
-                                  child: ChoiceButton(
-                                    label: choice,
-                                    onTap: () => controller.choose(choice),
-                                  ),
-                                ),
-                          ],
+              : atEpilogue
+                  ? _EndOfStory(onFinishStory: onFinishStory)
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // A state_hub can offer many activities/exits at once
+                        // (unlike a freeform AI turn, capped at 3 suggestions) —
+                        // bounded + scrollable so it never overflows the screen.
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.sizeOf(context).height * 0.4,
+                          ),
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (curated) ...[
+                                  for (final choice in controller.availableStoryChoices)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          bottom: AetherSpace.md),
+                                      child: ChoiceButton(
+                                        label: choice.label,
+                                        onTap: () => _tapStoryChoice(context, choice),
+                                      ),
+                                    ),
+                                  for (final activity in controller.availableActivities)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          bottom: AetherSpace.md),
+                                      child: ChoiceButton(
+                                        label: activity.label,
+                                        onTap: () =>
+                                            controller.chooseHubActivity(activity),
+                                      ),
+                                    ),
+                                  for (final ending in controller.availableEndings)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          bottom: AetherSpace.md),
+                                      child: ChoiceButton(
+                                        label: ending.visibleChoice,
+                                        onTap: () => _tapEnding(context, ending),
+                                      ),
+                                    ),
+                                ] else
+                                  for (final choice in controller.choices)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          bottom: AetherSpace.md),
+                                      child: ChoiceButton(
+                                        label: choice,
+                                        onTap: () => controller.choose(choice),
+                                      ),
+                                    ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                        if (allowFreeText) ...[
+                          const SizedBox(height: AetherSpace.xs),
+                          FreeActionField(
+                              controller: freeAction, onSubmit: onSubmitFree),
+                        ],
+                      ],
                     ),
-                    if (allowFreeText) ...[
-                      const SizedBox(height: AetherSpace.xs),
-                      FreeActionField(
-                          controller: freeAction, onSubmit: onSubmitFree),
-                    ],
-                  ],
-                ),
         ),
       ),
     );
