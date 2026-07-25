@@ -101,10 +101,16 @@ class GameSessionSummary {
     required this.worldSlug,
     required this.characterName,
     required this.updatedAt,
+    this.title,
   });
 
   final String id;
   final String worldSlug;
   final String characterName;
   final DateTime updatedAt;
+
+  /// The player-chosen title for this story, if they set one when starting
+  /// it — `null` for every session created before this existed, and for
+  /// every non-freeform module, which never asks for one.
+  final String? title;
 }

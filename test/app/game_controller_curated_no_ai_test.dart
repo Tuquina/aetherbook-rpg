@@ -113,6 +113,7 @@ class _RecordingPersistence implements GameStateRepositoryPort {
     required String worldSlug,
     String? campaignSlug,
     required Character character,
+    String? title,
   }) async =>
       GameSession(id: 'session-1', worldSlug: worldSlug, character: character);
 

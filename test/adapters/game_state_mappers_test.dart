@@ -286,5 +286,26 @@ void main() {
       });
       expect(summary.characterName, '???');
     });
+
+    test('reads the player-chosen title when set', () {
+      final summary = gameSessionSummaryFromRow({
+        'id': 'session-4',
+        'world_slug': 'cyberpunk',
+        'updated_at': '2026-07-24T10:00:00.000Z',
+        'title': 'La caída de Neo-Kyoto',
+        'characters': {'name': 'Vex'},
+      });
+      expect(summary.title, 'La caída de Neo-Kyoto');
+    });
+
+    test('title is null when the session never got one', () {
+      final summary = gameSessionSummaryFromRow({
+        'id': 'session-5',
+        'world_slug': 'cyberpunk',
+        'updated_at': '2026-07-24T10:00:00.000Z',
+        'characters': {'name': 'Vex'},
+      });
+      expect(summary.title, isNull);
+    });
   });
 }

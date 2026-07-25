@@ -257,12 +257,18 @@ class GameController extends ChangeNotifier {
   /// story must never resume (or, worse, silently reuse) one already in
   /// progress. Mutually exclusive with [sessionId] in practice (a caller
   /// wants to resume one specific thing, or start a new one — never both).
+  ///
+  /// [title] is the player-chosen name for the new story — only meaningful
+  /// together with [alwaysCreateNew] (the freeform "crea tu propia historia"
+  /// flow); ignored otherwise, since every other module has at most one
+  /// session per world and never asks for a title.
   Future<void> start(
     String worldSlug, {
     CreateCharacterInput? chargenInput,
     bool forceNew = false,
     String? sessionId,
     bool alwaysCreateNew = false,
+    String? title,
   }) async {
     _isLoading = true;
     _error = null;
@@ -298,6 +304,7 @@ class GameController extends ChangeNotifier {
           session = await persistence.createSession(
             worldSlug: world.slug,
             character: _initialCharacter(world, chargenInput),
+            title: title,
           );
         } else {
           var existing = await persistence.loadLatestSession(worldSlug);

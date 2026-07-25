@@ -30,11 +30,16 @@ abstract class GameStateRepositoryPort {
   Future<List<GameSessionSummary>> listActiveSessions(List<String> worldSlugs);
 
   /// Creates a new session with its starting [character] and returns the
-  /// resulting [GameSession] (with its persisted `id` set).
+  /// resulting [GameSession] (with its persisted `id` set). [title] is the
+  /// player-chosen name for the story — only ever set by the freeform "crea
+  /// tu propia historia" module, where several sessions can exist for the
+  /// same world at once and need something to tell them apart in "Tus
+  /// historias" beyond the genre name.
   Future<GameSession> createSession({
     required String worldSlug,
     String? campaignSlug,
     required Character character,
+    String? title,
   });
 
   /// Persists the character's current state after a turn.

@@ -88,6 +88,7 @@ class _FakeGameStateRepository implements GameStateRepositoryPort {
   final List<int> appendedTurnIndexes = [];
   final List<int> savedDigestUpToTurn = [];
   int createSessionCalls = 0;
+  final List<String?> createSessionTitles = [];
 
   /// Sessions resolvable by id via [loadSession] — separate from [seeded]
   /// (which only ever answers [loadLatestSession]) since the two now model
@@ -116,8 +117,10 @@ class _FakeGameStateRepository implements GameStateRepositoryPort {
     required String worldSlug,
     String? campaignSlug,
     required Character character,
+    String? title,
   }) async {
     createSessionCalls++;
+    createSessionTitles.add(title);
     return GameSession(id: 'new-session', worldSlug: worldSlug, character: character);
   }
 

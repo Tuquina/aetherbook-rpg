@@ -244,6 +244,13 @@ class _SavedStoryCard extends StatelessWidget {
     return 'hace ${since.inDays} d';
   }
 
+  /// The story's own title if the player set one at chargen, or the genre
+  /// name as a fallback for a story created before titles existed.
+  String get _displayTitle {
+    final title = story.title;
+    return title != null && title.trim().isNotEmpty ? title.trim() : genreName;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Pressable(
@@ -280,7 +287,9 @@ class _SavedStoryCard extends StatelessWidget {
                   Text(genreName.toUpperCase(),
                       style: AetherType.overline.copyWith(color: accent)),
                   const SizedBox(height: 4),
-                  Text(story.characterName, style: AetherType.title),
+                  Text(_displayTitle, style: AetherType.title),
+                  const SizedBox(height: 4),
+                  Text(story.characterName, style: AetherType.body),
                   const SizedBox(height: 4),
                   Text(_lastPlayed, style: AetherType.caption),
                 ],

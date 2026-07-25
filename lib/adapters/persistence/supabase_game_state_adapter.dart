@@ -87,7 +87,7 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
     if (worldSlugs.isEmpty) return const [];
     final rows = await _client
         .from('game_sessions')
-        .select('id, world_slug, updated_at, characters(name)')
+        .select('id, world_slug, updated_at, title, characters(name)')
         .inFilter('world_slug', worldSlugs)
         .eq('status', 'active')
         .order('updated_at', ascending: false);
@@ -99,6 +99,7 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
     required String worldSlug,
     String? campaignSlug,
     required Character character,
+    String? title,
   }) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
@@ -113,6 +114,7 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
           'user_id': userId,
           'world_slug': worldSlug,
           'campaign_slug': campaignSlug,
+          'title': title,
         })
         .select()
         .single();

@@ -46,6 +46,7 @@ class ChargenScreen extends StatefulWidget {
 
 class _ChargenScreenState extends State<ChargenScreen> {
   final _nameController = TextEditingController();
+  final _titleController = TextEditingController();
   final _personalItemController = TextEditingController();
   String? _originId;
   String? _freeAttributePoint;
@@ -56,6 +57,7 @@ class _ChargenScreenState extends State<ChargenScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _titleController.dispose();
     _personalItemController.dispose();
     super.dispose();
   }
@@ -88,6 +90,9 @@ class _ChargenScreenState extends State<ChargenScreen> {
       ),
       forceNew: widget.forceNew,
       alwaysCreateNew: widget.alwaysCreateNew,
+      title: widget.alwaysCreateNew && _titleController.text.trim().isNotEmpty
+          ? _titleController.text.trim()
+          : null,
     );
 
     if (!mounted) return;
@@ -147,6 +152,17 @@ class _ChargenScreenState extends State<ChargenScreen> {
                     height: 2,
                     color: AetherColors.hairlineStrong,
                   ),
+                  if (widget.alwaysCreateNew) ...[
+                    const SizedBox(height: AetherSpace.xl),
+                    Text('Título de tu historia (opcional)',
+                        style: AetherType.overline),
+                    const SizedBox(height: AetherSpace.sm),
+                    _NameField(
+                      controller: _titleController,
+                      hint: 'Cómo quieres llamar a esta historia',
+                      onChanged: () => setState(() {}),
+                    ),
+                  ],
                   const SizedBox(height: AetherSpace.md),
                   Text('CREA TU PERSONAJE', style: AetherType.overline),
                   const SizedBox(height: AetherSpace.xl),

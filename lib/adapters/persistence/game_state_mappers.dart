@@ -64,6 +64,7 @@ GameSessionSummary gameSessionSummaryFromRow(Map<String, dynamic> row) {
     worldSlug: row['world_slug'] as String,
     characterName: characterRow?['name'] as String? ?? '???',
     updatedAt: DateTime.parse(row['updated_at'] as String),
+    title: row['title'] as String?,
   );
 }
 
