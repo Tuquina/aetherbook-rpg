@@ -4,7 +4,7 @@
 
 Aetherbook es un "elige tu propia aventura" evolucionado: un *Game Master* de IA narra sobre un estado de juego que el motor controla de forma **determinista**. La IA nunca decide mecánicas ni inventa stats — solo narra sobre resultados que el código ya resolvió.
 
-📄 El diseño completo está en [`GDD-RPG-Narrativo-IA.md`](GDD-RPG-Narrativo-IA.md). Las reglas operativas para desarrollar con Claude Code están en [`CLAUDE.md`](CLAUDE.md).
+📄 El diseño completo está en [`GDD-RPG-Narrativo-IA.md`](GDD-RPG-Narrativo-IA.md). Las reglas operativas para desarrollar con Claude Code están en [`CLAUDE.md`](CLAUDE.md). Toda la narración (prompts y contenido escrito a mano) sigue [`NARRATIVE_VOICE.md`](NARRATIVE_VOICE.md): español neutro con tuteo, nunca voseo rioplatense.
 
 🎮 **Jugalo ya, sin instalar nada:** [aetherbook-rpg.vercel.app](https://aetherbook-rpg.vercel.app) — deployado en Vercel (tier gratuito), redeploya solo con cada push a `master` (`vercel.json`).
 
@@ -106,8 +106,8 @@ El modo 3 (híbrido) tiene **"Los nombres que devora el cielo"** (`assets/worlds
 | Cliente | **Flutter** (iOS / Android / web) | Una sola base de código, sensación de app nativa premium, animaciones y theming por mundo de alta calidad. |
 | Backend | **Supabase** (Postgres, Auth, Storage, RLS) | Estado relacional + log de turnos inmutable (event-sourced light), tier gratuito, mínima operación. |
 | Broker de IA | **Supabase Edge Functions** (Deno/TypeScript) | Guarda las API keys fuera del cliente y orquesta el fallback entre proveedores. |
-| Narración | Gemini Flash (principal) → Groq → Cerebras/OpenRouter (fallback) | Structured output nativo, velocidad y cuotas gratuitas complementarias. |
-| Imágenes | Pollinations / Cloudflare Workers AI | Generación async de escenas, cacheada en Storage. |
+| Narración | Gemini Flash (principal) → Groq (fallback real) | Structured output nativo, velocidad y cuotas gratuitas complementarias. Cerebras/OpenRouter quedan como fallback futuro, no implementados. |
+| Imágenes | Pollinations.ai, vía Edge Function `generate-image` | Generación async de escenas, cacheada por SHA-256 del prompt en Storage. Cloudflare Workers AI queda como alternativa futura. |
 
 ## Arquitectura
 
@@ -119,20 +119,26 @@ core/            Dart puro, sin infra
   narrative/     grafo de nodos, evaluación de gates
   state/         agregados: character, world, session
 
-ports/           interfaces (contratos)
+ports/           interfaces (contratos), lib/ports/
   NarratorPort
+  MemoryDigestPort
   ImageGeneratorPort
   GameStateRepositoryPort
-  ContentRepositoryPort
+  WorldRepositoryPort
+  AuthPort
 
-adapters/
+adapters/        lib/adapters/, salvo donde se aclara
   narrator/      HttpNarratorAdapter (cliente Dart, real) — llama a la Edge Function,
                  que por dentro orquesta GeminiNarratorAdapter -> GroqNarratorAdapter
                  (FallbackNarratorAdapter) en supabase/functions/narrator/ (Deno/TS)
-  memory/        HttpMemoryDigestAdapter (cliente Dart, real) -> Edge Function memory-digest
-  image/         PollinationsAdapter, CloudflareWorkersAIAdapter
+  memory/        HttpMemoryDigestAdapter (cliente Dart, real) -> Edge Function memory-digest/
+  image/         HttpImageGeneratorAdapter (cliente Dart, real) -> Edge Function
+                 generate-image/ (Pollinations.ai, cachea en Storage por hash del prompt)
+  content/       AssetWorldRepository — lee assets/worlds/*.json
   persistence/   SupabaseGameStateAdapter
-  fakes/         FakeNarratorAdapter, FakeMemoryDigestAdapter (tests, sin gastar cuota de IA)
+  auth/          SupabaseAuthAdapter
+  fakes/         FakeNarratorAdapter, FakeMemoryDigestAdapter, FakeImageGeneratorAdapter,
+                 FakeAuthAdapter (tests, sin gastar cuota de IA ni tocar red)
 ```
 
 Regla de dependencias: **hacia adentro** (`adapters` → `ports` → `core`). El cliente Flutter depende de los puertos, nunca de un adaptador concreto.
@@ -140,8 +146,8 @@ Regla de dependencias: **hacia adentro** (`adapters` → `ports` → `core`). El
 ## Roadmap
 
 - **Fase 0 — Prueba de concepto** *(completa)*: un mundo (Xianxia), modo freeform, loop mínimo acción → resolución → narración JSON → render, `FakeNarratorAdapter`. Sin auth, sin imágenes.
-- **Fase 1 — MVP jugable** *(completa)*: ✅ narrador real conectado al cliente (`HttpNarratorAdapter` -> Edge Function -> Gemini con fallback a Groq vía `FallbackNarratorAdapter`), ✅ memoria de tres niveles conectada (`HttpMemoryDigestAdapter` -> Edge Function `memory-digest` vía Groq), ✅ persistencia real en Supabase + Auth anónimo (RLS por sesión), ✅ posición en el grafo persistida (nodo actual, turnos de corredor, progreso de conflicto extendido — sobrevive un refresh), ✅ motor del modo híbrido completo (`core/narrative`: hitos fijos, corredores acotados, hubs de actividades, resoluciones; conflictos extendidos; combate por guard; chargen estructurado; progresión por rango con hitos), ✅ resolución de finales y epílogo (`GameController.availableEndings`/`chooseEnding`: chequeo contra la dificultad del final, fallback de fracaso, técnica final otorgada, epílogo ensamblado por `assembleEpilogueBeats`), ✅ una campaña híbrida real cargada (`xianxia_lianshu.json`, "Los nombres que devora el cielo") jugable de punta a punta, ya narrada por el modelo real, ✅ una historia curada 100% sin IA completa (`curated_zombie_01_ultimo_tren.json`, "El último tren no espera a los vivos"), ✅ menú de historias en 3 módulos con reinicio de partida, ✅ estado terminal explícito ("Fin de la historia") al llegar al epílogo de cualquiera de las dos campañas, ✅ `ClassifyFreeAction` reemplazando al inferidor por keyword en la acción libre, ✅ inventario real (`ItemDefinition` declarativo por mundo, `InventoryScreen` accesible desde el ícono en la barra de estado).
-- **Fase 2 — Contenido y mundos**: los otros 4 mundos (Isekai, Superhéroes, Cyberpunk, Post-apocalíptico genérico de fase 2 — distinto de la historia curada zombi de fase 1) con theming propio, más campañas, generación de imágenes.
+- **Fase 1 — MVP jugable** *(completa)*: ✅ narrador real conectado al cliente (`HttpNarratorAdapter` -> Edge Function -> Gemini con fallback a Groq vía `FallbackNarratorAdapter`), ✅ memoria de tres niveles conectada (`HttpMemoryDigestAdapter` -> Edge Function `memory-digest` vía Groq), ✅ persistencia real en Supabase + Auth anónimo (RLS por sesión), ✅ posición en el grafo persistida (nodo actual, turnos de corredor, progreso de conflicto extendido — sobrevive un refresh), ✅ motor del modo híbrido completo (`core/narrative`: hitos fijos, corredores acotados, hubs de actividades, resoluciones; conflictos extendidos; combate por guard; chargen estructurado; progresión por rango con hitos), ✅ resolución de finales y epílogo (`GameController.availableEndings`/`chooseEnding`: chequeo contra la dificultad del final, fallback de fracaso, técnica final otorgada, epílogo ensamblado por `assembleEpilogueBeats`), ✅ una campaña híbrida real cargada (`xianxia_lianshu.json`, "Los nombres que devora el cielo") jugable de punta a punta, ya narrada por el modelo real, ✅ una historia curada 100% sin IA completa (`curated_zombie_01_ultimo_tren.json`, "El último tren no espera a los vivos"), ✅ menú de historias en 3 módulos con reinicio de partida, ✅ estado terminal explícito ("Fin de la historia") al llegar al epílogo de cualquiera de las dos campañas, ✅ `ClassifyFreeAction` reemplazando al inferidor por keyword en la acción libre, ✅ inventario real (`ItemDefinition` declarativo por mundo, `InventoryScreen` accesible desde el ícono en la barra de estado), ✅ generación de imágenes por turno (`generate-image` vía Pollinations.ai, cacheada por hash del prompt en Storage, nunca bloquea ni rompe la narración si falla), ✅ narrador reescrito en español neutro con tuteo (nunca voseo rioplatense) en todo el contenido y prompts, con [`NARRATIVE_VOICE.md`](NARRATIVE_VOICE.md) como guía de estilo durable.
+- **Fase 2 — Contenido y mundos** *(en progreso)*: ✅ los 5 mundos freeform (Isekai, Xianxia, Superhéroes, Cyberpunk, Post-apocalíptico genérico — distinto de la historia curada zombi de fase 1) con chargen y theming propios, jugables desde "Creá tu propia historia". Falta: 2-3 campañas pre-armadas/híbridas más allá de las dos actuales.
 - **Fase 3 — Pulido y profundidad**: consistencia de personaje en imágenes, NPCs con memoria, rebobinar partidas, observabilidad.
 - **Fase 4 — Distribución**: App Store / Play Store + build web, compartir historias generadas.
 
@@ -161,7 +167,7 @@ Detalle completo en [`CLAUDE.md`](CLAUDE.md).
 
 ## Estado del proyecto
 
-✅ Fase 1 completa — motor híbrido completo con resolución de finales y epílogo, una historia curada 100% sin IA jugable de punta a punta ("El último tren no espera a los vivos") y una campaña híbrida real jugable de punta a punta ("Los nombres que devora el cielo"), ambas narradas/persistidas con los servicios reales, con acción libre clasificada en motor (`ClassifyFreeAction`) e inventario real con pantalla propia. Empieza Fase 2: contenido y mundos nuevos. Proyecto personal, desarrollado con [Claude Code](https://claude.com/claude-code).
+✅ Fase 1 completa — motor híbrido completo con resolución de finales y epílogo, una historia curada 100% sin IA jugable de punta a punta ("El último tren no espera a los vivos") y una campaña híbrida real jugable de punta a punta ("Los nombres que devora el cielo"), ambas narradas/persistidas con los servicios reales, con acción libre clasificada en motor (`ClassifyFreeAction`), inventario real con pantalla propia, generación de imágenes por turno y narración en español neutro (tuteo) en todo el contenido. En curso Fase 2: ya jugables los 5 géneros freeform ("Creá tu propia historia"); quedan más campañas pre-armadas. Proyecto personal, desarrollado con [Claude Code](https://claude.com/claude-code).
 
 ## Licencia
 

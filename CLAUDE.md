@@ -33,8 +33,8 @@ Toda narración (el prompt del narrador, el `system_prompt` de cada mundo, y el 
 - **Cliente:** Flutter (iOS / Android / web, una sola base de código). Dart.
 - **Backend:** Supabase — Postgres (estado + event log), Auth, Storage (imágenes cacheadas), RLS.
 - **Broker de IA:** Supabase Edge Functions (Deno / TypeScript). Guardan las keys y orquestan el fallback.
-- **Narración:** Gemini Flash (principal, structured output) → Groq → Cerebras/OpenRouter (fallback).
-- **Imágenes:** Pollinations / Cloudflare Workers AI, cacheadas en Storage.
+- **Narración:** Gemini Flash (principal, structured output) → Groq (fallback real, vía `FallbackNarratorAdapter`). Cerebras/OpenRouter quedan como fallback adicional a futuro — todavía no implementados.
+- **Imágenes:** Pollinations.ai (vía Edge Function `generate-image`), cacheadas por hash SHA-256 del prompt en el bucket público `scene-images` de Storage. Cloudflare Workers AI queda como alternativa a futuro, no implementada.
 
 > Los límites de los tiers gratuitos cambian casi todos los meses. No hardcodees supuestos sobre cuotas; hacelos configurables.
 
@@ -50,24 +50,29 @@ core/            Dart puro, sin infra
   narrative/     grafo de nodos, evaluación de gates
   state/         agregados: character, world, session
 
-ports/           interfaces (contratos)
+ports/           interfaces (contratos), lib/ports/
   NarratorPort
+  MemoryDigestPort
   ImageGeneratorPort
   GameStateRepositoryPort
-  ContentRepositoryPort
+  WorldRepositoryPort
+  AuthPort
 
-adapters/
-  narrator/      (implementados como Edge Functions TS)
-    GeminiNarratorAdapter (structured output)
-    GroqNarratorAdapter
-    FallbackNarratorAdapter   <- orquesta la cadena + reintentos
-  image/
-    PollinationsAdapter
-    CloudflareWorkersAIAdapter
-  persistence/
-    SupabaseGameStateAdapter
-  fakes/
-    FakeNarratorAdapter       <- para tests, devuelve JSON fijo
+adapters/        lib/adapters/, salvo donde se aclara
+  narrator/      HttpNarratorAdapter (cliente) -> Edge Function narrator/ (Deno/TS),
+                 que por dentro orquesta:
+                   GeminiNarratorAdapter (structured output)
+                   GroqNarratorAdapter
+                   FallbackNarratorAdapter   <- orquesta la cadena + reintentos
+  memory/        HttpMemoryDigestAdapter (cliente) -> Edge Function memory-digest/
+  image/         HttpImageGeneratorAdapter (cliente) -> Edge Function generate-image/
+                 (Pollinations.ai, cachea en Storage por hash del prompt)
+  persistence/    SupabaseGameStateAdapter
+  content/        AssetWorldRepository (lee assets/worlds/*.json)
+  auth/           SupabaseAuthAdapter
+  fakes/          FakeNarratorAdapter, FakeMemoryDigestAdapter,
+                  FakeImageGeneratorAdapter, FakeAuthAdapter <- para tests,
+                  nunca gastan cuota ni tocan red
 ```
 
 El cliente Flutter depende de los **puertos**, nunca de un adaptador concreto. La orquestación de IA vive en Edge Functions.
@@ -76,23 +81,29 @@ El cliente Flutter depende de los **puertos**, nunca de un adaptador concreto. L
 
 ## 5. Contrato del narrador (structured output)
 
-El narrador devuelve **solo JSON válido**, sin markdown, sin backticks, sin preámbulo:
+El narrador devuelve **solo JSON válido**, sin markdown, sin backticks, sin preámbulo. Contrato real (v2, `supabase/functions/narrator/types.ts` y `prompt_builder.ts`'s `OUTPUT_INSTRUCTION`):
 
 ```json
 {
   "narration": "Texto en segunda persona…",
-  "suggested_choices": ["Opción A", "Opción B", "Opción C"],
-  "state_deltas": [
-    { "type": "flag", "key": "conocio_al_anciano", "value": true }
+  "suggested_choices": [
+    { "id": "abrir_puerta", "label": "Abrir la puerta despacio", "intent": "…", "expected_check": { "attribute": "reflejos", "difficulty_id": "estandar" } }
+  ],
+  "proposed_state_deltas": [
+    { "type": "flag", "key": "conocio_al_anciano", "value": true, "operation": "increment", "reason": "…" }
   ],
   "image_prompt": "descripción visual de la escena",
-  "tone": "tenso"
+  "tone": "tenso",
+  "memory_facts": ["hecho corto que el diario debe recordar"],
+  "node_status": "active"
 }
 ```
 
-- Usá el structured output nativo de Gemini para forzar el schema.
-- Siempre implementá parseo tolerante: limpiar fences, y un retry de reparación ("devolvé JSON válido") si viene roto.
-- `state_deltas` se validan contra reglas del mundo antes de aplicarse.
+- Usá el structured output nativo de Gemini para forzar el schema (`GeminiNarratorAdapter`'s `RESPONSE_SCHEMA`); Groq solo tiene `response_format: json_object`, así que ahí pesa más el parser tolerante.
+- Siempre implementá parseo tolerante (`narrator_json_parser.ts`): limpiar fences, y un retry de reparación ("devolvé JSON válido") si viene roto.
+- `proposed_state_deltas` se validan contra reglas del mundo antes de aplicarse (`ProposedStateDelta.toStateDelta` en Dart) — la IA propone, el motor dispone.
+- `suggested_choices` solo importa en mundos freeform (sin `StoryGraph`): un mundo curado/híbrido ofrece sus propias `StoryChoices`/`HubActivities` y nunca las muestra. `isFreeform` en el request activa `FREEFORM_CHOICES_INSTRUCTION`, que pide como mucho 2-3 opciones (o `[]` si la escena no llegó a un punto de decisión).
+- `HUMAN_STYLE_INSTRUCTION` (siempre inyectada, `prompt_builder.ts`) es la capa de estilo compartida por todo mundo/proveedor: exige tuteo (nunca voseo — ver `NARRATIVE_VOICE.md`), párrafos separados, diálogo con raya y acotación breve, verbos precisos sobre adjetivos, y referencia de ritmo a Dan Brown/J.K. Rowling.
 
 ---
 
@@ -108,7 +119,15 @@ Nunca mandes el historial completo al modelo.
 
 ## 7. Modelo de datos (referencia)
 
-`worlds`, `campaigns`, `game_sessions`, `characters`, `inventory_items`, `story_flags`, `relationships`, `turns` (log inmutable), `memory_digests`. Detalle de columnas en el GDD §8. Diseño *event-sourced light*: `turns` es la fuente de eventos; el estado actual es su proyección. RLS: cada usuario ve solo sus sesiones.
+Solo el **estado del jugador** vive en Postgres — mundos y campañas nunca fueron tablas (`worlds`/`campaigns` en el GDD original eran aspiracionales): son JSON declarativo bundleado en `assets/worlds/*.json`, cargado por `WorldRepositoryPort`/`AssetWorldRepository` (CLAUDE.md §8). Tablas reales (`supabase/migrations/`):
+
+- `game_sessions` — `world_slug`/`campaign_slug`, `status`, y la posición en el grafo de una campaña curada/híbrida (`current_node_id`, `corridor_turns_used`, `extended_conflict_progress`).
+- `characters` — `attributes`/`resources` (jsonb) + columnas de chargen estructurado (`origin_id`, `origin_tag_id`, `vow_id`, `personal_item`) + jsonb genéricos para todo lo que antes hubiera sido tablas propias: `flags`, `relationships`, `lists` (inventario incluido, `lists['inventory']`), `vars`, `meters`.
+- `turns` — log inmutable: `player_action`, `resolved_mechanics`, `narration`, `image_url`, `suggested_choices` (para no re-invocar al narrador solo por reabrir la sesión).
+- `memory_digests` — el diario resumido por sesión.
+- Storage: bucket público `scene-images`, cacheado por SHA-256 del prompt (`generate-image`).
+
+Las tablas `inventory_items` y `relationships` de la migración inicial quedaron sin uso — ese estado terminó viviendo en columnas jsonb de `characters` en vez de tablas propias; no las uses como referencia de dónde persiste hoy el inventario o las relaciones. Diseño *event-sourced light*: `turns` es la fuente de eventos; el estado actual es su proyección. RLS: cada usuario ve solo sus sesiones (y todo lo que cuelga de ellas).
 
 ---
 
@@ -164,6 +183,7 @@ Con eso, la Fase 1 está funcionalmente completa: las dos campañas son jugables
 
 - Jugar manualmente (o con más tests de ruta) los otros 4 finales + el fracaso de "Los nombres que devora el cielo" que la ruta automatizada no ejercita (nuevo_pacto con su fallback a nuevo_pacto_fracturado, cielo_roto con dificultad escalonada por preparativos, etc.) — la lógica es genérica y ya está probada con éxito/fracaso/fallback/epílogo en `game_controller_ending_test.dart`, pero cada final real sigue siendo contenido propio que vale la pena recorrer.
 - [x] Generación de imágenes (GDD §6/§7.2/§7.3): Edge Function `generate-image` (Pollinations.ai, sin key) cachea por SHA-256 del prompt en el bucket público `scene-images` de Storage — mismo prompt nunca vuelve a pedirle nada al proveedor. `ImageGeneratorPort`/`HttpImageGeneratorAdapter` nunca lanzan (a diferencia de `NarratorPort`): es "nice to have" puro, un fallo de red nunca puede tapar la narración con un error. `GameController` dispara la generación sin `await` al cerrar cada turno con IA — la narración y las opciones ya están listas — y persiste la URL en `turns.image_url` (columna que ya existía sin usarse) una vez que llega; al retomar una sesión sale directo de ahí, sin red. `game_screen.dart` muestra un shimmer mientras carga y hace fade-in al llegar, sin ocupar espacio si no hay imagen. El sufijo de estilo de cada mundo (`image_style_suffix`) se agrega en el cliente, no se le pide a la IA que lo repita. Más campañas curadas/híbridas más allá de las dos actuales sigue pendiente.
+- [x] Narrador reescrito a español neutro (tuteo), nunca voseo rioplatense, con `NARRATIVE_VOICE.md` como guía de estilo canónica en el repo (referenciada desde §1). Cubre `HUMAN_STYLE_INSTRUCTION` (prompt compartido), los 6 `system_prompt` de mundo (los 5 freeform + `xianxia_lianshu`), el contenido de autoría propia de los 5 mundos freeform (intros por origen, opciones, hooks de objeto personal) y los 55 ids de `xianxia_lianshu.json`. `curated_zombie_01_ultimo_tren.json` (que narra en tercera persona sobre un protagonista fijo, no en "tú") solo tenía voseo en diálogo entre personajes y en los `confirmation_text` dirigidos al jugador — corregido ahí también. Verificado con la Edge Function real desplegada (curl confirma tuteo en producción) y con `flutter test`/`deno test` en verde.
 
 ---
 
