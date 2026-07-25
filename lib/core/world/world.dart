@@ -166,7 +166,7 @@ class World {
   /// A short closing paragraph appended to the opening scene only when the
   /// player actually filled in a personal item at chargen (CLAUDE.md Fase 2:
   /// asking for one and then never using it makes the field pointless).
-  /// Written generically enough ("seguís llevando encima {{personalItem}}")
+  /// Written generically enough ("sigues llevando encima {{personalItem}}")
   /// to read naturally regardless of which origin the character picked, so
   /// one per world is enough — `null`/empty for a world that hasn't
   /// authored one yet.

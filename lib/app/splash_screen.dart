@@ -99,7 +99,7 @@ class _SplashScreenState extends State<SplashScreen>
                       const _OrnamentDivider(),
                       const SizedBox(height: AetherSpace.lg),
                       Text(
-                        'Un multiverso que se escribe con vos',
+                        'Un multiverso que se escribe contigo',
                         textAlign: TextAlign.center,
                         style: AetherType.body.copyWith(
                             color: AetherColors.parchmentDim,

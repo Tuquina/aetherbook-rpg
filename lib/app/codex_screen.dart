@@ -87,7 +87,7 @@ class _CodexBody extends StatelessWidget {
           icon: Icons.casino_rounded,
           title: 'Las Tiradas del Destino',
           body:
-              'Cuando intentás algo de resultado incierto —ya sea escribiendo tu '
+              'Cuando intentas algo de resultado incierto —ya sea escribiendo tu '
               'propia acción o eligiendo una opción marcada con una tirada—, el '
               'motor lo resuelve así:',
           child: _FateExplainer(),
@@ -96,10 +96,10 @@ class _CodexBody extends StatelessWidget {
           icon: Icons.hub_rounded,
           title: 'Todo deja huella',
           body:
-              'El resultado de cada tirada cambia el estado del mundo: ganás '
+              'El resultado de cada tirada cambia el estado del mundo: ganas '
               'experiencia, tus recursos suben o bajan, se encienden marcas de '
               'trama (secretos revelados, vínculos, decisiones). Ese estado '
-              'moldea lo que viene: lo que hacés hoy abre o cierra caminos '
+              'moldea lo que viene: lo que haces hoy abre o cierra caminos '
               'mañana, y puede cambiar quién sobrevive o cómo termina la '
               'historia. Cuando una decisión no tiene vuelta atrás, el juego te '
               'lo advierte y te pide confirmar antes de resolverla — el mundo '
@@ -109,7 +109,7 @@ class _CodexBody extends StatelessWidget {
           icon: Icons.trending_up_rounded,
           title: 'Progresión',
           body:
-              'Tus acciones te dan experiencia y, al acumularla, ascendés de '
+              'Tus acciones te dan experiencia y, al acumularla, asciendes de '
               'reino. Cada reino no es solo un número más alto: desbloquea '
               'opciones, técnicas y caminos que antes te estaban vedados.',
         ),
@@ -126,7 +126,7 @@ class _CodexBody extends StatelessWidget {
           icon: Icons.inventory_2_rounded,
           title: 'Tu inventario',
           body:
-              'Lo que encontrás, te dan o conseguís durante la partida queda '
+              'Lo que encuentras, te dan o consigues durante la partida queda '
               'registrado con nombre y descripción propios — no son solo '
               'objetos sueltos. Se accede desde el ícono de mochila en la '
               'barra de estado, arriba de la pantalla de juego.',
@@ -135,10 +135,10 @@ class _CodexBody extends StatelessWidget {
           icon: Icons.balance_rounded,
           title: 'La economía de decisiones',
           body:
-              'Ninguna elección es gratis. Cada acción define quién sos: honrar '
+              'Ninguna elección es gratis. Cada acción define quién eres: honrar '
               'o traicionar, atesorar tu humanidad o perseguir el poder. El '
               'mundo responde a esa moneda invisible, y la historia se ramifica '
-              'según en qué gastás.',
+              'según en qué gastas.',
         ),
       ],
     );
@@ -288,9 +288,9 @@ class _FateExplainer extends StatelessWidget {
         _band(AetherColors.failure, 'Falla',
             'El total no alcanza la dificultad. El intento se te escapa.'),
         _band(AetherColors.success, 'Éxito',
-            'Alcanzás o superás la dificultad. El mundo cede a tu voluntad.'),
+            'Alcanzas o superas la dificultad. El mundo cede a tu voluntad.'),
         _band(AetherColors.critical, 'Éxito crítico',
-            'La superás por un amplio margen: algo memorable ocurre.'),
+            'La superas por un amplio margen: algo memorable ocurre.'),
         const SizedBox(height: AetherSpace.md),
         Row(
           children: [

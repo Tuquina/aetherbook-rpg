@@ -33,7 +33,7 @@ class FakeNarratorAdapter implements NarratorPort {
       return _json(
         narration: request.world.seedNarration.isNotEmpty
             ? request.world.seedNarration
-            : 'El sendero se abre ante vos.',
+            : 'El sendero se abre ante ti.',
         choices: _choicesFrom(request.world.seedChoices),
         deltas: const [],
         imagePrompt: 'Un discípulo ante un sendero de montaña',
@@ -48,7 +48,7 @@ class FakeNarratorAdapter implements NarratorPort {
           narration:
               'Con maestría inesperada, "${request.playerAction}" sale mejor '
               'de lo que imaginabas. El qi fluye limpio a través de tus '
-              'meridianos y algo dentro de vos se afianza.',
+              'meridianos y algo dentro de ti se afianza.',
           choices: _choicesFrom(const [
             'Consolidar el avance en meditación',
             'Aprovechar el impulso y adentrarte más',
@@ -84,7 +84,7 @@ class FakeNarratorAdapter implements NarratorPort {
       case ActionOutcome.success:
         return _json(
           narration:
-              'Lográs lo que buscabas: "${request.playerAction}". No fue '
+              'Logras lo que buscabas: "${request.playerAction}". No fue '
               'sencillo, pero el mundo cede un poco ante tu voluntad.',
           choices: _choicesFrom(const [
             'Seguir avanzando por el sendero',
@@ -114,8 +114,8 @@ class FakeNarratorAdapter implements NarratorPort {
       case ActionOutcome.failure:
         return _json(
           narration:
-              'Intentás "${request.playerAction}", pero el intento se '
-              'deshace entre tus dedos. El qi se dispersa y quedás expuesto '
+              'Intentas "${request.playerAction}", pero el intento se '
+              'deshace entre tus dedos. El qi se dispersa y quedas expuesto '
               'un instante de más.',
           choices: _choicesFrom(const [
             'Recomponerte y volver a intentarlo',

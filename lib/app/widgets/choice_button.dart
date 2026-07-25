@@ -96,7 +96,7 @@ class FreeActionField extends StatelessWidget {
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(
             horizontal: AetherSpace.lg, vertical: AetherSpace.md),
-        hintText: 'O escribí tu propia acción…',
+        hintText: 'O escribe tu propia acción…',
         hintStyle: AetherType.caption
             .copyWith(color: AetherColors.parchmentFaint, fontSize: 15),
         filled: true,

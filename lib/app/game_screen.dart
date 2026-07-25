@@ -471,7 +471,7 @@ class _KeepReadingHintState extends State<_KeepReadingHint> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                ready ? 'Ver opciones' : 'Seguí leyendo',
+                ready ? 'Ver opciones' : 'Sigue leyendo',
                 style: AetherType.caption.copyWith(
                   color: accent,
                   fontWeight: ready ? FontWeight.w700 : FontWeight.normal,
@@ -521,7 +521,7 @@ class _ChoicesBar extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AetherColors.surface,
         content: Text(
-          choice.confirmationText ?? '¿Confirmás esta decisión? No se puede deshacer.',
+          choice.confirmationText ?? '¿Confirmas esta decisión? No se puede deshacer.',
           style: AetherType.body,
         ),
         actions: [
@@ -553,7 +553,7 @@ class _ChoicesBar extends StatelessWidget {
         backgroundColor: AetherColors.surface,
         title: Text(ending.visibleChoice, style: AetherType.title),
         content: const Text(
-          'Esta es una decisión final — no hay vuelta atrás. ¿Confirmás?',
+          'Esta es una decisión final — no hay vuelta atrás. ¿Confirmas?',
           style: AetherType.body,
         ),
         actions: [

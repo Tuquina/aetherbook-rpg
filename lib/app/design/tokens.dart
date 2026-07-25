@@ -82,7 +82,7 @@ abstract final class AetherColors {
   static const Color arcaneBright = Color(0xFF7FD0E3);
   static const Color arcaneGlow = Color(0x334FA3B8);
 
-  /// "Creá tu propia historia" — freeform worlds, no script at all. A vivid
+  /// "Crea tu propia historia" — freeform worlds, no script at all. A vivid
   /// violet: unscripted, alive, the wildest of the three.
   static const Color nova = Color(0xFF9B5DE0);
   static const Color novaBright = Color(0xFFC191F5);

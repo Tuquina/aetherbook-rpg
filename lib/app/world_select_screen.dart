@@ -16,7 +16,7 @@ import 'widgets/atmosphere.dart';
 /// adding its slug here once its content JSON exists in `assets/worlds/` —
 /// everything shown about it (name, tone, whether it's curated) is always
 /// read live from the world itself via [GameController.loadWorldInfo],
-/// never duplicated in this list. The 5 freeform genres (Fase 2 — "creá tu
+/// never duplicated in this list. The 5 freeform genres (Fase 2 — "crea tu
 /// propia historia") land in `StoryModule.aiNarrator` automatically, purely
 /// from content (no `graph` key in their JSON), same as every other module.
 const _availableWorldSlugs = [
@@ -41,7 +41,7 @@ extension StoryModuleInfo on StoryModule {
   String get title => switch (this) {
         StoryModule.complete => 'Historias completas',
         StoryModule.preArmada => 'Historias pre-armadas',
-        StoryModule.aiNarrator => 'Creá tu propia historia',
+        StoryModule.aiNarrator => 'Crea tu propia historia',
       };
 
   String get description => switch (this) {
@@ -50,7 +50,7 @@ extension StoryModuleInfo on StoryModule {
         StoryModule.preArmada =>
           'Una campaña pre-diseñada, con hitos fijos, que un narrador de IA viste turno a turno según tus elecciones.',
         StoryModule.aiNarrator =>
-          'Elegís un género, armás tu personaje y la IA narra lo que sigue turno a turno, sin guion previo. Podés tener varias historias a la vez.',
+          'Eliges un género, armas tu personaje y la IA narra lo que sigue turno a turno, sin guion previo. Puedes tener varias historias a la vez.',
       };
 
   /// The one-line teaser shown on the picker card — a shorter cousin of
@@ -58,7 +58,7 @@ extension StoryModuleInfo on StoryModule {
   String get teaser => switch (this) {
         StoryModule.complete => 'Escrita a mano, de punta a punta.',
         StoryModule.preArmada => 'Rieles fijos, vestidos por IA en vivo.',
-        StoryModule.aiNarrator => 'Elegís el género, la IA narra en vivo.',
+        StoryModule.aiNarrator => 'Eliges el género, la IA narra en vivo.',
       };
 
   /// All three modules are real, playable content.
@@ -212,7 +212,7 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
         backgroundColor: AetherColors.surface,
         title: Text(summary.characterName, style: AetherType.title),
         content: Text(
-          'Vas a abandonar esta historia. No se puede deshacer. ¿Confirmás?',
+          'Vas a abandonar esta historia. No se puede deshacer. ¿Confirmas?',
           style: AetherType.body,
         ),
         actions: [
@@ -242,7 +242,7 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
         backgroundColor: AetherColors.surface,
         title: Text(world.name, style: AetherType.title),
         content: Text(
-          'Vas a reiniciar esta historia desde el principio. El progreso actual se pierde. ¿Confirmás?',
+          'Vas a reiniciar esta historia desde el principio. El progreso actual se pierde. ¿Confirmas?',
           style: AetherType.body,
         ),
         actions: [
@@ -322,7 +322,7 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Elegí tu historia', style: AetherType.display),
+                    Text('Elige tu historia', style: AetherType.display),
                     const SizedBox(height: AetherSpace.xs),
                     Text('Cada mundo se escribe distinto.',
                         style: AetherType.body

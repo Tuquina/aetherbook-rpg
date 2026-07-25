@@ -338,7 +338,7 @@ void main() {
       });
     });
 
-    group('several stories per world (Fase 2 "creá tu propia historia")', () {
+    group('several stories per world (Fase 2 "crea tu propia historia")', () {
       test('alwaysCreateNew: true creates a new session without touching an existing one',
           () async {
         final persistence = _FakeGameStateRepository()
@@ -566,7 +566,7 @@ void main() {
           vows: [Vow(id: 'x', text: 'Juramento de prueba')],
           seedNarration: 'Apertura genérica.',
           seedChoices: ['A', 'B', 'C'],
-          personalItemSeedHook: 'Seguís llevando {{personalItem}} con vos.',
+          personalItemSeedHook: 'Sigues llevando {{personalItem}} contigo.',
         );
         final controller = GameController(
           worldRepository: const _FakeWorldRepository(worldWithHook),
@@ -585,7 +585,7 @@ void main() {
         );
 
         expect(controller.narration,
-            'Apertura genérica.\n\nSeguís llevando una foto arrugada con vos.');
+            'Apertura genérica.\n\nSigues llevando una foto arrugada contigo.');
       });
 
       test('no personal item means no hook paragraph gets appended', () async {
@@ -611,7 +611,7 @@ void main() {
           vows: [Vow(id: 'x', text: 'Juramento de prueba')],
           seedNarration: 'Apertura genérica.',
           seedChoices: ['A', 'B', 'C'],
-          personalItemSeedHook: 'Seguís llevando {{personalItem}} con vos.',
+          personalItemSeedHook: 'Sigues llevando {{personalItem}} contigo.',
         );
         final controller = GameController(
           worldRepository: const _FakeWorldRepository(worldWithHook),

@@ -65,7 +65,7 @@ class _AccountScreenState extends State<AccountScreen> {
       if (!mounted) return;
       setState(() {
         _status = _Status.error;
-        _error = 'No pudimos enviar el correo. Probá de nuevo en un momento.';
+        _error = 'No pudimos enviar el correo. Prueba de nuevo en un momento.';
       });
     }
   }
@@ -118,7 +118,7 @@ class _AccountScreenState extends State<AccountScreen> {
         Text('Ya estás guardando tu progreso', style: AetherType.display.copyWith(fontSize: 22)),
         const SizedBox(height: AetherSpace.md),
         Text(
-          'Estás jugando con $email. Entrá con este mismo email desde cualquier '
+          'Estás jugando con $email. Entra con este mismo email desde cualquier '
           'otro dispositivo o navegador para seguir donde lo dejaste.',
           style: AetherType.body,
         ),
@@ -127,7 +127,7 @@ class _AccountScreenState extends State<AccountScreen> {
   List<Widget> _sentContent(EmailLinkOutcome outcome, String email) => [
         const Icon(Icons.mark_email_read_rounded, color: AetherColors.goldBright, size: 32),
         const SizedBox(height: AetherSpace.lg),
-        Text('Revisá tu correo', style: AetherType.display.copyWith(fontSize: 22)),
+        Text('Revisa tu correo', style: AetherType.display.copyWith(fontSize: 22)),
         const SizedBox(height: AetherSpace.md),
         Text(
           outcome == EmailLinkOutcome.linkConfirmationSent
@@ -135,19 +135,19 @@ class _AccountScreenState extends State<AccountScreen> {
                   'ahora en más queda guardado en esa cuenta — vas a poder entrar '
                   'con este mismo email desde cualquier otro dispositivo.'
               : 'Ese email ya tiene una cuenta acá. Te mandamos un enlace para '
-                  'entrar — abrilo desde este dispositivo para continuar donde '
+                  'entrar — ábrelo desde este dispositivo para continuar donde '
                   'la dejaste.',
           style: AetherType.body,
         ),
       ];
 
   List<Widget> _formContent() => [
-        Text('Guardá tu progreso', style: AetherType.display.copyWith(fontSize: 22)),
+        Text('Guarda tu progreso', style: AetherType.display.copyWith(fontSize: 22)),
         const SizedBox(height: AetherSpace.md),
         Text(
-          'Hoy tu partida vive solo en este dispositivo. Dejanos tu email y te '
+          'Hoy tu partida vive solo en este dispositivo. Déjanos tu email y te '
           'mandamos un enlace: al confirmarlo, tu progreso queda ligado a esa '
-          'cuenta y podés seguir jugando desde cualquier otro dispositivo sin '
+          'cuenta y puedes seguir jugando desde cualquier otro dispositivo sin '
           'perder nada.',
           style: AetherType.body,
         ),

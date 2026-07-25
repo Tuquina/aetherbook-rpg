@@ -1,4 +1,4 @@
-// Loads the real content assets for the 5 "creá tu propia historia" genres
+// Loads the real content assets for the 5 "crea tu propia historia" genres
 // (CLAUDE.md Fase 2) — not fakes/fixtures — and checks the structural
 // invariants every one of them must share: freeform (no story graph), its
 // own chargen (origins + vows, same mechanism as xianxia_lianshu.json), and
@@ -19,7 +19,7 @@ World _loadWorld(String slug) {
 }
 
 void main() {
-  group('freeform genre worlds ("creá tu propia historia")', () {
+  group('freeform genre worlds ("crea tu propia historia")', () {
     for (final slug in _freeformSlugs) {
       group(slug, () {
         test('parses without throwing', () {

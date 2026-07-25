@@ -34,7 +34,7 @@ class ChargenScreen extends StatefulWidget {
   final bool forceNew;
 
   /// Passed through to `GameController.start` — true when this chargen was
-  /// reached by picking a genre on `CreateStoryScreen` ("creá tu propia
+  /// reached by picking a genre on `CreateStoryScreen` ("crea tu propia
   /// historia"): that flow always creates one more story rather than
   /// resuming or abandoning an existing one, since a player can have several
   /// active sessions for the same freeform world at once (CLAUDE.md Fase 2).
@@ -148,7 +148,7 @@ class _ChargenScreenState extends State<ChargenScreen> {
                     color: AetherColors.hairlineStrong,
                   ),
                   const SizedBox(height: AetherSpace.md),
-                  Text('CREÁ TU PERSONAJE', style: AetherType.overline),
+                  Text('CREA TU PERSONAJE', style: AetherType.overline),
                   const SizedBox(height: AetherSpace.xl),
                   if (world.hasCustomizableName) ...[
                     Text('Nombre', style: AetherType.overline),
@@ -161,7 +161,7 @@ class _ChargenScreenState extends State<ChargenScreen> {
                     Text(world.startingCharacter.name, style: AetherType.title),
                     const SizedBox(height: 4),
                     Text(
-                      'Esta historia sigue a un personaje ya definido — vos elegís cómo llegó hasta acá y qué hace de ahora en más.',
+                      'Esta historia sigue a un personaje ya definido — tú eliges cómo llegó hasta acá y qué hace de ahora en más.',
                       style: AetherType.caption,
                     ),
                     const SizedBox(height: AetherSpace.xl),

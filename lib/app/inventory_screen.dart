@@ -79,7 +79,7 @@ class _EmptyState extends StatelessWidget {
                 size: 40, color: AetherColors.parchmentFaint),
             const SizedBox(height: AetherSpace.md),
             Text(
-              'Todavía no tenés nada.',
+              'Todavía no tienes nada.',
               style: AetherType.body.copyWith(color: AetherColors.parchmentDim),
               textAlign: TextAlign.center,
             ),

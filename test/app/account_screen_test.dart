@@ -18,7 +18,7 @@ void main() {
     testWidgets('shows the form and a disabled button while anonymous', (tester) async {
       await _pumpAccountScreen(tester, FakeAuthAdapter());
 
-      expect(find.text('Guardá tu progreso'), findsOneWidget);
+      expect(find.text('Guarda tu progreso'), findsOneWidget);
       expect(find.text('Enviar enlace'), findsOneWidget);
     });
 
@@ -34,7 +34,7 @@ void main() {
       expect(find.text('Enviar enlace'), findsNothing);
     });
 
-    testWidgets('submitting a new email shows the "revisá tu correo" confirmation',
+    testWidgets('submitting a new email shows the "revisa tu correo" confirmation',
         (tester) async {
       final auth = FakeAuthAdapter()..nextOutcome = EmailLinkOutcome.linkConfirmationSent;
       await _pumpAccountScreen(tester, auth);
@@ -45,7 +45,7 @@ void main() {
       await tester.pump();
 
       expect(auth.continueWithEmailCalls, ['nueva@aetherbook.dev']);
-      expect(find.text('Revisá tu correo'), findsOneWidget);
+      expect(find.text('Revisa tu correo'), findsOneWidget);
       expect(find.textContaining('nueva@aetherbook.dev'), findsOneWidget);
     });
 
@@ -87,7 +87,7 @@ void main() {
 
       // The disabled button ignored the tap — no submission went through.
       expect(auth.continueWithEmailCalls, isEmpty);
-      expect(find.text('Guardá tu progreso'), findsOneWidget);
+      expect(find.text('Guarda tu progreso'), findsOneWidget);
     });
   });
 }

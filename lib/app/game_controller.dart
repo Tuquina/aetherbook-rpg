@@ -214,7 +214,7 @@ class GameController extends ChangeNotifier {
   }
 
   /// The player's own saved stories across [worldSlugs] — the "tus
-  /// historias" list on the freeform "creá tu propia historia" module
+  /// historias" list on the freeform "crea tu propia historia" module
   /// (CLAUDE.md Fase 2), where several sessions per world slug are expected.
   /// Empty (never an error) when there's no persistence configured — same
   /// in-memory-only degradation as everything else in this class.
@@ -244,7 +244,7 @@ class GameController extends ChangeNotifier {
   /// rather than pick up where they left off.
   ///
   /// [sessionId], when set, resumes that *exact* session regardless of
-  /// [worldSlug] — used by the "creá tu propia historia" module's "tus
+  /// [worldSlug] — used by the "crea tu propia historia" module's "tus
   /// historias" list, where a player can have several sessions for the same
   /// freeform world at once (unlike every other module, which only ever
   /// expects one). If that session can't be found, this sets [error] and
@@ -480,7 +480,7 @@ class GameController extends ChangeNotifier {
 
     if (classification.canonCompatibility == CanonCompatibility.invalid) {
       _error = 'Esa acción intenta otorgarte algo directamente (un objeto, '
-          'un rango, un vínculo) en vez de intentarlo — describí lo que tu '
+          'un rango, un vínculo) en vez de intentarlo — describe lo que tu '
           'personaje hace, no lo que consigue.';
       notifyListeners();
       return;

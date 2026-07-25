@@ -10,7 +10,7 @@ import 'widgets/atmosphere.dart';
 import 'world_select_screen.dart'
     show StoryModule, StoryModuleStyle, storyModuleStyle;
 
-/// The freeform "creá tu propia historia" module's own screen — replaces
+/// The freeform "crea tu propia historia" module's own screen — replaces
 /// [StoryModuleScreen] for `StoryModule.aiNarrator` specifically (the other
 /// two modules keep using it unchanged). Unlike a curated/hybrid module,
 /// where each world *is* one campaign with at most one active session, a
@@ -201,11 +201,11 @@ class _ModuleBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Creá tu propia historia', style: AetherType.title),
+                Text('Crea tu propia historia', style: AetherType.title),
                 const SizedBox(height: 4),
                 Text(
-                  'Elegís un género, armás tu personaje y la IA narra lo que '
-                  'sigue turno a turno, sin guion previo. Podés tener varias '
+                  'Eliges un género, armas tu personaje y la IA narra lo que '
+                  'sigue turno a turno, sin guion previo. Puedes tener varias '
                   'historias a la vez.',
                   style: AetherType.body,
                 ),

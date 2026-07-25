@@ -179,12 +179,12 @@ void main() {
         'target': 'siguiente',
         'requires_confirmation': true,
         'confirmation_text':
-            'Yago está herido y no puede perseguirlos. ¿Confirmás?',
+            'Yago está herido y no puede perseguirlos. ¿Confirmas?',
       });
       expect(choice.requiresConfirmation, isTrue);
       expect(
         choice.confirmationText,
-        'Yago está herido y no puede perseguirlos. ¿Confirmás?',
+        'Yago está herido y no puede perseguirlos. ¿Confirmas?',
       );
     });
   });

@@ -90,7 +90,7 @@ class GameSession {
 
 /// A lightweight listing entry for one of the player's own sessions — no
 /// turn history, just enough to render a "your stories" list item and decide
-/// whether to resume it (CLAUDE.md Fase 2: the freeform "creá tu propia
+/// whether to resume it (CLAUDE.md Fase 2: the freeform "crea tu propia
 /// historia" module allows several sessions per world/genre at once, unlike
 /// every other module where at most one active session per world makes
 /// sense — so listing needs its own lightweight shape instead of loading a

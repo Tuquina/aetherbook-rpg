@@ -17,7 +17,7 @@ abstract class GameStateRepositoryPort {
   /// included, or `null` if it doesn't exist (or isn't this user's — RLS
   /// handles that transparently, same as every other method here). Unlike
   /// [loadLatestSession] (always "the newest for this world slug"), this
-  /// resumes an exact entry — used by the "creá tu propia historia" module's
+  /// resumes an exact entry — used by the "crea tu propia historia" module's
   /// "tus historias" list, where a player can have several active sessions
   /// for the same world slug at once (CLAUDE.md Fase 2).
   Future<GameSession?> loadSession(String sessionId);

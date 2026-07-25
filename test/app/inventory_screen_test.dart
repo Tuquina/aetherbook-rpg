@@ -36,7 +36,7 @@ void main() {
       home: InventoryScreen(world: _world, character: character),
     ));
 
-    expect(find.text('Todavía no tenés nada.'), findsOneWidget);
+    expect(find.text('Todavía no tienes nada.'), findsOneWidget);
   });
 
   testWidgets('shows the description for a known item and falls back to the '
