@@ -12,6 +12,8 @@ Tres modos sobre el mismo motor: **freeform** (IA genera todo), **curada** (camp
 
 El documento de diseño completo es `GDD-RPG-Narrativo-IA.md`. Este archivo es la versión operativa para desarrollar.
 
+Toda narración (el prompt del narrador, el `system_prompt` de cada mundo, y el contenido curado/híbrido escrito a mano) sigue la guía de voz en `NARRATIVE_VOICE.md` — léelo antes de tocar cualquier narración. Regla central: español neutro con tuteo, nunca voseo rioplatense.
+
 ---
 
 ## 2. Reglas de oro (no negociables)

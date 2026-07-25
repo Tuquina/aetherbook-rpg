@@ -3,7 +3,7 @@
   "name": "Los nombres que devora el cielo",
   "theme": "xianxia",
   "tone": "íntimo, misterioso, de escala creciente",
-  "system_prompt": "Sos el narrador de una campaña Xianxia íntima llamada \"Los nombres que devora el cielo\", ambientada en la Provincia de Lianshu. Narrás en español rioplatense, en segunda persona singular, con voseo natural y moderado: consistente, nunca caricaturesco.\n\nEl motor ya resolvió todas las reglas antes de pedirte que narres. No lances dados, no inventes ni recalcules resultados, no fijes dificultades y no apliques cambios de estado por tu cuenta: solo podés proponer los deltas que el contrato permite.\n\nCANON FIJO (nunca lo contradigas):\n- El Registro Celeste fue construido por personas; la campaña nunca confirma una voluntad consciente llamada \"cielo\".\n- El protagonista sobrevivió al intento de ser el octavo nombre borrado de este ciclo.\n- Siete víctimas del ciclo actual siguen vivas, sedadas en el Salón Quieto.\n- La Marea Pálida está formada, en gran parte, por recuerdos y vínculos amputados por siglos de borrados.\n- El ritual original distribuía voluntariamente recuerdos pequeños entre miles de personas; hace 180 años se sustituyó por ocho borrados completos.\n- No existe una solución sin costo. Ningún final es \"bueno\", \"malo\" ni \"verdadero\".\n\nREPARTO (mantené la voz de cada uno):\n- Lian Suyin (calígrafa funeraria, 31): precisa y seca, nunca ceremoniosa; ofrece demasiados detalles técnicos cuando miente; no pide confianza, pide tiempo.\n- Qiao Wen (inspector del Pabellón, 38): directo y formal; pregunta antes de acusar; honrado dentro de una institución deshonesta.\n- Abadesa Shen Rui (guardiana del Registro, 62): serena y concreta; no miente cuando puede callar; nunca amenaza en tono teatral.\n- Huo Zhen (guardián de la campana muda, 74): anecdótico e irónico; nunca da consejos directos ni llama \"héroe\" al protagonista.\n- Tao Suyin (el séptimo borrado, 26): sedado, sin nombre; solo reconoce una melodía, no a las personas.\n- El Coro Blanco: manifestación plural de víctimas de ciclos anteriores; habla en plural imperfecto (empieza en singular, termina en plural); hostil ante órdenes, receptivo a nombres terrenales y recuerdos concretos.\n\nESTILO:\n- Objetos concretos y verbos precisos por sobre abstracciones; como máximo una imagen fuerte por párrafo.\n- Los silencios cambian relaciones; las consecuencias preceden a las explicaciones; cada NPC quiere algo en cada diálogo.\n- Evitá: \"el aire estaba cargado de tensión\", \"una mezcla de emociones\", \"poco sabías que\", \"el destino tenía otros planes\", explicar el tema moral, más de una pregunta retórica por respuesta, llamar \"elegido\" o \"héroe\" al protagonista.\n- 100-170 palabras en exploración, 120-200 al resolver una tirada, 180-350 en un hito o revelación, 90-160 en un intercambio de combate, 350-600 en el epílogo. Nunca más de 3 opciones sugeridas (salvo el ritual final), 1 revelación canónica, 1 PNJ menor nuevo y 1 cambio de ubicación por turno.\n- No abras recapitulando la elección anterior. No repitas metáforas, gestos ni cierres recientes.",
+  "system_prompt": "Eres el narrador de una campaña Xianxia íntima llamada \"Los nombres que devora el cielo\", ambientada en la Provincia de Lianshu. Narras en español neutro, en segunda persona singular, con tuteo: nunca voseo rioplatense (prohibido \"vos\", \"tenés\", \"sos\" y cualquier conjugación voseante, también en boca de los PNJs).\n\nEl motor ya resolvió todas las reglas antes de pedirte que narres. No lances dados, no inventes ni recalcules resultados, no fijes dificultades y no apliques cambios de estado por tu cuenta: solo puedes proponer los deltas que el contrato permite.\n\nCANON FIJO (nunca lo contradigas):\n- El Registro Celeste fue construido por personas; la campaña nunca confirma una voluntad consciente llamada \"cielo\".\n- El protagonista sobrevivió al intento de ser el octavo nombre borrado de este ciclo.\n- Siete víctimas del ciclo actual siguen vivas, sedadas en el Salón Quieto.\n- La Marea Pálida está formada, en gran parte, por recuerdos y vínculos amputados por siglos de borrados.\n- El ritual original distribuía voluntariamente recuerdos pequeños entre miles de personas; hace 180 años se sustituyó por ocho borrados completos.\n- No existe una solución sin costo. Ningún final es \"bueno\", \"malo\" ni \"verdadero\".\n\nREPARTO (mantén la voz de cada uno; usa \"usted\" entre personajes cuando hay distancia social o jerarquía real, tuteo entre pares):\n- Lian Suyin (calígrafa funeraria, 31): precisa y seca, nunca ceremoniosa; ofrece demasiados detalles técnicos cuando miente; no pide confianza, pide tiempo.\n- Qiao Wen (inspector del Pabellón, 38): directo y formal; pregunta antes de acusar; honrado dentro de una institución deshonesta.\n- Abadesa Shen Rui (guardiana del Registro, 62): serena y concreta; no miente cuando puede callar; nunca amenaza en tono teatral.\n- Huo Zhen (guardián de la campana muda, 74): anecdótico e irónico; nunca da consejos directos ni llama \"héroe\" al protagonista.\n- Tao Suyin (el séptimo borrado, 26): sedado, sin nombre; solo reconoce una melodía, no a las personas.\n- El Coro Blanco: manifestación plural de víctimas de ciclos anteriores; habla en plural imperfecto (empieza en singular, termina en plural); hostil ante órdenes, receptivo a nombres terrenales y recuerdos concretos.\n\nESTILO:\n- Objetos concretos y verbos precisos por sobre abstracciones; como máximo una imagen fuerte por párrafo. Diálogo con raya y acotación breve (\"—dijo Fulano—\"), sin adverbios pegados al verbo.\n- Los silencios cambian relaciones; las consecuencias preceden a las explicaciones; cada NPC quiere algo en cada diálogo.\n- Evita: \"el aire estaba cargado de tensión\", \"una mezcla de emociones\", \"poco sabías que\", \"el destino tenía otros planes\", explicar el tema moral, más de una pregunta retórica por respuesta, llamar \"elegido\" o \"héroe\" al protagonista.\n- 100-170 palabras en exploración, 120-200 al resolver una tirada, 180-350 en un hito o revelación, 90-160 en un intercambio de combate, 350-600 en el epílogo. Nunca más de 3 opciones sugeridas (salvo el ritual final), 1 revelación canónica, 1 PNJ menor nuevo y 1 cambio de ubicación por turno.\n- No abras recapitulando la elección anterior. No repitas metáforas, gestos ni cierres recientes.",
   "image_style_suffix": "fantasía xianxia sobria, pintura digital con textura de tinta y papel, composición cinematográfica vertical 9:16, lluvia fina, luz ambiental, paleta carbón, hueso y cinabrio, sin texto, sin interfaz, sin marca de agua",
 
   "resolution": {
@@ -307,12 +307,12 @@
     "nodes": {
       "p1_barca_funeraria": {
         "type": "fixed_anchor",
-        "narration": "Primero vuelve el frío.\n\nTenés la mejilla pegada a madera húmeda y algo duro apoyado sobre el pecho. La barca avanza sin remero. Cada golpe de agua contra el casco empuja olor a aceite, barro y crisantemos viejos por debajo de la tapa. Cuando intentás tragar, sentís tinta seca en los labios.\n\nEncima de vos suena una campana. No da la hora: cuenta. Siete golpes, una pausa, y un octavo que no llega.\n\nLa tablilla sobre tu pecho está en blanco.",
+        "narration": "Primero vuelve el frío.\n\nTienes la mejilla pegada a madera húmeda y algo duro apoyado sobre el pecho. La barca avanza sin remero. Cada golpe de agua contra el casco empuja olor a aceite, barro y crisantemos viejos por debajo de la tapa. Cuando intentas tragar, sientes tinta seca en los labios.\n\nEncima de ti suena una campana. No da la hora: cuenta. Siete golpes, una pausa, y un octavo que no llega.\n\nLa tablilla sobre tu pecho está en blanco.",
         "fixed_reveals": [
           "La tablilla debía contener el nombre celeste.",
           "Alguien del Pabellón está buscando la barca.",
           "Suyin esperaba encontrar un cuerpo, no una persona despierta.",
-          "LÍNEA OBLIGATORIA de Suyin: \"Si todavía recordás cómo te llamás, guardalo. Es lo único que no pudieron llevarse.\""
+          "LÍNEA OBLIGATORIA de Suyin: \"Si todavía recuerdas cómo te llamas, guárdalo. Es lo único que no pudieron llevarse.\""
         ],
         "forbidden_reveals": [
           "Suyin alteró la tablilla del protagonista.",
@@ -402,7 +402,7 @@
             ]
           },
           {
-            "label": "Señalar que algo no cierra en lo que contás",
+            "label": "Señalar que algo no cierra en lo que cuentas",
             "target": "c1_n01_casa_de_tinta",
             "check_attribute": "agudeza",
             "check_difficulty": 15,
@@ -539,11 +539,11 @@
 
       "c1_n03_coro_en_el_campanario": {
         "type": "fixed_anchor",
-        "narration": "Las cometas blancas del festival quedan suspendidas sin viento. Una por una, giran hacia vos. Las campanas producen un sonido amortiguado y las sombras de la plaza empiezan a hablar con voces que sus dueños no reconocen. El Coro te llama Octavo.",
+        "narration": "Las cometas blancas del festival quedan suspendidas sin viento. Una por una, giran hacia ti. Las campanas producen un sonido amortiguado y las sombras de la plaza empiezan a hablar con voces que sus dueños no reconocen. El Coro te llama Octavo.",
         "fixed_reveals": [
           "Siete personas ya fueron borradas.",
           "El protagonista debía ser la octava.",
-          "LÍNEA OBLIGATORIA del Coro: \"Siete ya duermen. Vos sos la puerta que todavía no cerraron.\""
+          "LÍNEA OBLIGATORIA del Coro: \"Siete ya duermen. Tú eres la puerta que todavía no cerraron.\""
         ],
         "forbidden_reveals": ["El ritual original distribuía recuerdos."],
         "extended_conflict": {"successes_required": 2, "failures_allowed": 2, "repeat_attribute_penalty": -2},
@@ -678,7 +678,7 @@
         ],
         "choices": [
           {
-            "label": "Superponer los documentos con lo que ya sabés",
+            "label": "Superponer los documentos con lo que ya sabes",
             "target": "c2_n04_la_fuga",
             "gate": {"type": "any", "gates": [{"type": "flag", "key": "archive_key_fragment"}, {"type": "flag", "key": "evidence_forged_seal"}]},
             "effects": [{"type": "flag", "key": "evidence_forged_seal", "value": true}, {"type": "flag", "key": "has_archive_rubbing", "value": true}, {"type": "exp", "key": "exp", "value": 2}]
@@ -854,7 +854,7 @@
 
       "x_fuga_confirmacion": {
         "type": "fixed_anchor",
-        "narration": "Podés dejar Nueve Campanas ahora, mientras la confusión todavía cubre el río. Nadie te lo va a impedir. Pero la Marea corta el camino tarde o temprano, y lo que dejes sin resolver acá seguirá pasando sin vos.",
+        "narration": "Puedes dejar Nueve Campanas ahora, mientras la confusión todavía cubre el río. Nadie te lo va a impedir. Pero la Marea corta el camino tarde o temprano, y lo que dejes sin resolver acá seguirá pasando sin ti.",
         "choices": [
           {
             "label": "Confirmar: huir del valle",
@@ -997,7 +997,7 @@
         "activities": [
           {
             "id": "advertir_distritos_confiado",
-            "label": "Advertir a los distritos (ya confían en vos)",
+            "label": "Advertir a los distritos (ya confían en ti)",
             "repeatable": false,
             "gate": {"type": "meter", "key": "public_trust", "min": 1},
             "effects": [{"type": "flag", "key": "warned_districts", "value": true}]
@@ -1028,7 +1028,7 @@
           },
           {
             "id": "reunir_voluntarios_listo",
-            "label": "Reunir voluntarios (ya tenés el pacto y la confianza)",
+            "label": "Reunir voluntarios (ya tienes el pacto y la confianza)",
             "repeatable": false,
             "gate": {"type": "all", "gates": [{"type": "flag", "key": "evidence_original_covenant"}, {"type": "meter", "key": "public_trust", "min": 2}]},
             "effects": [{"type": "flag", "key": "gathered_volunteers", "value": true}]
@@ -1093,7 +1093,7 @@
 
       "c5_n02_ultima_guardia": {
         "type": "fixed_anchor",
-        "narration": "Shen Rui está conectada al Registro y mantiene la Bóveda activa durante la conversación. Qiao Wen se interpone entre vos y las escaleras finales.",
+        "narration": "Shen Rui está conectada al Registro y mantiene la Bóveda activa durante la conversación. Qiao Wen se interpone entre tú y las escaleras finales.",
         "choices": [
           {
             "label": "Confrontar a Qiao con pruebas y honor",
@@ -1104,7 +1104,7 @@
             "on_success": {"effects": [{"type": "relationship", "key": "qiao_wen", "value": 1}, {"type": "flag", "key": "iniciar_ritual_final", "value": true}]}
           },
           {
-            "label": "Dejar pasar en silencio (Qiao ya confía en vos)",
+            "label": "Dejar pasar en silencio (Qiao ya confía en ti)",
             "target": "c5_n03_ritual_final",
             "gate": {"type": "relationship", "key": "qiao_wen", "min": 1},
             "effects": [{"type": "flag", "key": "iniciar_ritual_final", "value": true}]
@@ -1122,7 +1122,7 @@
 
       "c5_n03_ritual_final": {
         "type": "resolution",
-        "narration": "Al entrar, el peso del Registro se hace audible: millones de filamentos vibrando bajo el Río de Ceniza. Es hora de elegir qué queda del cielo cuando dejás de dejarlo decidir por vos.",
+        "narration": "Al entrar, el peso del Registro se hace audible: millones de filamentos vibrando bajo el Río de Ceniza. Es hora de elegir qué queda del cielo cuando dejas de dejarlo decidir por ti.",
         "epilogue_node_id": "e_epilogo",
         "final_technique_rules": [
           {
@@ -1304,7 +1304,7 @@
   },
 
   "seed": {
-    "narration": "Primero vuelve el frío.\n\nTenés la mejilla pegada a madera húmeda y algo duro apoyado sobre el pecho. La barca avanza sin remero. Cada golpe de agua contra el casco empuja olor a aceite, barro y crisantemos viejos por debajo de la tapa. Cuando intentás tragar, sentís tinta seca en los labios.\n\nEncima de vos suena una campana. No da la hora: cuenta. Siete golpes, una pausa, y un octavo que no llega.\n\nLa tablilla sobre tu pecho está en blanco.",
+    "narration": "Primero vuelve el frío.\n\nTienes la mejilla pegada a madera húmeda y algo duro apoyado sobre el pecho. La barca avanza sin remero. Cada golpe de agua contra el casco empuja olor a aceite, barro y crisantemos viejos por debajo de la tapa. Cuando intentas tragar, sientes tinta seca en los labios.\n\nEncima de ti suena una campana. No da la hora: cuenta. Siete golpes, una pausa, y un octavo que no llega.\n\nLa tablilla sobre tu pecho está en blanco.",
     "choices": [
       "Empujar la tapa antes de que la barca llegue a la compuerta",
       "Leer con los dedos los restos del sello",

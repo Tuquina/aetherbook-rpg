@@ -12,39 +12,62 @@ import type { NarratorRequest } from "./types.ts";
 // having to restate it, and so a style tweak here doesn't require editing
 // every world's JSON.
 export const HUMAN_STYLE_INSTRUCTION =
+  `IDIOMA Y REGISTRO (regla no negociable, va antes que cualquier otra ` +
+  `cosa):\n` +
+  `- Español neutro con tuteo. SIEMPRE "tú", "tienes", "eres", "puedes", ` +
+  `"quieres". NUNCA voseo rioplatense: prohibido "vos", "tenés", "sos", ` +
+  `"podés", "querés", "andá", "mirá" y cualquier conjugación voseante. Esto ` +
+  `incluye los diálogos de otros personajes, no solo la narración al ` +
+  `jugador.\n` +
+  `- Entre personajes (nunca con el jugador, que siempre es "tú"), usá ` +
+  `"usted" cuando hay distancia social real: jerarquía, una autoridad, un ` +
+  `desconocido tratado con formalidad. Entre pares o gente que se conoce ` +
+  `bien, tuteo.\n\n` +
   `ESTILO DE ESCRITURA (se aplica siempre, además del tono propio del mundo):\n` +
-  `- Escribí como una persona narrando, no como una IA generando texto. Nada ` +
-  `de relleno ni de prosa genérica que podría pertenecer a cualquier escena.\n` +
-  `- Alterná drásticamente la longitud de las oraciones. Una frase de cinco ` +
-  `palabras puede ir seguida de otra mucho más larga, con giros, comas y ` +
-  `una idea que se estira antes de cerrar — así respira un pensamiento real. ` +
-  `Nunca repitas el mismo largo de oración dos veces seguidas.\n` +
-  `- Separá el texto en párrafos (saltos de línea dobles). Nunca un solo ` +
+  `- Escribe como una persona narrando, no como una IA generando texto. ` +
+  `Nada de relleno ni de prosa genérica que podría pertenecer a cualquier ` +
+  `escena.\n` +
+  `- Alterna drásticamente la longitud de las oraciones. Una frase de ` +
+  `cinco palabras puede ir seguida de otra mucho más larga, con giros, ` +
+  `comas y una idea que se estira antes de cerrar — así respira un ` +
+  `pensamiento real. Nunca repitas el mismo largo de oración dos veces ` +
+  `seguidas.\n` +
+  `- Separa el texto en párrafos (saltos de línea dobles). Nunca un solo ` +
   `bloque compacto de principio a fin.\n` +
+  `- En los diálogos, usa raya y una acotación breve: "—Frase —dijo Fulano—, ` +
+  `resto de la frase." La acotación es corta (dijo, preguntó, respondió) y ` +
+  `casi nunca lleva un adverbio pegado — el verbo solo alcanza si el ` +
+  `diálogo en sí ya transmite el tono.\n` +
+  `- Preferí verbos precisos y gestos concretos por sobre adjetivos ` +
+  `acumulados. Un personaje no está "profundamente nervioso" — hace algo ` +
+  `puntual (consulta el reloj, se le corta la voz a mitad de frase) y ese ` +
+  `gesto ya comunica el estado interno. La tensión se construye con ` +
+  `detalle concreto, nunca nombrando la emoción directamente.\n` +
   `- No cierres cada escena con una frase prolija ni una conclusión ` +
   `redonda. Algunas escenas terminan en seco, a mitad de un gesto o una ` +
   `duda, sin resolver la tensión.\n` +
-  `- Evitá clichés y frases hechas: "el aire se cargó de tensión", "una ` +
+  `- Evita clichés y frases hechas: "el aire se cargó de tensión", "una ` +
   `mezcla de emociones", "poco sabías que", "el destino tenía otros ` +
   `planes", "sin previo aviso", "un silencio sepulcral", "el corazón le ` +
   `latía con fuerza", "no podía creer lo que veían sus ojos". Si una frase ` +
-  `te suena a algo ya leído mil veces, reescribila.\n` +
-  `- Inspirate en el pulso de Dan Brown (capítulos cortos, ganchos, ` +
-  `urgencia que empuja a seguir leyendo) y en el detalle sensorial y la voz ` +
-  `propia de cada personaje al estilo J.K. Rowling. Es una referencia de ` +
-  `ritmo y textura, nunca copies frases ni construcciones suyas.\n` +
+  `te suena a algo ya leído mil veces, reescríbela.\n` +
+  `- Inspírate en el pulso y la precisión de Dan Brown (capítulos cortos, ` +
+  `ganchos, urgencia que empuja a seguir leyendo, diálogo ágil) y en el ` +
+  `detalle sensorial y la voz propia de cada personaje al estilo J.K. ` +
+  `Rowling. Es una referencia de ritmo y textura, nunca copies frases ni ` +
+  `construcciones suyas.\n` +
   `- El personaje tiene un nombre (está en "Estado del personaje" más ` +
-  `abajo) — usalo con naturalidad de tanto en tanto, como lo haría alguien ` +
-  `que lo conoce. No narres todo en "vos" sin nombrarlo nunca.`;
+  `abajo) — úsalo con naturalidad de tanto en tanto, como lo haría alguien ` +
+  `que lo conoce. No narres todo en "tú" sin nombrarlo nunca.`;
 
 // Only injected for worlds with no StoryGraph at all (100% generated por
 // IA, sin contenido curado) — un mundo curado/híbrido ofrece sus propias
 // StoryChoices/HubActivities y nunca muestra `suggested_choices` en la UI,
 // así que pedírselas ahí sería trabajo desperdiciado.
 export const FREEFORM_CHOICES_INSTRUCTION =
-  `OPCIONES SUGERIDAS (esta historia es 100% generada por vos, sin guion ` +
+  `OPCIONES SUGERIDAS (esta historia es 100% generada por ti, sin guion ` +
   `previo):\n` +
-  `- Devolvé preferentemente 2 "suggested_choices", como mucho 3, nunca ` +
+  `- Devuelve preferentemente 2 "suggested_choices", como mucho 3, nunca ` +
   `más. Tienen que ser acciones simples y concretas, coherentes con cómo ` +
   `terminó tu propia narración recién — el paso siguiente lógico, no un ` +
   `menú de todas las opciones posibles.\n` +
@@ -52,12 +75,12 @@ export const FREEFORM_CHOICES_INSTRUCTION =
   `una tuya, así que no hace falta cubrir cada posibilidad — con dos ` +
   `caminos razonables alcanza.\n` +
   `- Si la escena todavía no llegó a un punto de decisión concreto (por ` +
-  `ejemplo, si vos mismo dejaste algo abierto para resolverlo en el próximo ` +
-  `turno), devolvé "suggested_choices": [] — no hace falta forzar una ` +
+  `ejemplo, si tú mismo dejaste algo abierto para resolverlo en el próximo ` +
+  `turno), devuelve "suggested_choices": [] — no hace falta forzar una ` +
   `elección en cada turno, la historia puede seguir su curso sin una.`;
 
 export const OUTPUT_INSTRUCTION =
-  `Devolvé SOLO un objeto JSON válido con esta forma exacta, sin markdown, ` +
+  `Devuelve SOLO un objeto JSON válido con esta forma exacta, sin markdown, ` +
   `sin backticks, sin preámbulo ni texto fuera del JSON:\n` +
   `{"narration": string, ` +
   `"suggested_choices": [{"id": string, "label": string, ` +
@@ -98,7 +121,7 @@ export function buildUserPrompt(request: NarratorRequest): string {
       `El personaje lleva consigo, desde el principio: "${c.personalItem}". ` +
         `Le pidieron al jugador que lo describiera en la creación del ` +
         `personaje, así que tiene que importar en algún momento de la ` +
-        `historia — no en cada turno ni forzado, pero buscá una oportunidad ` +
+        `historia — no en cada turno ni forzado, pero busca una oportunidad ` +
         `genuina (una escena, un recuerdo, un uso concreto) para que ese ` +
         `objeto pese en la trama, no que quede como un dato olvidado.`,
     );
@@ -116,7 +139,7 @@ export function buildUserPrompt(request: NarratorRequest): string {
 
   if (request.nodeFixedReveals && request.nodeFixedReveals.length > 0) {
     parts.push(
-      `Hechos que DEBÉS incluir en esta escena:\n` +
+      `Hechos que DEBES incluir en esta escena:\n` +
         request.nodeFixedReveals.map((f) => `- ${f}`).join("\n"),
     );
   }
@@ -146,15 +169,15 @@ export function buildUserPrompt(request: NarratorRequest): string {
       parts.push(
         `El jugador hizo esto: "${request.playerAction}". No hizo falta ` +
           `ninguna tirada para resolverlo — no había incertidumbre ` +
-          `mecánica real en juego, así que sale tal como se planteó. Narrá ` +
+          `mecánica real en juego, así que sale tal como se planteó. Narra ` +
           `el resultado con naturalidad, sin mencionar chequeos ni ` +
           `tiradas.`,
       );
     } else {
       parts.push(
         `El jugador no especificó una acción puntual esta vez — prefirió ` +
-          `dejar que la historia avance sola. Continuá la escena con ` +
-          `naturalidad desde donde quedó: traé algo nuevo (información, ` +
+          `dejar que la historia avance sola. Continúa la escena con ` +
+          `naturalidad desde donde quedó: trae algo nuevo (información, ` +
           `un giro, una reacción del entorno o de un personaje), sin ` +
           `necesidad de resolver ningún chequeo.`,
       );
@@ -168,7 +191,7 @@ export function buildUserPrompt(request: NarratorRequest): string {
         `tirada d20 ${r.roll}, total ${r.total} vs dificultad ${r.difficulty}` +
         (r.isNatural20 ? " (20 natural)" : "") +
         (r.isNatural1 ? " (1 natural)" : "") +
-        `. Narrá este resultado con estilo, reflejando que fue un chequeo de ` +
+        `. Narra este resultado con estilo, reflejando que fue un chequeo de ` +
         `${r.attributeKey}; no decidas si tuvo éxito, eso ya está decidido.`,
     );
   }

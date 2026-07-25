@@ -7,7 +7,7 @@ const baseRequest: NarratorRequest = {
     slug: "xianxia",
     name: "El Sendero del Qi",
     tone: "épico",
-    systemPrompt: "Sos el Game Master de un mundo xianxia.",
+    systemPrompt: "Eres el Game Master de un mundo xianxia.",
     imageStyleSuffix: "arte xianxia",
   },
   character: {
@@ -30,9 +30,18 @@ Deno.test("system prompt includes the world's prompt and the output instruction"
 Deno.test("system prompt always includes the shared human-style instruction", () => {
   const prompt = buildSystemPrompt(baseRequest);
   assertStringIncludes(prompt, "ESTILO DE ESCRITURA");
-  assertStringIncludes(prompt, "Alterná drásticamente la longitud");
-  assertStringIncludes(prompt, "Evitá clichés");
-  assertStringIncludes(prompt, "usalo con naturalidad");
+  assertStringIncludes(prompt, "Alterna drásticamente la longitud");
+  assertStringIncludes(prompt, "Evita clichés");
+  assertStringIncludes(prompt, "úsalo con naturalidad");
+});
+
+Deno.test("system prompt always forbids voseo and requires neutral tuteo Spanish", () => {
+  const prompt = buildSystemPrompt(baseRequest);
+  assertStringIncludes(prompt, "IDIOMA Y REGISTRO");
+  assertStringIncludes(prompt, "NUNCA voseo rioplatense");
+  assertStringIncludes(prompt, '"vos"');
+  assertStringIncludes(prompt, "SIEMPRE");
+  assertStringIncludes(prompt, '"tú"');
 });
 
 Deno.test("user prompt asks to continue naturally when resolution is null and playerAction is empty", () => {
@@ -110,7 +119,7 @@ Deno.test("user prompt includes fixed reveals the narrator must include", () => 
     nodeFixedReveals: ["Siete personas ya fueron borradas."],
   };
   const prompt = buildUserPrompt(request);
-  assertStringIncludes(prompt, "DEBÉS incluir");
+  assertStringIncludes(prompt, "DEBES incluir");
   assertStringIncludes(prompt, "Siete personas ya fueron borradas.");
 });
 
@@ -149,7 +158,7 @@ Deno.test("system prompt includes the freeform-choices instruction when isFreefo
 
 Deno.test("user prompt omits node-context sections when absent", () => {
   const prompt = buildUserPrompt(baseRequest);
-  assertEquals(prompt.includes("DEBÉS incluir"), false);
+  assertEquals(prompt.includes("DEBES incluir"), false);
   assertEquals(prompt.includes("Nunca reveles"), false);
   assertEquals(prompt.includes("tramo generativo acotado"), false);
 });
