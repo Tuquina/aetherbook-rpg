@@ -282,6 +282,7 @@ class _NarrationView extends StatelessWidget {
               ),
             const SizedBox(height: AetherSpace.xl),
           ],
+          _SceneImage(controller: controller),
           AnimatedSwitcher(
             duration: AetherMotion.slow,
             switchInCurve: AetherMotion.standard,
@@ -306,6 +307,95 @@ class _NarrationView extends StatelessWidget {
                 style: AetherType.body.copyWith(color: AetherColors.failure)),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// The scene illustration for the current turn (GDD §6) — optional and
+/// asynchronous, never blocks reading: narration and choices already work
+/// with it absent. While [GameController.imageLoading] is true, shows a
+/// quiet shimmer placeholder; once [GameController.imageUrl] arrives, it
+/// fades in the same way the narration text itself does. Renders nothing at
+/// all (no reserved space) when there's neither — no generator configured,
+/// this world never calls the narrator, or generation failed — so a plain
+/// curated/AI-free campaign's screen looks exactly as it always has.
+class _SceneImage extends StatelessWidget {
+  const _SceneImage({required this.controller});
+
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = controller.imageUrl;
+    final loading = controller.imageLoading;
+    if (imageUrl == null && !loading) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AetherSpace.xl),
+      child: ClipRRect(
+        borderRadius: AetherRadius.allLg,
+        child: AspectRatio(
+          aspectRatio: 4 / 3,
+          child: AnimatedSwitcher(
+            duration: AetherMotion.slow,
+            switchInCurve: AetherMotion.standard,
+            transitionBuilder: (child, animation) =>
+                FadeTransition(opacity: animation, child: child),
+            child: imageUrl != null
+                ? Image.network(
+                    imageUrl,
+                    key: ValueKey(imageUrl),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                  )
+                : const _SceneImageShimmer(key: ValueKey('scene-image-shimmer')),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A soft, looping pulse between two surface tones — "la imagen se está
+/// dibujando", without borrowing any loading-spinner iconography that would
+/// compete with [DestinyWriting]'s own "el destino se escribe…" indicator.
+class _SceneImageShimmer extends StatefulWidget {
+  const _SceneImageShimmer({super.key});
+
+  @override
+  State<_SceneImageShimmer> createState() => _SceneImageShimmerState();
+}
+
+class _SceneImageShimmerState extends State<_SceneImageShimmer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) => ColoredBox(
+        color: Color.lerp(
+          AetherColors.surface,
+          AetherColors.surfaceRaised,
+          _controller.value,
+        )!,
       ),
     );
   }

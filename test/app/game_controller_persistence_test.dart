@@ -4,6 +4,7 @@ import 'package:aetherbook/core/engine/action_resolution.dart';
 import 'package:aetherbook/core/engine/create_character.dart';
 import 'package:aetherbook/core/engine/dice.dart';
 import 'package:aetherbook/core/narrative/extended_conflict.dart';
+import 'package:aetherbook/core/narrative/story_choice.dart';
 import 'package:aetherbook/core/narrative/story_graph.dart';
 import 'package:aetherbook/core/narrative/story_node.dart';
 import 'package:aetherbook/core/state/character.dart';
@@ -12,9 +13,23 @@ import 'package:aetherbook/core/world/character_origin.dart';
 import 'package:aetherbook/core/world/vow.dart';
 import 'package:aetherbook/core/world/world.dart';
 import 'package:aetherbook/ports/game_state_repository_port.dart';
+import 'package:aetherbook/ports/image_generator_port.dart';
 import 'package:aetherbook/ports/narrator_port.dart';
 import 'package:aetherbook/ports/world_repository_port.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+/// Records every prompt it's asked to illustrate and answers with [nextUrl]
+/// (or `null`, to simulate a provider hiccup) — no network, controllable.
+class _CapturingImageGenerator implements ImageGeneratorPort {
+  final List<String> prompts = [];
+  String? nextUrl = 'https://cdn.example/scene.jpg';
+
+  @override
+  Future<String?> generateImage(String prompt) async {
+    prompts.add(prompt);
+    return nextUrl;
+  }
+}
 
 /// Wraps [FakeNarratorAdapter] to record the last [NarratorRequest] it saw,
 /// so a test can assert on wiring (like `isFreeform`) without needing the
@@ -122,6 +137,19 @@ class _FakeGameStateRepository implements GameStateRepositoryPort {
     required List<String> suggestedChoices,
   }) async {
     appendedTurnIndexes.add(turnIndex);
+  }
+
+  /// `(sessionId, turnIndex, imageUrl)` per call, so a test can assert on
+  /// which turn's image got persisted.
+  final List<(String, int, String)> savedTurnImages = [];
+
+  @override
+  Future<void> saveTurnImage({
+    required String sessionId,
+    required int turnIndex,
+    required String imageUrl,
+  }) async {
+    savedTurnImages.add((sessionId, turnIndex, imageUrl));
   }
 
   @override
@@ -720,6 +748,157 @@ void main() {
         await controller.abandonStory('some-story');
 
         expect(persistence.abandonedSessionIds, ['some-story']);
+      });
+    });
+
+    group('scene images (GDD §6)', () {
+      test('a normal turn generates and persists an image, with the '
+          "world's imageStyleSuffix appended to the AI's prompt", () async {
+        final persistence = _FakeGameStateRepository();
+        final imageGenerator = _CapturingImageGenerator();
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          persistence: persistence,
+          imageGenerator: imageGenerator,
+          dice: const FixedDice(10), // 2 + 10 = 12 vs 12 -> success
+        );
+
+        await controller.start('xianxia');
+        await controller.choose('Meditar');
+        // The image generation is fire-and-forget — let its microtasks
+        // (and the persistence write after it) settle before asserting.
+        await Future<void>.delayed(Duration.zero);
+
+        expect(imageGenerator.prompts, hasLength(1));
+        expect(imageGenerator.prompts.single, endsWith(', arte xianxia'));
+        expect(controller.imageUrl, 'https://cdn.example/scene.jpg');
+        expect(controller.imageLoading, isFalse);
+        expect(persistence.savedTurnImages, [
+          ('new-session', 0, 'https://cdn.example/scene.jpg'),
+        ]);
+      });
+
+      test('imageLoading is true immediately after the turn resolves, before '
+          'the generator has answered', () async {
+        final imageGenerator = _CapturingImageGenerator();
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          imageGenerator: imageGenerator,
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('xianxia');
+        await controller.choose('Meditar');
+
+        // Assert before pumping the fire-and-forget future — this is the
+        // "narration is readable, image is still drawing" window the UI
+        // relies on (GDD §6: "no bloquea el turno").
+        expect(controller.imageLoading, isTrue);
+        expect(controller.imageUrl, isNull);
+      });
+
+      test('no imageGenerator configured: nothing breaks, no image ever '
+          'appears', () async {
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('xianxia');
+        await controller.choose('Meditar');
+        await Future<void>.delayed(Duration.zero);
+
+        expect(controller.error, isNull);
+        expect(controller.imageUrl, isNull);
+        expect(controller.imageLoading, isFalse);
+      });
+
+      test('a curated, AI-free turn never attempts to generate an image '
+          '(no image_prompt exists to work from)', () async {
+        final imageGenerator = _CapturingImageGenerator();
+        final graph = StoryGraph(
+          startNodeId: 'p0',
+          nodes: const {
+            'p0': FixedAnchorNode(
+              id: 'p0',
+              narration: 'Comienzo curado.',
+              choices: [
+                StoryChoice(
+                  label: 'Avanzar',
+                  targetNodeId: 'p0',
+                  resultText: 'Seguís avanzando.',
+                ),
+              ],
+            ),
+          },
+        );
+        final curatedWorld = World(
+          slug: 'curated_test',
+          name: 'Historia curada de prueba',
+          theme: 'test',
+          tone: 'seco',
+          systemPrompt: '',
+          imageStyleSuffix: 'arte curado',
+          defaultDifficulty: 12,
+          criticalMargin: 5,
+          primaryAttribute: 'espiritu',
+          storyGraph: graph,
+          startingCharacter: _character,
+          seedNarration: '',
+          seedChoices: const [],
+          aiRuntimeRequired: false,
+        );
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(curatedWorld),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          imageGenerator: imageGenerator,
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('curated_test');
+        final node = graph.nodeById('p0') as FixedAnchorNode;
+        await controller.chooseStoryChoice(node.choices.first);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(imageGenerator.prompts, isEmpty);
+        expect(controller.imageUrl, isNull);
+        expect(controller.imageLoading, isFalse);
+      });
+
+      test('resuming a session restores the last turn\'s image without any '
+          'generator call', () async {
+        final imageGenerator = _CapturingImageGenerator();
+        final persistence = _FakeGameStateRepository()
+          ..seeded = GameSession(
+            id: 'existing-session',
+            worldSlug: 'xianxia',
+            character: _character,
+            turns: const [
+              Turn(
+                index: 0,
+                playerAction: 'Meditar',
+                narration: 'Ya meditaste una vez.',
+                tone: 'sereno',
+                imageUrl: 'https://cdn.example/already-cached.jpg',
+              ),
+            ],
+          );
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          persistence: persistence,
+          imageGenerator: imageGenerator,
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('xianxia');
+
+        expect(controller.imageUrl, 'https://cdn.example/already-cached.jpg');
+        expect(controller.imageLoading, isFalse);
+        expect(imageGenerator.prompts, isEmpty);
       });
     });
   });

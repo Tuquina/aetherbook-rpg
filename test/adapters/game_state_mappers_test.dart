@@ -230,6 +230,25 @@ void main() {
       });
       expect(turn.suggestedChoices, isEmpty);
     });
+
+    test('turnFromRow reads image_url when present', () {
+      final turn = turnFromRow({
+        'turn_index': 1,
+        'player_action': 'mirar alrededor',
+        'narration': 'x',
+        'image_url': 'https://cdn.example/scene.jpg',
+      });
+      expect(turn.imageUrl, 'https://cdn.example/scene.jpg');
+    });
+
+    test('turnFromRow defaults image_url to null when absent', () {
+      final turn = turnFromRow({
+        'turn_index': 0,
+        'player_action': '',
+        'narration': 'x',
+      });
+      expect(turn.imageUrl, isNull);
+    });
   });
 
   group('gameSessionSummaryFromRow', () {

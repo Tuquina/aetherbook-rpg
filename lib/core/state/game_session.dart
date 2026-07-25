@@ -9,6 +9,7 @@ class Turn {
     required this.narration,
     required this.tone,
     this.suggestedChoices = const [],
+    this.imageUrl,
   });
 
   final int index;
@@ -19,6 +20,13 @@ class Turn {
   /// The choices offered after this turn — kept so a resumed session can
   /// show the same options instead of re-invoking the narrator.
   final List<String> suggestedChoices;
+
+  /// The scene illustration for this turn (GDD §6), if one was generated —
+  /// `null` for a turn with no AI narration (`aiRuntimeRequired: false`) or
+  /// one where image generation hasn't finished/failed. Arrives *after* the
+  /// turn is first persisted (`GameStateRepositoryPort.saveTurnImage`
+  /// updates it in place once the image is ready), never blocks the turn.
+  final String? imageUrl;
 }
 
 /// A play session: the current character plus the turn history. Updated by

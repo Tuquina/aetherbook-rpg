@@ -158,6 +158,19 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
   }
 
   @override
+  Future<void> saveTurnImage({
+    required String sessionId,
+    required int turnIndex,
+    required String imageUrl,
+  }) async {
+    await _client
+        .from('turns')
+        .update({'image_url': imageUrl})
+        .eq('session_id', sessionId)
+        .eq('turn_index', turnIndex);
+  }
+
+  @override
   Future<void> saveGraphPosition({
     required String sessionId,
     String? currentNodeId,

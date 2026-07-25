@@ -51,6 +51,16 @@ abstract class GameStateRepositoryPort {
     required List<String> suggestedChoices,
   });
 
+  /// Fills in a turn's scene image (GDD §6) after the fact — the image
+  /// always arrives later than [appendTurn], since generating it never
+  /// blocks the turn. A no-op if [turnIndex] doesn't exist for [sessionId]
+  /// (shouldn't happen in practice, but nothing to update either way).
+  Future<void> saveTurnImage({
+    required String sessionId,
+    required int turnIndex,
+    required String imageUrl,
+  });
+
   /// Returns the most recent memory digest text for [sessionId], or `null`
   /// if none has been generated yet (CLAUDE.md §6, GDD §5.3).
   Future<String?> loadLatestMemoryDigest(String sessionId);

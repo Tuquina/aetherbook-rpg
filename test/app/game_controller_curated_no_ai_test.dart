@@ -131,6 +131,13 @@ class _RecordingPersistence implements GameStateRepositoryPort {
   }) async {}
 
   @override
+  Future<void> saveTurnImage({
+    required String sessionId,
+    required int turnIndex,
+    required String imageUrl,
+  }) async {}
+
+  @override
   Future<String?> loadLatestMemoryDigest(String sessionId) async => null;
 
   @override

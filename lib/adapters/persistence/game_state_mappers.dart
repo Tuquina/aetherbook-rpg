@@ -124,6 +124,7 @@ Turn turnFromRow(Map<String, dynamic> row) {
     narration: row['narration'] as String,
     tone: '',
     suggestedChoices: _stringList(row['suggested_choices']),
+    imageUrl: row['image_url'] as String?,
   );
 }
 

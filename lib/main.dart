@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'adapters/auth/supabase_auth_adapter.dart';
 import 'adapters/content/asset_world_repository.dart';
+import 'adapters/image/http_image_generator_adapter.dart';
 import 'adapters/memory/http_memory_digest_adapter.dart';
 import 'adapters/narrator/http_narrator_adapter.dart';
 import 'adapters/persistence/supabase_game_state_adapter.dart';
@@ -19,6 +20,7 @@ const _supabaseUrl = 'https://hsgdldztcolteyodiscu.supabase.co';
 const _supabasePublishableKey = 'sb_publishable_5i-67CN7D7hDUY-w-iT3YQ_uBtaa_Gw';
 final _narratorEndpoint = Uri.parse('$_supabaseUrl/functions/v1/narrator');
 final _memoryDigestEndpoint = Uri.parse('$_supabaseUrl/functions/v1/memory-digest');
+final _generateImageEndpoint = Uri.parse('$_supabaseUrl/functions/v1/generate-image');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +33,9 @@ Future<void> main() async {
   // for the narrator, Groq for the memory digest) — Fase 1's last quota-side
   // gate. `xianxia_lianshu` ("Los nombres que devora el cielo") is the world
   // that actually depends on this; `curated_zombie_01_ultimo_tren` never
-  // calls either port regardless (`ai_runtime_required: false`).
+  // calls either port regardless (`ai_runtime_required: false`). The image
+  // generator (GDD §6) is "nice to have" by design — HttpImageGeneratorAdapter
+  // never throws, so wiring it in can't turn a provider hiccup into a crash.
   final controller = GameController(
     worldRepository: const AssetWorldRepository(),
     narrator: HttpNarratorAdapter(
@@ -41,6 +45,10 @@ Future<void> main() async {
     persistence: supabase?.persistence,
     memoryDigest: HttpMemoryDigestAdapter(
       endpoint: _memoryDigestEndpoint,
+      publishableKey: _supabasePublishableKey,
+    ),
+    imageGenerator: HttpImageGeneratorAdapter(
+      endpoint: _generateImageEndpoint,
       publishableKey: _supabasePublishableKey,
     ),
   );

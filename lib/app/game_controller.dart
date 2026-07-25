@@ -2,6 +2,8 @@
 // Dart forbids private *named* parameters, so `this._field` initializing
 // formals are not usable for this public named-argument constructor.
 // ignore_for_file: prefer_initializing_formals
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../core/engine/action_resolution.dart';
@@ -27,6 +29,7 @@ import '../core/state/character.dart';
 import '../core/state/game_session.dart';
 import '../core/world/world.dart';
 import '../ports/game_state_repository_port.dart';
+import '../ports/image_generator_port.dart';
 import '../ports/memory_digest_port.dart';
 import '../ports/narrator_port.dart';
 import '../ports/world_repository_port.dart';
@@ -78,12 +81,14 @@ class GameController extends ChangeNotifier {
     required NarratorPort narrator,
     GameStateRepositoryPort? persistence,
     MemoryDigestPort? memoryDigest,
+    ImageGeneratorPort? imageGenerator,
     int digestEveryNTurns = 5,
     Dice? dice,
   })  : _worldRepository = worldRepository,
         _narrator = narrator,
         _persistence = persistence,
         _memoryDigest = memoryDigest,
+        _imageGenerator = imageGenerator,
         _digestEveryNTurns = digestEveryNTurns,
         _resolve = ResolvePlayerAction(dice ?? RandomDice()),
         _classifyFreeAction = const ClassifyFreeAction(),
@@ -95,6 +100,7 @@ class GameController extends ChangeNotifier {
   final NarratorPort _narrator;
   final GameStateRepositoryPort? _persistence;
   final MemoryDigestPort? _memoryDigest;
+  final ImageGeneratorPort? _imageGenerator;
   final int _digestEveryNTurns;
   final ResolvePlayerAction _resolve;
   final ClassifyFreeAction _classifyFreeAction;
@@ -116,6 +122,16 @@ class GameController extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  /// The current turn's scene illustration (GDD §6), or `null` if none was
+  /// generated (no `imageGenerator` configured, the provider failed, or this
+  /// world never calls the narrator at all). Never blocks anything else.
+  String? _imageUrl;
+
+  /// Whether a scene image is currently being generated for the turn on
+  /// screen. Distinct from [isLoading]: the narration/choices are already
+  /// interactive while this is still `true`.
+  bool _imageLoading = false;
+
   World? get world => _world;
   Character? get character => _session?.character;
   List<String> get choices => _choices;
@@ -126,6 +142,8 @@ class GameController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isReady => _world != null && _session != null;
+  String? get imageUrl => _imageUrl;
+  bool get imageLoading => _imageLoading;
 
   /// The current medium-term memory digest, if any has been generated yet.
   String? get memoryDigestText => _memoryDigestText;
@@ -312,11 +330,20 @@ class GameController extends ChangeNotifier {
         _memoryDigestText = await persistence.loadLatestMemoryDigest(session.id!);
       }
 
+      // No turn generates an image mid-flight during start() — either it's
+      // already cached (resuming, set below) or this is the literal opening
+      // scene, which never calls the narrator and so never has one.
+      _imageUrl = null;
+      _imageLoading = false;
+
       if (session.turns.isNotEmpty) {
         final lastTurn = session.turns.last;
         _narration = lastTurn.narration;
         _choices = lastTurn.suggestedChoices;
         _tone = lastTurn.tone.isNotEmpty ? lastTurn.tone : world.tone;
+        // Already cached in Storage (GDD §6: "mismo prompt -> misma
+        // imagen") — resuming a session never re-requests anything.
+        _imageUrl = lastTurn.imageUrl;
       } else if (graph != null) {
         final node = graph.nodeById(session.currentNodeId!);
         _narration = _literalNarrationOf(node, session.character) ?? world.seedNarration;
@@ -703,6 +730,7 @@ class GameController extends ChangeNotifier {
       String tone;
       List<String> choiceLabels;
       List<StateDelta> proposedDeltas;
+      String? imagePrompt;
 
       if (world.aiRuntimeRequired) {
         final response = await _narrator.narrate(
@@ -725,6 +753,7 @@ class GameController extends ChangeNotifier {
         proposedDeltas = [
           for (final delta in response.stateDeltas) ?delta.toStateDelta(),
         ];
+        imagePrompt = response.imagePrompt;
       } else {
         // Curated, AI-free world (campaign-bible §25.10): the resolved
         // outcome's own authored text is the turn's narration, interpolated
@@ -777,6 +806,30 @@ class GameController extends ChangeNotifier {
       _tone = tone;
       _lastResolution = resolution;
       _lastLevelsGained = application.character.level - beforeLevel;
+
+      // Scene image (GDD §6): never blocks the turn — narration and choices
+      // are already live above. Fired-and-forgotten here; when it resolves
+      // (or fails, silently — the port never throws) it updates the image
+      // state and persists it on its own, on whatever turn is current by
+      // then (see the turn-index guard in `_generateImageForTurn`).
+      final imageGenerator = _imageGenerator;
+      if (imageGenerator != null &&
+          world.aiRuntimeRequired &&
+          imagePrompt != null &&
+          imagePrompt.trim().isNotEmpty) {
+        _imageUrl = null;
+        _imageLoading = true;
+        unawaited(_generateImageForTurn(
+          imageGenerator: imageGenerator,
+          world: world,
+          sessionId: session.id,
+          turnIndex: turn.index,
+          imagePrompt: imagePrompt,
+        ));
+      } else {
+        _imageUrl = null;
+        _imageLoading = false;
+      }
 
       // Durably record the turn and the character's new state, if a
       // persistence adapter is configured (Fase 1). Deltas — AI-proposed or
@@ -835,6 +888,48 @@ class GameController extends ChangeNotifier {
       _error = world.aiRuntimeRequired ? 'El narrador falló: $e' : 'Error al resolver el turno: $e';
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Runs off to the side of a turn's critical path (GDD §6: "opcional y
+  /// asíncrona para no bloquear el turno"). [world.imageStyleSuffix] is
+  /// appended here, in code, rather than trusted to the AI's own
+  /// `image_prompt` (CLAUDE.md: formatting concerns belong in the
+  /// client/adapter, not left for the model to remember every time).
+  ///
+  /// Guards against a stale result: if the player has already moved on to
+  /// another turn by the time the image comes back, it's discarded instead
+  /// of popping an old scene's picture onto the new turn.
+  Future<void> _generateImageForTurn({
+    required ImageGeneratorPort imageGenerator,
+    required World world,
+    required String? sessionId,
+    required int turnIndex,
+    required String imagePrompt,
+  }) async {
+    final fullPrompt = world.imageStyleSuffix.isEmpty
+        ? imagePrompt
+        : '$imagePrompt, ${world.imageStyleSuffix}';
+    final url = await imageGenerator.generateImage(fullPrompt);
+
+    final currentTurns = _session?.turns ?? const [];
+    final stillOnThisTurn =
+        currentTurns.isNotEmpty && currentTurns.last.index == turnIndex;
+    if (!stillOnThisTurn) return;
+
+    _imageLoading = false;
+    if (url != null) {
+      _imageUrl = url;
+      notifyListeners();
+      if (sessionId != null) {
+        await _persistence?.saveTurnImage(
+          sessionId: sessionId,
+          turnIndex: turnIndex,
+          imageUrl: url,
+        );
+      }
+    } else {
       notifyListeners();
     }
   }
