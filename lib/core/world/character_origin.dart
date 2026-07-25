@@ -9,6 +9,8 @@ class CharacterOrigin {
     required this.baseAttributes,
     required this.tagId,
     this.narrativeConnection = '',
+    this.seedNarration,
+    this.seedChoices = const [],
   });
 
   final String id;
@@ -26,6 +28,19 @@ class CharacterOrigin {
   /// Flavor text describing how this origin connects to the story.
   final String narrativeConnection;
 
+  /// This origin's own opening scene for a freeform world (CLAUDE.md Fase 2):
+  /// the seed narration must actually reflect *how* the character arrived
+  /// (e.g. isekai's "transportado en combate" opens mid-fight, not on a
+  /// generic empty room), so it can't be one shared string per world. `null`
+  /// falls back to `World.seedNarration` — a world with no per-origin seed
+  /// authored yet (or a curated world's origins, which never render this at
+  /// all) keeps working exactly as before.
+  final String? seedNarration;
+
+  /// This origin's own starter choices, shown alongside [seedNarration].
+  /// Empty falls back to `World.seedChoices`.
+  final List<String> seedChoices;
+
   factory CharacterOrigin.fromJson(Map<String, dynamic> json) {
     return CharacterOrigin(
       id: json['id'] as String,
@@ -33,7 +48,16 @@ class CharacterOrigin {
       baseAttributes: _intMap(json['base_attributes']),
       tagId: json['tag_id'] as String,
       narrativeConnection: json['narrative_connection'] as String? ?? '',
+      seedNarration: json['seed_narration'] as String?,
+      seedChoices: _stringList(json['seed_choices']),
     );
+  }
+
+  static List<String> _stringList(Object? value) {
+    if (value is List) {
+      return value.whereType<String>().toList(growable: false);
+    }
+    return const [];
   }
 
   static Map<String, int> _intMap(Object? value) {

@@ -16,6 +16,9 @@ class InterpolateCopy {
     return text.replaceAllMapped(_tokenPattern, (match) {
       final token = match.group(1)!;
       if (token == 'name' && protagonistName != null) return protagonistName;
+      if (token == 'personalItem' && character.personalItem != null) {
+        return character.personalItem!;
+      }
       if (character.resources.containsKey(token)) {
         return character.resource(token).toString();
       }

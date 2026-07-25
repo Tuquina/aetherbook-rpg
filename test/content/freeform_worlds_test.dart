@@ -65,6 +65,39 @@ void main() {
           expect(world.seedChoices.length, 3);
         });
 
+        test('every origin has its own opening scene, distinct from the '
+            "others (CLAUDE.md: the intro must match how the character "
+            'arrived, not one generic text for every origin)', () {
+          final world = _loadWorld(slug);
+          final seenNarrations = <String>{};
+          for (final origin in world.origins) {
+            expect(origin.seedNarration, isNotNull,
+                reason: '${origin.id} has no seed_narration of its own');
+            expect(origin.seedNarration, isNotEmpty,
+                reason: '${origin.id} has an empty seed_narration');
+            expect(origin.seedChoices.length, 3,
+                reason: '${origin.id} does not offer exactly 3 starter choices');
+            expect(seenNarrations.add(origin.seedNarration!), isTrue,
+                reason: '${origin.id} reuses another origin\'s seed_narration verbatim');
+          }
+        });
+
+        test("every origin's seed narration is substantially longer than a "
+            'couple of throwaway lines', () {
+          final world = _loadWorld(slug);
+          for (final origin in world.origins) {
+            expect(origin.seedNarration!.length, greaterThan(400),
+                reason: '${origin.id}\'s intro reads as too short to be a '
+                    'real opening scene');
+          }
+        });
+
+        test('the personal item, if provided, gets a hook to actually use it', () {
+          final world = _loadWorld(slug);
+          expect(world.personalItemSeedHook, isNotNull);
+          expect(world.personalItemSeedHook, contains('{{personalItem}}'));
+        });
+
         test('system prompt and image style suffix are authored, not left blank', () {
           final world = _loadWorld(slug);
           expect(world.systemPrompt, isNotEmpty);

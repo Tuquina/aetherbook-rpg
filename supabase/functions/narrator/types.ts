@@ -25,6 +25,11 @@ export interface CharacterState {
   attributes: Record<string, number>;
   resources: Record<string, number>;
   flags?: Record<string, boolean>;
+  /** Free-text personal object chosen at chargen (campaign-bible §5.1),
+   * `null`/absent when the player left it blank. Asking for one and never
+   * using it makes the field pointless, so the prompt nudges the narrator
+   * to actually work it into the story when present. */
+  personalItem?: string | null;
 }
 
 export interface WorldContext {

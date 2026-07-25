@@ -34,21 +34,39 @@
       "display_name": "Discípulo sin secta",
       "base_attributes": {"espiritu": 3, "agudeza": 2},
       "tag_id": "sin_maestro",
-      "narrative_connection": "Aprendiste robando técnicas con la vista, sin maestro que te corrigiera. Pasiva: +2 al intentar imitar algo que ya viste hacer una vez."
+      "narrative_connection": "Aprendiste robando técnicas con la vista, sin maestro que te corrigiera. Pasiva: +2 al intentar imitar algo que ya viste hacer una vez.",
+      "seed_narration": "La técnica sale mal, otra vez, y esta vez el fuego le llega al arbusto equivocado.\n\nLo apagás a manotazos —sin gracia, sin ningún estilo marcial digno de mención— mientras un conejo que estaba durmiendo ahí sale disparado, ofendido, y vos te quedás un momento mirando tus propias manos como si te hubieran traicionado. Nadie te enseñó esto. Lo aprendiste mirando de lejos, memorizando gestos de discípulos que ni sabían que los estabas copiando, y el resultado es esto: humo, un conejo indignado, y un movimiento que casi funciona.\n\nCasi. Ese \"casi\" es lo que te mantiene despierto de noche, {{name}}, más que el hambre o el frío del sendero. Porque a veces —no siempre, pero a veces— algo dentro tuyo responde como si hubiera estado esperando toda la vida a que se lo pidieras.\n\nHoy, mientras el humo todavía se disuelve entre los árboles, sentís algo distinto. El qi no fluye como ayer. Fluye como si, por primera vez, alguien del otro lado te estuviera prestando atención.",
+      "seed_choices": [
+        "Repetir la técnica ahora mismo, antes de perder esta sensación",
+        "Sentarte a meditar y entender qué cambió",
+        "Seguir el sendero: algo, en algún lugar de esta montaña, parece estar esperándote"
+      ]
     },
     {
       "id": "heredera_casa_caida",
       "display_name": "Heredero de una casa caída",
       "base_attributes": {"presencia": 3, "cuerpo": 2},
       "tag_id": "sangre_noble",
-      "narrative_connection": "Tu apellido todavía abre puertas, aunque tu familia ya no exista. Pasiva: +2 al invocar tu linaje ante desconocidos."
+      "narrative_connection": "Tu apellido todavía abre puertas, aunque tu familia ya no exista. Pasiva: +2 al invocar tu linaje ante desconocidos.",
+      "seed_narration": "Las ruinas todavía huelen a ceniza, años después, o quizás eso es solo algo que tu cabeza inventa cada vez que volvés.\n\nEl apellido que llevás abrió estas puertas alguna vez —puertas que ahora son marcos vacíos, columnas partidas a la mitad, un jardín que nadie podó desde la masacre— y aun así, cuando cruzás lo que queda del portón principal, un anciano que barre hojas muertas se detiene, te mira, y hace una reverencia que no le pediste.\n\n—Joven amo —dice, y la voz le tiembla un poco. No de miedo. De otra cosa.\n\nVos no heredaste tierras. No heredaste ejércitos, ni tesoros, ni siquiera un techo entero. Heredaste esto: un nombre que todavía pesa en la boca de la gente, {{name}}, y una casa que existe únicamente en la memoria de quienes la vieron caer. Es un peso extraño, mitad honor y mitad condena, y todavía no decidiste cuál de las dos pesa más.\n\nEl anciano sigue esperando que digas algo. Cualquier cosa.",
+      "seed_choices": [
+        "Preguntarle al anciano qué recuerda del día que cayó la casa",
+        "Decirle que no hace falta la reverencia — todavía no sos nadie",
+        "Entrar a explorar lo que queda, antes de que se derrumbe del todo"
+      ]
     },
     {
       "id": "sobreviviente_masacre",
       "display_name": "Sobreviviente de una masacre de secta",
       "base_attributes": {"cuerpo": 3, "espiritu": 2},
       "tag_id": "unico_sobreviviente",
-      "narrative_connection": "Viste morir a todos los que conocías, y sobreviviste sin saber bien cómo. Pasiva: +2 para detectar una emboscada o traición antes de que ocurra."
+      "narrative_connection": "Viste morir a todos los que conocías, y sobreviviste sin saber bien cómo. Pasiva: +2 para detectar una emboscada o traición antes de que ocurra.",
+      "seed_narration": "Contás otra vez, porque no podés evitarlo: sesenta y tres. Ese es el número de personas que dormían en el pabellón esa noche. Vos sos, hasta donde sabés, el único que sigue contando.\n\nEl olor todavía te persigue algunas mañanas —metal y ceniza, una combinación que tu cuerpo aprendió a reconocer antes de que tu mente terminara de entender qué significaba— y aun así seguís caminando, sendero abajo, con una calma que no sentís pero que igual proyectás, porque alguien tiene que.\n\nLo más raro no fue la masacre. Fue lo que pasó después: un archivero de la secta rival se acercó, en medio de las ruinas todavía humeantes, con un pergamino, y te pidió, con toda formalidad, que firmaras la baja administrativa de los muertos. Firmaste. No supiste qué más hacer con las manos, {{name}}.\n\nAhora el sendero se bifurca frente a vos, y por primera vez en semanas sentís algo que no es culpa: un cosquilleo bajo la piel, atento, casi animal. Alguien te está siguiendo. O quizás no. Pero el instinto que te mantuvo con vida esa noche no suele equivocarse.",
+      "seed_choices": [
+        "Girar de golpe y encarar a quien te sigue, antes de que decida acercarse más",
+        "Seguir caminando como si no hubieras notado nada",
+        "Buscar un lugar alto desde donde ver el sendero completo"
+      ]
     }
   ],
 
@@ -73,6 +91,7 @@
       "Sentarte a meditar y sentir el flujo del qi antes de moverte",
       "Seguir el sendero que sube hacia el templo distante",
       "Buscar a la primera persona que veas y preguntar dónde estás"
-    ]
+    ],
+    "personal_item_hook": "En el fondo de tu bolsa de viaje sigue estando {{personalItem}} — lo único que rescataste, sin pensarlo demasiado, antes de dejar todo lo demás atrás."
   }
 }

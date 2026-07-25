@@ -45,6 +45,7 @@ class World {
     required this.startingCharacter,
     required this.seedNarration,
     required this.seedChoices,
+    this.personalItemSeedHook,
     this.aiRuntimeRequired = true,
     this.allowFreeText = true,
     this.catalogDescription,
@@ -155,9 +156,21 @@ class World {
 
   final Character startingCharacter;
 
-  /// Opening narration and choices shown before the first action.
+  /// Opening narration and choices shown before the first action — the
+  /// fallback used when the player's chosen `CharacterOrigin` declares no
+  /// `seedNarration`/`seedChoices` of its own (or for a world/campaign that
+  /// never shows this at all, like a graph-driven one).
   final String seedNarration;
   final List<String> seedChoices;
+
+  /// A short closing paragraph appended to the opening scene only when the
+  /// player actually filled in a personal item at chargen (CLAUDE.md Fase 2:
+  /// asking for one and then never using it makes the field pointless).
+  /// Written generically enough ("seguís llevando encima {{personalItem}}")
+  /// to read naturally regardless of which origin the character picked, so
+  /// one per world is enough — `null`/empty for a world that hasn't
+  /// authored one yet.
+  final String? personalItemSeedHook;
 
   /// Whether this world's curated turns need `NarratorPort` at all
   /// (campaign-bible §9.1/§25.10: "ai_runtime_required"). `false` means every
@@ -214,6 +227,18 @@ class World {
         (o) => o.id == id,
         orElse: () => throw ArgumentError('unknown origin: $id'),
       );
+
+  /// Same lookup as [originById], but degrades to `null` instead of
+  /// throwing — for reading back the chosen origin's own seed content at
+  /// `start()` time, where `character.originId` may be `null` (a world with
+  /// no chargen at all) or, in principle, stale.
+  CharacterOrigin? originByIdOrNull(String? id) {
+    if (id == null) return null;
+    for (final origin in origins) {
+      if (origin.id == id) return origin;
+    }
+    return null;
+  }
 
   Vow vowById(String id) => vows.firstWhere(
         (v) => v.id == id,
@@ -316,6 +341,7 @@ class World {
       ),
       seedNarration: seed['narration'] as String? ?? '',
       seedChoices: _stringList(seed['choices']),
+      personalItemSeedHook: seed['personal_item_hook'] as String?,
       aiRuntimeRequired: json['ai_runtime_required'] as bool? ?? true,
       allowFreeText: json['free_text_actions'] as bool? ?? true,
       catalogDescription: json['catalog_description'] as String?,

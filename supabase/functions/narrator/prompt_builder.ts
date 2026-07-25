@@ -93,6 +93,17 @@ export function buildUserPrompt(request: NarratorRequest): string {
         : ""),
   );
 
+  if (c.personalItem && c.personalItem.trim().length > 0) {
+    parts.push(
+      `El personaje lleva consigo, desde el principio: "${c.personalItem}". ` +
+        `Le pidieron al jugador que lo describiera en la creación del ` +
+        `personaje, así que tiene que importar en algún momento de la ` +
+        `historia — no en cada turno ni forzado, pero buscá una oportunidad ` +
+        `genuina (una escena, un recuerdo, un uso concreto) para que ese ` +
+        `objeto pese en la trama, no que quede como un dato olvidado.`,
+    );
+  }
+
   if (request.memoryDigest && request.memoryDigest.trim().length > 0) {
     parts.push(`Diario de la historia hasta ahora:\n${request.memoryDigest}`);
   }

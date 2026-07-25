@@ -34,21 +34,39 @@
       "display_name": "Mutación accidental",
       "base_attributes": {"fuerza": 3, "agilidad": 2},
       "tag_id": "poder_inestable",
-      "narrative_connection": "Un accidente despertó algo en vos que todavía no controlás del todo. Pasiva: +2 al intentar algo físico que nunca intentaste antes con tu poder."
+      "narrative_connection": "Un accidente despertó algo en vos que todavía no controlás del todo. Pasiva: +2 al intentar algo físico que nunca intentaste antes con tu poder.",
+      "seed_narration": "Las manos todavía te tiemblan. Las mirás un momento, esperando —de forma un poco ridícula, tenés que admitirlo— que dejen de hacerlo solas con solo desearlo. No pasa. Bajo la piel, donde antes no había nada, ahora hay algo que se mueve cuando no debería, que responde antes de que se lo pidas, como un músculo nuevo que nadie te avisó que ibas a tener.\n\nHace media hora eras una persona más, de esas que nadie mira dos veces en la calle, {{name}}. Ibas apurado, seguramente, a algún lado sin importancia, y de golpe el aire se llenó de un zumbido que no era del todo sonido, y ahora tenés esto. Lo que sea que sea esto.\n\nLa ciudad sigue exactamente igual, lo cual es casi insultante: las luces del semáforo cambian sin apuro, alguien discute por teléfono en la esquina como si el mundo no acabara de partirse en dos para vos, un colectivo frena mal y toca bocina. Nadie sabe lo que acaba de pasar. Nadie tiene por qué saberlo todavía, y una parte de vos —chiquita, mezquina, pero real— agradece eso.\n\nLo que hagas en los próximos minutos con esto, sea lo que sea, va a decir más sobre quién sos que cualquier otra cosa que hayas hecho hasta ahora.",
+      "seed_choices": [
+        "Probar hasta dónde llega esto, en privado, antes de que alguien te vea",
+        "Buscar a alguien de confianza y contarle lo que pasó",
+        "Salir a la calle a ver si podés ayudar a alguien ahora mismo"
+      ]
     },
     {
       "id": "legado_familiar_de_heroes",
       "display_name": "Legado familiar de héroes",
       "base_attributes": {"voluntad": 3, "intelecto": 2},
       "tag_id": "apellido_heroico",
-      "narrative_connection": "Tu familia lleva generaciones bajo una máscara distinta cada vez. Pasiva: +2 al usar equipo o contactos heredados de esa tradición."
+      "narrative_connection": "Tu familia lleva generaciones bajo una máscara distinta cada vez. Pasiva: +2 al usar equipo o contactos heredados de esa tradición.",
+      "seed_narration": "—Otra vez no —decís, en voz alta, aunque no hay nadie más en el sótano para escucharte.\n\nEl traje está exactamente donde tu tía lo dejó: doblado con una precisión casi militar sobre el baúl de tu abuelo, que a su vez heredó el gesto de doblar así la ropa de su propio padre, que llevaba una máscara distinta pero, según cuentan, la misma expresión de \"esto no lo elegí, pero tampoco lo voy a dejar pasar\". Tu familia lleva generaciones bajo un nombre falso distinto cada vez. Vos sos, técnicamente, el siguiente.\n\nEl emblema cosido en el pecho —una forma que todavía no vas a describir, porque ni vos sabés bien qué representa— pesa más de lo que debería para ser solo tela. Alguien golpea la puerta arriba, {{name}}: es tu tía, obviamente, con esa voz que usa cuando ya sabe la respuesta antes de preguntar.\n\n—¿Lo vas a usar o no?\n\nNo es una pregunta. Es, como casi todo en esta familia, una obligación disfrazada de opción.",
+      "seed_choices": [
+        "Ponerte el traje y bajar a la ciudad esta misma noche",
+        "Preguntarle a tu tía la verdad completa sobre lo que le pasó al último que lo usó",
+        "Dejarlo doblado donde estaba — todavía no, todavía no estás seguro"
+      ]
     },
     {
       "id": "experimento_escapado",
       "display_name": "Experimento escapado",
       "base_attributes": {"intelecto": 3, "agilidad": 2},
       "tag_id": "fugitivo_de_laboratorio",
-      "narrative_connection": "Escapaste de un laboratorio que todavía te está buscando. Pasiva: +2 para anticipar cómo piensa una organización que te persigue."
+      "narrative_connection": "Escapaste de un laboratorio que todavía te está buscando. Pasiva: +2 para anticipar cómo piensa una organización que te persigue.",
+      "seed_narration": "La alarma dejó de sonar hace tres calles, pero la seguís escuchando igual, metida en algún lugar del oído que ya no distingue bien entre lo que pasa y lo que pasó.\n\nCorrés descalzo sobre asfalto mojado, con una bata que no cubre lo que debería y un número tatuado en la nuca que todavía no tuviste tiempo de mirar en un espejo. Detrás, en algún punto que preferís no calcular con exactitud, el laboratorio sigue ahí, con las luces de emergencia pintando todo de un rojo antipático, y alguien —una voz que conocés demasiado bien— está dando órdenes para encontrarte.\n\nNo sabés hace cuánto estuviste adentro. Los días se mezclaban con las pruebas, y las pruebas se mezclaban con el dolor, hasta que dejaron de ser cosas distintas, {{name}}. Lo que sí sabés, con una certeza fría que te sorprende a vos mismo, es esto: no vas a volver. Pase lo que pase después.\n\nUna patrulla dobla la esquina dos cuadras más adelante. Vos ya estás calculando el ángulo para no ser visto antes de que tu cabeza termine de decidir que eso es lo que estás haciendo.",
+      "seed_choices": [
+        "Meterte en el callejón más cercano y esperar a que la patrulla pase",
+        "Arriesgarte a pedir ayuda a la primera persona despierta que encuentres",
+        "Probar, ahí mismo, qué tan lejos llega lo que te hicieron"
+      ]
     }
   ],
 
@@ -73,6 +91,7 @@
       "Probar hasta dónde llega tu poder, en privado",
       "Buscar a alguien de confianza y contarle lo que pasó",
       "Salir a la calle a ver si podés ayudar a alguien ahora mismo"
-    ]
+    ],
+    "personal_item_hook": "Contra todo pronóstico, seguís teniendo con vos {{personalItem}} — lo único de tu vida de antes que sobrevivió a esta noche entera."
   }
 }

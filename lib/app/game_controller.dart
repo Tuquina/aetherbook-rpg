@@ -323,14 +323,34 @@ class GameController extends ChangeNotifier {
         _choices = const [];
         _tone = world.tone;
       } else {
-        // Interpolated (not raw world.seedNarration): a freeform world's
-        // opening scene should be able to greet the character the player
-        // just built in chargen — e.g. a genre's "{{name}}, contame quién
-        // sos" framing (CLAUDE.md Fase 2) — the same InterpolateCopy already
-        // used for curated/hybrid nodes below.
-        _narration = _interpolate(world.seedNarration,
+        // A freeform world's opening scene must actually match *how* the
+        // character got here — the origin picked in chargen (CLAUDE.md
+        // Fase 2: an isekai character who arrived mid-combat can't open on
+        // the same generic "you wake up somewhere new" text as one summoned
+        // by a botched ritual). The origin's own seed content wins when
+        // authored; a world/origin with none yet falls back to
+        // `world.seedNarration`/`seedChoices` exactly as before.
+        final origin = world.originByIdOrNull(session.character.originId);
+        final baseNarration = (origin?.seedNarration?.isNotEmpty ?? false)
+            ? origin!.seedNarration!
+            : world.seedNarration;
+        final baseChoices =
+            (origin?.seedChoices.isNotEmpty ?? false) ? origin!.seedChoices : world.seedChoices;
+
+        // The personal item asked for at chargen is otherwise pure dead
+        // data — collected, persisted, never surfaced. Appending this hook
+        // (only when the player actually filled one in) is what makes the
+        // opening scene actually put it in play, on top of also being sent
+        // to the narrator every turn (see NarratorRequest.character).
+        final personalItem = session.character.personalItem?.trim() ?? '';
+        final hook = world.personalItemSeedHook;
+        final fullNarration = personalItem.isNotEmpty && (hook?.isNotEmpty ?? false)
+            ? '$baseNarration\n\n$hook'
+            : baseNarration;
+
+        _narration = _interpolate(fullNarration,
             character: session.character, protagonistName: session.character.name);
-        _choices = world.seedChoices;
+        _choices = baseChoices;
         _tone = world.tone;
       }
       _lastResolution = null;

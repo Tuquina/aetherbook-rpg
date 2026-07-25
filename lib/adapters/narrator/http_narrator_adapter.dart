@@ -108,6 +108,7 @@ class HttpNarratorAdapter implements NarratorPort {
         'attributes': character.attributes,
         'resources': character.resources,
         'flags': character.flags,
+        'personalItem': character.personalItem,
       };
 
   Map<String, Object?>? _resolutionJson(ActionResolution? resolution) {

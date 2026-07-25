@@ -1,12 +1,15 @@
 import 'package:aetherbook/adapters/narrator/fake_narrator_adapter.dart';
 import 'package:aetherbook/app/game_controller.dart';
 import 'package:aetherbook/core/engine/action_resolution.dart';
+import 'package:aetherbook/core/engine/create_character.dart';
 import 'package:aetherbook/core/engine/dice.dart';
 import 'package:aetherbook/core/narrative/extended_conflict.dart';
 import 'package:aetherbook/core/narrative/story_graph.dart';
 import 'package:aetherbook/core/narrative/story_node.dart';
 import 'package:aetherbook/core/state/character.dart';
 import 'package:aetherbook/core/state/game_session.dart';
+import 'package:aetherbook/core/world/character_origin.dart';
+import 'package:aetherbook/core/world/vow.dart';
 import 'package:aetherbook/core/world/world.dart';
 import 'package:aetherbook/ports/game_state_repository_port.dart';
 import 'package:aetherbook/ports/narrator_port.dart';
@@ -412,6 +415,192 @@ void main() {
         await controller.start('cyberpunk');
 
         expect(controller.narration, 'Discípulo: la ciudad no duerme.');
+      });
+
+      test("a freeform world's opening scene uses the chosen origin's own "
+          'seed content, not the generic world-level one', () async {
+        const worldWithOrigins = World(
+          slug: 'cyberpunk',
+          name: 'Cyberpunk',
+          theme: 'cyberpunk',
+          tone: 'oscuro',
+          systemPrompt: '',
+          imageStyleSuffix: '',
+          defaultDifficulty: 12,
+          criticalMargin: 5,
+          primaryAttribute: 'tecnica',
+          startingCharacter: _character,
+          origins: [
+            CharacterOrigin(
+              id: 'combate',
+              displayName: 'Transportado en combate',
+              baseAttributes: {'reflejos': 3},
+              tagId: 'reflejos_de_otro_mundo',
+              seedNarration: '{{name}} esquiva el primer golpe por instinto.',
+              seedChoices: ['Pelear', 'Huir', 'Gritar'],
+            ),
+            CharacterOrigin(
+              id: 'error',
+              displayName: 'Convocado por error',
+              baseAttributes: {'ingenio': 3},
+              tagId: 'convocado_sin_querer',
+            ),
+          ],
+          vows: [Vow(id: 'v1', text: 'Un juramento cualquiera')],
+          seedNarration: 'Texto genérico del mundo, no debería aparecer acá.',
+          seedChoices: ['Genérica 1', 'Genérica 2', 'Genérica 3'],
+        );
+        final controller = GameController(
+          worldRepository: const _FakeWorldRepository(worldWithOrigins),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          dice: const FixedDice(10),
+        );
+
+        await controller.start(
+          'cyberpunk',
+          chargenInput: const CreateCharacterInput(
+            name: 'Vex',
+            originId: 'combate',
+            vowId: 'v1',
+          ),
+        );
+
+        expect(controller.error, isNull);
+        expect(controller.narration, 'Vex esquiva el primer golpe por instinto.');
+        expect(controller.choices, ['Pelear', 'Huir', 'Gritar']);
+      });
+
+      test("an origin with no seed content of its own falls back to the "
+          "world's generic seed narration/choices", () async {
+        const worldWithOrigins = World(
+          slug: 'cyberpunk',
+          name: 'Cyberpunk',
+          theme: 'cyberpunk',
+          tone: 'oscuro',
+          systemPrompt: '',
+          imageStyleSuffix: '',
+          defaultDifficulty: 12,
+          criticalMargin: 5,
+          primaryAttribute: 'tecnica',
+          startingCharacter: _character,
+          origins: [
+            CharacterOrigin(
+              id: 'error',
+              displayName: 'Convocado por error',
+              baseAttributes: {'ingenio': 3},
+              tagId: 'convocado_sin_querer',
+            ),
+          ],
+          vows: [Vow(id: 'v1', text: 'Un juramento cualquiera')],
+          seedNarration: '{{name}}, texto genérico del mundo.',
+          seedChoices: ['Genérica 1', 'Genérica 2', 'Genérica 3'],
+        );
+        final controller = GameController(
+          worldRepository: const _FakeWorldRepository(worldWithOrigins),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          dice: const FixedDice(10),
+        );
+
+        await controller.start(
+          'cyberpunk',
+          chargenInput: const CreateCharacterInput(
+            name: 'Vex',
+            originId: 'error',
+            vowId: 'v1',
+          ),
+        );
+
+        expect(controller.narration, 'Vex, texto genérico del mundo.');
+        expect(controller.choices, ['Genérica 1', 'Genérica 2', 'Genérica 3']);
+      });
+
+      test('the personal item, when the player filled one in, gets appended '
+          'as a hook so it actually shows up in the story', () async {
+        const worldWithHook = World(
+          slug: 'cyberpunk',
+          name: 'Cyberpunk',
+          theme: 'cyberpunk',
+          tone: 'oscuro',
+          systemPrompt: '',
+          imageStyleSuffix: '',
+          defaultDifficulty: 12,
+          criticalMargin: 5,
+          primaryAttribute: 'tecnica',
+          startingCharacter: _character,
+          origins: [
+            CharacterOrigin(
+              id: 'x',
+              displayName: 'Origen de prueba',
+              baseAttributes: {'tecnica': 3},
+              tagId: 'tag_x',
+            ),
+          ],
+          vows: [Vow(id: 'x', text: 'Juramento de prueba')],
+          seedNarration: 'Apertura genérica.',
+          seedChoices: ['A', 'B', 'C'],
+          personalItemSeedHook: 'Seguís llevando {{personalItem}} con vos.',
+        );
+        final controller = GameController(
+          worldRepository: const _FakeWorldRepository(worldWithHook),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          dice: const FixedDice(10),
+        );
+
+        await controller.start(
+          'cyberpunk',
+          chargenInput: const CreateCharacterInput(
+            name: 'Vex',
+            originId: 'x', // no origins declared -> originByIdOrNull is null
+            vowId: 'x',
+            personalItem: 'una foto arrugada',
+          ),
+        );
+
+        expect(controller.narration,
+            'Apertura genérica.\n\nSeguís llevando una foto arrugada con vos.');
+      });
+
+      test('no personal item means no hook paragraph gets appended', () async {
+        const worldWithHook = World(
+          slug: 'cyberpunk',
+          name: 'Cyberpunk',
+          theme: 'cyberpunk',
+          tone: 'oscuro',
+          systemPrompt: '',
+          imageStyleSuffix: '',
+          defaultDifficulty: 12,
+          criticalMargin: 5,
+          primaryAttribute: 'tecnica',
+          startingCharacter: _character,
+          origins: [
+            CharacterOrigin(
+              id: 'x',
+              displayName: 'Origen de prueba',
+              baseAttributes: {'tecnica': 3},
+              tagId: 'tag_x',
+            ),
+          ],
+          vows: [Vow(id: 'x', text: 'Juramento de prueba')],
+          seedNarration: 'Apertura genérica.',
+          seedChoices: ['A', 'B', 'C'],
+          personalItemSeedHook: 'Seguís llevando {{personalItem}} con vos.',
+        );
+        final controller = GameController(
+          worldRepository: const _FakeWorldRepository(worldWithHook),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          dice: const FixedDice(10),
+        );
+
+        await controller.start(
+          'cyberpunk',
+          chargenInput: const CreateCharacterInput(
+            name: 'Vex',
+            originId: 'x',
+            vowId: 'x',
+          ),
+        );
+
+        expect(controller.narration, 'Apertura genérica.');
       });
 
       test('listCreatedStories delegates to persistence.listActiveSessions', () async {

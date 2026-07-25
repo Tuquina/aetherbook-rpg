@@ -34,21 +34,39 @@
       "display_name": "Convocado por error",
       "base_attributes": {"ingenio": 3, "destreza": 2},
       "tag_id": "convocado_sin_querer",
-      "narrative_connection": "Un ritual que salió mal te arrastró hasta acá — nadie esperaba que aparecieras justo vos. Pasiva: +2 al deducir cómo funciona algo mágico que nunca viste antes."
+      "narrative_connection": "Un ritual que salió mal te arrastró hasta acá — nadie esperaba que aparecieras justo vos. Pasiva: +2 al deducir cómo funciona algo mágico que nunca viste antes.",
+      "seed_narration": "El círculo brilla mal. Eso lo notás vos antes que ellos — un parpadeo verde donde debería ser dorado, un chisporroteo seco, como si el hechizo tosiera — y para cuando los seis encapuchados terminan de cantar la última sílaba, ya es tarde para que sea otra persona la que aparezca de rodillas sobre las runas.\n\nSilencio. Después, alguien deja caer un pergamino.\n\n—Se suponía... —empieza uno, y no termina la frase, porque no hace falta. Todos están mirando la misma cosa: vos, con la ropa de tu mundo, sin espada, sin armadura, sin ninguna de las trece profecías que llevaban meses memorizando. Uno de ellos, el más joven, todavía sostiene una vela con las manos temblando, como si soltarla fuera a empeorar las cosas.\n\nEl aire acá adentro huele a tiza quemada y a algo dulzón que no sabés nombrar, {{name}}. Hace un minuto estabas en otra parte haciendo algo completamente distinto — eso ya no importa, porque el círculo se cerró detrás tuyo y nadie, ni siquiera el mago de barba más larga que parece estar al mando, tiene ni idea de cómo se abre de nuevo.\n\nUno de ellos empieza a discutir en voz baja con otro sobre de quién fue la culpa. Nadie te mira a los ojos todavía. Va a tener que pasar, tarde o temprano.",
+      "seed_choices": [
+        "Preguntar, en voz alta, qué se suponía que iba a pasar acá",
+        "Aprovechar la confusión y salir del círculo antes de que decidan qué hacer con vos",
+        "Fijarte qué llevás encima — algo de esto tiene que servir para algo"
+      ]
     },
     {
       "id": "noble_caido_reencarnado",
       "display_name": "Noble caído reencarnado",
       "base_attributes": {"carisma": 3, "destreza": 2},
       "tag_id": "memoria_de_otra_vida",
-      "narrative_connection": "Recordás fragmentos borrosos de una vida anterior en este mismo mundo, de la que nadie más sabe nada. Pasiva: +2 al presentarte ante la nobleza o una corte."
+      "narrative_connection": "Recordás fragmentos borrosos de una vida anterior en este mismo mundo, de la que nadie más sabe nada. Pasiva: +2 al presentarte ante la nobleza o una corte.",
+      "seed_narration": "Te despertás con un nombre en la boca que no es el tuyo — Ashariel, o algo parecido, una sílaba de más que se te resbaló de un sueño que ya se está deshaciendo — y con la sensación exacta, física, de haber tenido una mano distinta hace apenas un segundo.\n\nEl techo es de paja. Eso ya es raro. Más raro todavía: sabés, sin haberlo aprendido nunca, cuántas vigas tiene y en qué año se reforzó la de la esquina — un dato inútil y perfecto, como los que aparecen a veces sin avisar y después no se van.\n\nAlguien golpea la puerta con los nudillos, dos veces, respetuoso. —¿Mi señor? —pregunta una voz que no reconocés, y el título te cae encima con un peso que no debería tener, {{name}}, porque vos no sos ningún señor. O no lo sos todavía. O lo fuiste, en otra vida, en esta misma tierra, y algo de esa vida decidió quedarse pegado a la tuya como una mancha que no sale.\n\nAfuera, alguien más discute sobre impuestos con un tono que sugiere que esto lleva discutiéndose hace semanas. Nadie parece sorprendido de que sigas ahí. Eso, más que cualquier otra cosa, es lo que más miedo te da.",
+      "seed_choices": [
+        "Contestar a quien golpea la puerta como si supieras exactamente quién sos",
+        "Fingir que seguís durmiendo, para ganar un minuto y pensar",
+        "Buscar un espejo, algo, cualquier cosa que te diga qué cara tenés ahora"
+      ]
     },
     {
       "id": "transportado_en_combate",
       "display_name": "Transportado en combate",
       "base_attributes": {"fuerza": 3, "destreza": 2},
       "tag_id": "reflejos_de_otro_mundo",
-      "narrative_connection": "Un instante estabas en tu mundo, al siguiente en medio de una pelea que no elegiste. Pasiva: +2 al reaccionar ante un peligro físico repentino."
+      "narrative_connection": "Un instante estabas en tu mundo, al siguiente en medio de una pelea que no elegiste. Pasiva: +2 al reaccionar ante un peligro físico repentino.",
+      "seed_narration": "El primer golpe casi te mata antes de que termines de entender que hay un golpe.\n\nLo esquivás de pura suerte —una torsión del cuerpo que tu cerebro ni alcanzó a ordenar— y el hacha pasa tan cerca que sentís el viento que corta, frío contra la mejilla, un segundo antes de escuchar el grito de quien la sostenía. Detrás tuyo, alguien te empuja el hombro y grita algo en un idioma que no deberías entender y que, sin embargo, entendés perfecto: \"¡A la izquierda, ahora!\"\n\nHace un minuto —literal, sesenta segundos, quizás menos— estabas en otro lugar haciendo algo que ya ni siquiera podés recordar del todo, {{name}}. Ahora hay barro, y sangre que no es tuya todavía, y un ejército de algo que no termina de ser humano avanzando entre el humo con una disciplina espeluznante.\n\nNadie te va a explicar nada ahora. No hay tiempo. Lo único que hay es el siguiente segundo, y el que viene después de ese, y la sensación absurda —porque no debería tener sentido, pero lo tiene— de que tu cuerpo ya sabe pelear mejor de lo que vos sabías que sabía.",
+      "seed_choices": [
+        "Agarrar el arma más cercana en el suelo y sumarte a la formación",
+        "Retroceder hacia las líneas propias antes de que te maten sin siquiera entender por qué peleás",
+        "Gritarle a quien te salvó la vida que te explique qué está pasando"
+      ]
     }
   ],
 
@@ -73,6 +91,7 @@
       "Buscar a la primera persona que veas y pedir explicaciones",
       "Quedarte quieto y observar el lugar antes de moverte",
       "Revisar qué llevás encima, por si algo cruzó con vos"
-    ]
+    ],
+    "personal_item_hook": "Contra toda lógica seguís teniendo encima {{personalItem}} — lo único que cruzó con vos de tu mundo, y nadie te sabe explicar por qué."
   }
 }

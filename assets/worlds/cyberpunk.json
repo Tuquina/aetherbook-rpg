@@ -34,21 +34,39 @@
       "display_name": "Netrunner independiente",
       "base_attributes": {"tecnica": 3, "astucia": 2},
       "tag_id": "acceso_a_la_red",
-      "narrative_connection": "Vivís medio conectado a la red, y eso te dejó marcas que no se ven a simple vista. Pasiva: +2 al intentar hackear o rastrear algo digital."
+      "narrative_connection": "Vivís medio conectado a la red, y eso te dejó marcas que no se ven a simple vista. Pasiva: +2 al intentar hackear o rastrear algo digital.",
+      "seed_narration": "El agua fría te empapa la nuca antes de que termines de decidir si vale la pena correr o no.\n\nA través de la visera rayada de tus lentes tácticos, los carteles holográficos de ramen barato chisporrotean con un zumbido eléctrico molesto, proyectando sombras rojas sobre los contenedores volcados del callejón. Escuchás un chasquido metálico. No viene de la calle: viene del puerto de interfaz que tenés detrás de la oreja izquierda, donde el chip que acabás de extraer —robado, sí, pero de alguien que se lo merecía menos que vos— acaba de sobrecalentarse tres grados de más.\n\nAlguien quebró tu frecuencia privada, {{name}}. Una voz sintetizada, procesada por un hardware barato que chirría en las notas altas, exige una clave de acceso que nadie te dio, en un tono que suena demasiado seguro de que la vas a tipear sin pensar.\n\nNo la vas a tipear sin pensar. Pero tampoco tenés tanto tiempo como te gustaría.",
+      "seed_choices": [
+        "Forzar la extracción del chip antes de que el puerto se sobrecaliente del todo",
+        "Usar tu terminal para rastrear de dónde viene esa voz",
+        "Cortar la conexión de un tirón y perderte entre los callejones"
+      ]
     },
     {
       "id": "ex_corpo_fugado",
       "display_name": "Ex-corpo fugado",
       "base_attributes": {"astucia": 3, "voluntad": 2},
       "tag_id": "fugitivo_corporativo",
-      "narrative_connection": "Trabajaste para una corporación hasta que supiste algo que no debías. Pasiva: +2 al anticipar cómo actúa una corporación o su seguridad."
+      "narrative_connection": "Trabajaste para una corporación hasta que supiste algo que no debías. Pasiva: +2 al anticipar cómo actúa una corporación o su seguridad.",
+      "seed_narration": "Contás las cámaras de la cuadra por costumbre, no porque hoy importen más que ayer. Doce. La misma cantidad de siempre. Eso no te tranquiliza en absoluto.\n\nTrabajaste dos años en la torre que ahora ves reflejada, minúscula, en el charco frente a tus zapatillas gastadas —dos años aprendiendo a sonreír en las reuniones correctas, a firmar sin leer, hasta el día en que sí leíste, y lo que leíste no se puede desleer. Ese día renunciaste sin avisar. En este negocio, a eso le dicen fuga.\n\nLa corpo no manda gente detrás tuyo con armas visibles, {{name}}. Eso sería torpe, y ellos no son torpes. Mandan gente que se sienta cerca en el bar, que pregunta cosas casuales, que después desaparece sin pagar la cuenta. Ya perdiste la cuenta de cuántas caras casuales notaste esta semana.\n\nTu teléfono vibra. Es un número que no guardaste con ningún nombre, porque sabías, desde el primer mensaje, que algún día iba a escribir esto: \"Sabemos lo que tenés. Hablemos.\"",
+      "seed_choices": [
+        "Contestar el mensaje, aunque sea solo para medir qué tan desesperados están",
+        "Apagar el teléfono y desaparecer de la cuadra ahora mismo",
+        "Ir a buscar a alguien de tu antigua vida que todavía te deba un favor"
+      ]
     },
     {
       "id": "fixer_callejero",
       "display_name": "Fixer callejero",
       "base_attributes": {"voluntad": 3, "reflejos": 2},
       "tag_id": "contactos_en_la_calle",
-      "narrative_connection": "Conocés a todo el mundo que importa en la calle, y a nadie del todo. Pasiva: +2 al conseguir información o contactos por canales no oficiales."
+      "narrative_connection": "Conocés a todo el mundo que importa en la calle, y a nadie del todo. Pasiva: +2 al conseguir información o contactos por canales no oficiales.",
+      "seed_narration": "El contacto llega veinte minutos tarde, lo cual, en tu experiencia, casi nunca es buena señal.\n\nEsperás apoyado contra la pared húmeda de un callejón que conocés mejor que tu propio departamento —cada grieta, cada cámara rota que nunca arreglaron, cada rincón donde un cuerpo podría quedarse quieto sin que nadie lo note hasta la mañana— mientras la lluvia ácida deja un sabor metálico en el aire que ya ni te molesta sentir en la lengua.\n\nConocés a todo el que hay que conocer en esta parte de la ciudad, {{name}}, lo cual suena a un montón hasta que te das cuenta de que \"conocer\" acá significa, sobre todo, saber a quién no meterle presión y a quién sí. El trabajo de esta noche debería ser simple: entregar un paquete, cobrar, olvidarte. Pero el contacto llega tarde, y tu instinto —el mismo que te mantuvo vivo cinco años en este negocio— te está diciendo, con bastante insistencia, que algo en esta entrega no cierra.\n\nUn auto dobla la esquina despacio. Demasiado despacio.",
+      "seed_choices": [
+        "Esconder el paquete antes de que el auto llegue hasta vos",
+        "Plantarte donde estás y ver qué hace el auto",
+        "Llamar a un contacto de confianza para avisar que esto se puede complicar"
+      ]
     }
   ],
 
@@ -73,6 +91,7 @@
       "Ir directo a tu contacto habitual a ver qué se cocina",
       "Quedarte en las sombras y escuchar antes de moverte",
       "Revisar tus implantes por si alguien los tocó mientras dormías"
-    ]
+    ],
+    "personal_item_hook": "En medio de tanto neón e implante seguís cargando con {{personalItem}} — lo único analógico que te queda, y por eso mismo lo único que nadie te puede hackear."
   }
 }
