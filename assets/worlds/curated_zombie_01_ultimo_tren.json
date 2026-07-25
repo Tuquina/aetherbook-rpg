@@ -177,7 +177,7 @@
 
       "p0_postura": {
         "type": "fixed_anchor",
-        "narration": "Abril se despierta con el segundo clic de la radio y se frota un ojo con el dorso de la mano, todavía manchada de estaño de anoche.\n\n—¿Otra vez el generador?\n\n—Ya volvió.\n\nElla mira la mesa —la llave, la taza, el objeto que él nunca explica— y después lo mira a él, con esa atención de mecánica que revisa un motor antes de preguntar qué falla.\n\n—Alguien mencionó el C-17 ayer. En la fila de la cena. Vos cambiaste de tema tan rápido que hasta Saúl se dio cuenta.\n\nTodavía no es una acusación. Es una puerta que Abril deja abierta, esperando a ver si él la cruza solo.",
+        "narration": "Abril se despierta con el segundo clic de la radio y se frota un ojo con el dorso de la mano, todavía manchada de estaño de anoche.\n\n—¿Otra vez el generador?\n\n—Ya volvió.\n\nElla mira la mesa —la llave, la taza, el objeto que él nunca explica— y después lo mira a él, con esa atención de mecánica que revisa un motor antes de preguntar qué falla.\n\n—Alguien mencionó el C-17 ayer. En la fila de la cena. Tú cambiaste de tema tan rápido que hasta Saúl se dio cuenta.\n\nTodavía no es una acusación. Es una puerta que Abril deja abierta, esperando a ver si él la cruza solo.",
         "choices": [
           {
             "label": "\"El sistema falló.\"",
@@ -661,9 +661,9 @@
             ]
           },
           {
-            "label": "\"Despertá a Lucía. Que nadie más oiga todavía.\"",
+            "label": "\"Despierta a Lucía. Que nadie más oiga todavía.\"",
             "target": "c1_n01_consejo",
-            "result_text": "—Despertá a Lucía —dice Damián—. Que nadie más oiga esto todavía.\n\nAbril duda, pero va a buscarla. La repetición sigue sonando, ahora para menos oídos.\n\nDamián mira la llave maestra sobre la mesa.\n\nAfuera, el frío mantiene quietos a los muertos. Dentro, la esperanza despierta a todos.",
+            "result_text": "—Despierta a Lucía —dice Damián—. Que nadie más oiga esto todavía.\n\nAbril duda, pero va a buscarla. La repetición sigue sonando, ahora para menos oídos.\n\nDamián mira la llave maestra sobre la mesa.\n\nAfuera, el frío mantiene quietos a los muertos. Dentro, la esperanza despierta a todos.",
             "effects": [
               {"type": "flag", "key": "aurora_message_heard", "value": true},
               {"type": "flag", "key": "proof_aurora_real", "value": true},
@@ -675,7 +675,7 @@
 
       "c1_n01_consejo": {
         "type": "fixed_anchor",
-        "narration": "El comedor de La Cámara fue, alguna vez, una sala de despiece. Todavía conserva los ganchos en el techo, oxidados en una hilera perfecta, y un desagüe central en el piso que nadie logró destapar y que todos aprendieron a rodear sin mirar.\n\nSesenta y tres personas no caben sentadas. Se agrupan entre mesas, puertas y estantes vacíos, respirando el mismo aire caliente. Lucía sostiene la radio en alto sobre una caja de leche para que todos alcancen a escuchar la tercera repetición del mensaje.\n\nCuando la voz dice veinte, nadie murmura. El silencio dura justo lo que tarda la gente en hacer la cuenta. Después empieza el ruido.\n\nUna mujer pregunta si los niños cuentan como pasajeros aparte. Un hombre quiere saber si Faro Sur tiene médicos de verdad o solo la palabra pegada a un cartel. Ramiro pregunta cuántos soldados viajan en el tren, como si la respuesta cambiara algo. Saúl tose dentro de un pañuelo que ya no es blanco y nadie le pregunta por qué.\n\nDamián extiende el mapa ferroviario sobre la mesa más cercana, alisando los dobleces con el canto de la mano. Marca la Estación Central, la torre, el puente de agujas, el Túnel 17 — cuatro puntos que trece meses de silencio no le dejaron olvidar.\n\n—Nada de esto funciona sin energía —dice—. Si queremos que Aurora frene, hay que encender la señal.\n\n—Vos podés —responde Abril, desde algún lugar detrás de las cabezas.\n\nNo suena a pregunta. Sesenta y dos personas giran hacia él al mismo tiempo, y por un segundo el comedor entero respira distinto.",
+        "narration": "El comedor de La Cámara fue, alguna vez, una sala de despiece. Todavía conserva los ganchos en el techo, oxidados en una hilera perfecta, y un desagüe central en el piso que nadie logró destapar y que todos aprendieron a rodear sin mirar.\n\nSesenta y tres personas no caben sentadas. Se agrupan entre mesas, puertas y estantes vacíos, respirando el mismo aire caliente. Lucía sostiene la radio en alto sobre una caja de leche para que todos alcancen a escuchar la tercera repetición del mensaje.\n\nCuando la voz dice veinte, nadie murmura. El silencio dura justo lo que tarda la gente en hacer la cuenta. Después empieza el ruido.\n\nUna mujer pregunta si los niños cuentan como pasajeros aparte. Un hombre quiere saber si Faro Sur tiene médicos de verdad o solo la palabra pegada a un cartel. Ramiro pregunta cuántos soldados viajan en el tren, como si la respuesta cambiara algo. Saúl tose dentro de un pañuelo que ya no es blanco y nadie le pregunta por qué.\n\nDamián extiende el mapa ferroviario sobre la mesa más cercana, alisando los dobleces con el canto de la mano. Marca la Estación Central, la torre, el puente de agujas, el Túnel 17 — cuatro puntos que trece meses de silencio no le dejaron olvidar.\n\n—Nada de esto funciona sin energía —dice—. Si queremos que Aurora frene, hay que encender la señal.\n\n—Tú puedes —responde Abril, desde algún lugar detrás de las cabezas.\n\nNo suena a pregunta. Sesenta y dos personas giran hacia él al mismo tiempo, y por un segundo el comedor entero respira distinto.",
         "choices": [
           {
             "label": "Decir ahora que son veinte",
@@ -838,7 +838,7 @@
             "label": "Abril",
             "target": "c1_n02b_segundo",
             "gate": {"type": "flag", "key": "team_has_abril", "equals": false},
-            "result_text": "Abril no pregunta si puede ir. Deja la ballesta y el bolso sobre la mesa.\n\n—Vos me enseñaste el tablero. Saúl me enseñó los relés. Si el problema es la señal, no soy equipaje.",
+            "result_text": "Abril no pregunta si puede ir. Deja la ballesta y el bolso sobre la mesa.\n\n—Tú me enseñaste el tablero. Saúl me enseñó los relés. Si el problema es la señal, no soy equipaje.",
             "effects": [
               {"type": "flag", "key": "team_has_abril", "value": true},
               {"type": "relationship", "key": "abril", "value": 1}
@@ -865,7 +865,7 @@
             "label": "Saúl",
             "target": "c1_n02b_segundo",
             "gate": {"type": "flag", "key": "team_has_saul", "equals": false},
-            "result_text": "Lucía abre la boca para negarse. Saúl levanta un inhalador.\n\n—Todavía sé qué extremo de una llave apunta al problema.\n\n—Y yo sé cuánto oxígeno tenés —dice ella.\n\n—Entonces sabés que no conviene desperdiciarlo sentado.",
+            "result_text": "Lucía abre la boca para negarse. Saúl levanta un inhalador.\n\n—Todavía sé qué extremo de una llave apunta al problema.\n\n—Y yo sé cuánto oxígeno tienes —dice ella.\n\n—Entonces sabes que no conviene desperdiciarlo sentado.",
             "effects": [
               {"type": "flag", "key": "team_has_saul", "value": true},
               {"type": "relationship", "key": "saul", "value": 1}
@@ -882,7 +882,7 @@
             "label": "Abril",
             "target": "c1_n03_inventario",
             "gate": {"type": "flag", "key": "team_has_abril", "equals": false},
-            "result_text": "Abril no pregunta si puede ir. Deja la ballesta y el bolso sobre la mesa.\n\n—Vos me enseñaste el tablero. Saúl me enseñó los relés. Si el problema es la señal, no soy equipaje.",
+            "result_text": "Abril no pregunta si puede ir. Deja la ballesta y el bolso sobre la mesa.\n\n—Tú me enseñaste el tablero. Saúl me enseñó los relés. Si el problema es la señal, no soy equipaje.",
             "effects": [
               {"type": "flag", "key": "team_has_abril", "value": true},
               {"type": "relationship", "key": "abril", "value": 1}
@@ -909,7 +909,7 @@
             "label": "Saúl",
             "target": "c1_n03_inventario",
             "gate": {"type": "flag", "key": "team_has_saul", "equals": false},
-            "result_text": "Lucía abre la boca para negarse. Saúl levanta un inhalador.\n\n—Todavía sé qué extremo de una llave apunta al problema.\n\n—Y yo sé cuánto oxígeno tenés —dice ella.\n\n—Entonces sabés que no conviene desperdiciarlo sentado.",
+            "result_text": "Lucía abre la boca para negarse. Saúl levanta un inhalador.\n\n—Todavía sé qué extremo de una llave apunta al problema.\n\n—Y yo sé cuánto oxígeno tienes —dice ella.\n\n—Entonces sabes que no conviene desperdiciarlo sentado.",
             "effects": [
               {"type": "flag", "key": "team_has_saul", "value": true},
               {"type": "relationship", "key": "saul", "value": 1}
@@ -1587,7 +1587,7 @@
             "label": "Matarlo",
             "target": "c3_n03_pacto_silos",
             "requires_confirmation": true,
-            "confirmation_text": "Yago está herido y no puede perseguirlos. Matarlo evitará que avise a Los Silos, pero no es defensa inmediata. ¿Confirmás?",
+            "confirmation_text": "Yago está herido y no puede perseguirlos. Matarlo evitará que avise a Los Silos, pero no es defensa inmediata. ¿Confirmas?",
             "result_text": "Damián aparta a los demás. El disparo cabe dentro de la subestación y sale convertido en eco.\n\nCuando termina, la vía sigue igual de cerrada.",
             "effects": [
               {"type": "flag", "key": "yago_killed", "value": true},
@@ -2147,7 +2147,7 @@
             "label": "Destruir el registro",
             "target": "c5_n04_elena_rojo",
             "requires_confirmation": true,
-            "confirmation_text": "Borrar el registro no cambia lo que pasó, y Dávila conserva su propia copia. ¿Confirmás?",
+            "confirmation_text": "Borrar el registro no cambia lo que pasó, y Dávila conserva su propia copia. ¿Confirmas?",
             "result_text": "La barra llega a cien por ciento.\n\nEl archivo desaparece.\n\nEl tren no cambia de lugar.",
             "effects": [
               {"type": "flag", "key": "c17_log_recovered", "value": false},
@@ -2186,7 +2186,7 @@
             "label": "Liberarla para usarla como señuelo",
             "target": "c5_n05_confesion_abril",
             "requires_confirmation": true,
-            "confirmation_text": "Usar el cuerpo de Elena para despejar el coche es irreversible y va a costar la relación con quien lo presencie. ¿Confirmás?",
+            "confirmation_text": "Usar el cuerpo de Elena para despejar el coche es irreversible y va a costar la relación con quien lo presencie. ¿Confirmas?",
             "result_text": "Damián corta el cinturón y se aparta.\n\nElena cae de rodillas, se levanta contra el asiento y sigue el ruido que él dejó preparado.\n\nFunciona.\n\nEsa es la parte que Damián recordará.",
             "effects": [
               {"type": "flag", "key": "elena_found", "value": true},
@@ -2786,7 +2786,7 @@
             "label": "Cerrar la estación y abandonar la señal",
             "target": "end_quedarse",
             "requires_confirmation": true,
-            "confirmation_text": "Abandonar la reparación ahora deja la señal sin completar y cierra la ruta hacia Aurora. ¿Confirmás?",
+            "confirmation_text": "Abandonar la reparación ahora deja la señal sin completar y cierra la ruta hacia Aurora. ¿Confirmas?",
             "result_text": "Damián ordena replegarse. La señal no se completa. Aurora va a pasar sin detenerse.",
             "effects": [{"type": "flag", "key": "signal_abandoned", "value": true}]
           }
@@ -2810,7 +2810,7 @@
             "label": "Que baje Saúl",
             "target": "c7_n04b_saul_sacrificio",
             "gate": {"type": "all", "gates": [{"type": "flag", "key": "team_has_saul"}, {"type": "relationship", "key": "saul", "min": 0}]},
-            "result_text": "—Yo hice este tablero antes de que vos supieras leerlo —dice Saúl.\n\nDamián ve el inhalador vacío en su mano."
+            "result_text": "—Yo hice este tablero antes de que tú supieras leerlo —dice Saúl.\n\nDamián ve el inhalador vacío en su mano."
           },
           {
             "label": "Que baje Abril",
@@ -2836,13 +2836,13 @@
 
       "c7_n04b_saul_sacrificio": {
         "type": "fixed_anchor",
-        "narration": "Saúl mantiene la palanca con una llave atravesada.\n\n—No conviertas esto en una deuda —dice por radio—. Ya tenés suficientes.\n\nLa puerta de la caseta desaparece detrás de cuerpos.\n\nLa luz cambia.",
+        "narration": "Saúl mantiene la palanca con una llave atravesada.\n\n—No conviertas esto en una deuda —dice por radio—. Ya tienes suficientes.\n\nLa puerta de la caseta desaparece detrás de cuerpos.\n\nLa luz cambia.",
         "choices": [
           {
             "label": "Permitirlo",
             "target": "c7_n05_senal_verde",
             "requires_confirmation": true,
-            "confirmation_text": "Dejar que Saúl baje a fijar la señal es una decisión irreversible. ¿Confirmás?",
+            "confirmation_text": "Dejar que Saúl baje a fijar la señal es una decisión irreversible. ¿Confirmas?",
             "result_text": "La señal se completa. Saúl no vuelve a subir.",
             "effects": [{"type": "flag", "key": "saul_sacrificed", "value": true}, {"type": "flag", "key": "saul_alive", "value": false}, {"type": "meter", "key": "humanity_axis", "value": -1}]
           },
@@ -3078,7 +3078,7 @@
             "label": "Usar fuego",
             "target": "c9_n02b_incendio",
             "requires_confirmation": true,
-            "confirmation_text": "Usar fuego mata a los infectados y a cualquier sobreviviente que quede adentro. Es irreversible. ¿Confirmás?",
+            "confirmation_text": "Usar fuego mata a los infectados y a cualquier sobreviviente que quede adentro. Es irreversible. ¿Confirmas?",
             "gate": {"type": "any", "gates": [{"type": "list", "key": "inventory", "value": "detonador_vial"}]},
             "result_text": "El fuego resuelve el problema del coche tres de la peor manera posible.",
             "effects": [{"type": "meter", "key": "humanity_axis", "value": -3}, {"type": "relationship", "key": "ramiro", "value": 1}, {"type": "relationship", "key": "davila", "value": -2}]
@@ -3243,7 +3243,7 @@
             "label": "Obligar a un herido a cerrarla",
             "target": "c10_n01_anden_dividido",
             "requires_confirmation": true,
-            "confirmation_text": "Obligar a una persona herida a quedarse atrás es irreversible. ¿Confirmás?",
+            "confirmation_text": "Obligar a una persona herida a quedarse atrás es irreversible. ¿Confirmas?",
             "result_text": "Damián señala a quien menos puede negarse. La compuerta cierra. Alguien secundario no vuelve a subir a ningún tren.",
             "effects": [{"type": "meter", "key": "humanity_axis", "value": -2}, {"type": "relationship", "key": "ramiro", "value": 1}]
           }
@@ -3270,7 +3270,7 @@
             "label": "Ordenarle que baje el arma (relación alta)",
             "target": "c10_n02_decision_final",
             "gate": {"type": "all", "gates": [{"type": "flag", "key": "mutiny_active"}, {"type": "relationship", "key": "ramiro", "min": 2}]},
-            "result_text": "—Bajá el arma —dice Damián.\n\nRamiro obedece, esta vez.",
+            "result_text": "—Baja el arma —dice Damián.\n\nRamiro obedece, esta vez.",
             "effects": [{"type": "relationship", "key": "ramiro", "value": 1}]
           },
           {
@@ -3285,7 +3285,7 @@
             "target": "c10_n02_decision_final",
             "gate": {"type": "flag", "key": "mutiny_active"},
             "requires_confirmation": true,
-            "confirmation_text": "Atacar a Ramiro en el andén es irreversible y puede terminar en su muerte. ¿Confirmás?",
+            "confirmation_text": "Atacar a Ramiro en el andén es irreversible y puede terminar en su muerte. ¿Confirmas?",
             "check_attribute": "cuerpo",
             "check_difficulty": 15,
             "on_success": {"result_text": "Ramiro queda neutralizado, no muerto.", "effects": [{"type": "flag", "key": "ramiro_captured", "value": true}]},
@@ -3309,7 +3309,7 @@
             "target": "fail_infeccion",
             "gate": {"type": "meter", "key": "infection", "min": 3},
             "requires_confirmation": true,
-            "confirmation_text": "Damián sabe que está infectado. Subir sin decirlo pone en riesgo a todo el convoy. ¿Querés ocultarlo?",
+            "confirmation_text": "Damián sabe que está infectado. Subir sin decirlo pone en riesgo a todo el convoy. ¿Quieres ocultarlo?",
             "result_text": "Damián sube sin decir nada. Nadie más lo sabe todavía.",
             "effects": [{"type": "flag", "key": "hid_infection_boarding", "value": true}]
           },
@@ -3362,7 +3362,7 @@
               {"type": "any", "gates": [{"type": "flag", "key": "mutiny_active"}, {"type": "flag", "key": "team_has_ramiro"}]}
             ]},
             "requires_confirmation": true,
-            "confirmation_text": "La toma puede matar a miembros de Aurora y a personas de La Cámara. Cierra la vía cooperativa. ¿Querés iniciar el asalto?",
+            "confirmation_text": "La toma puede matar a miembros de Aurora y a personas de La Cámara. Cierra la vía cooperativa. ¿Quieres iniciar el asalto?",
             "result_text": "El grupo intenta apoderarse de la locomotora y obligar a los actuales pasajeros a aceptar una nueva distribución.",
             "effects": [{"type": "flag", "key": "ending_tomar_aurora", "value": true}]
           },
@@ -3381,7 +3381,7 @@
               {"type": "any", "gates": [{"type": "flag", "key": "mutiny_active", "equals": false}, {"type": "flag", "key": "north_access_secured", "equals": false}]}
             ]},
             "requires_confirmation": true,
-            "confirmation_text": "Damián se quedará solo para atraer a la horda. Puede morir incluso con éxito. ¿Querés continuar?",
+            "confirmation_text": "Damián se quedará solo para atraer a la horda. Puede morir incluso con éxito. ¿Quieres continuar?",
             "result_text": "Damián atrae a la horda por la vía opuesta para garantizar la salida de Aurora y de la comunidad.",
             "effects": [{"type": "flag", "key": "ending_ultimo_relevo", "value": true}]
           }
@@ -3489,7 +3489,7 @@
         "type": "fixed_anchor",
         "narration": "El resultado de la maniobra decide lo que queda de Damián.",
         "conditional_inserts": [
-          {"text": "Requiere salida conocida, Cohesión alta o un compañero que desobedece: la explosión o la bocina cubre el sonido de una moto. Alguien aparece por el canal de servicio. —Subí. Damián no pregunta cómo supo dónde encontrarlo. Sobrevive con salud mínima y una lesión.", "gate": {"type": "all", "gates": [{"type": "flag", "key": "last_relay_success"}, {"type": "flag", "key": "tunnel_escape_known"}, {"type": "meter", "key": "group_cohesion", "min": 5}]}},
+          {"text": "Requiere salida conocida, Cohesión alta o un compañero que desobedece: la explosión o la bocina cubre el sonido de una moto. Alguien aparece por el canal de servicio. —Sube. Damián no pregunta cómo supo dónde encontrarlo. Sobrevive con salud mínima y una lesión.", "gate": {"type": "all", "gates": [{"type": "flag", "key": "last_relay_success"}, {"type": "flag", "key": "tunnel_escape_known"}, {"type": "meter", "key": "group_cohesion", "min": 5}]}},
           {"text": "Sin salida conocida: Aurora abandona San Gregorio. La comunidad cruza el puente hacia el norte. Damián mantiene la bengala alta hasta que deja de ver el tren. Después corre. La historia no muestra el momento de su muerte. Muestra la señal verde reflejada en las ventanas de Aurora.", "gate": {"type": "all", "gates": [{"type": "flag", "key": "last_relay_success"}, {"type": "any", "gates": [{"type": "flag", "key": "tunnel_escape_known", "equals": false}, {"type": "meter", "key": "group_cohesion", "max": 4}]}]}},
           {"text": "La horda se divide, pero Aurora sufre bajas civiles y Damián muere o queda infectado. No se presenta como un sacrificio pleno; el epílogo reconoce la intención y el resultado.", "gate": {"type": "flag", "key": "last_relay_partial"}},
           {"text": "Con confesión, Abril publica ambos registros: el desvío que Damián ocultó y la última señal que todos vieron. No permite que uno borre al otro.", "gate": {"type": "flag", "key": "public_confession"}},
@@ -3513,7 +3513,7 @@
             "label": "Cerrar el túnel desde dentro",
             "target": "epilogo",
             "requires_confirmation": true,
-            "confirmation_text": "Cerrar el túnel salva a un grupo pequeño, pero Damián queda adentro. ¿Confirmás?",
+            "confirmation_text": "Cerrar el túnel salva a un grupo pequeño, pero Damián queda adentro. ¿Confirmas?",
             "result_text": "Un grupo pequeño sobrevive detrás de una puerta que Damián no vuelve a abrir.",
             "effects": [{"type": "flag", "key": "damian_dead", "value": true}, {"type": "flag", "key": "ending_fail_anden", "value": true}]
           },
@@ -3550,7 +3550,7 @@
             "label": "Negar hasta el final",
             "target": "epilogo",
             "requires_confirmation": true,
-            "confirmation_text": "Negar la mordida hasta el final pone en riesgo a todo el convoy. ¿Confirmás?",
+            "confirmation_text": "Negar la mordida hasta el final pone en riesgo a todo el convoy. ¿Confirmas?",
             "result_text": "La puerta del compartimiento queda abierta cuando Damián deja de respirar. El brote resultante se contiene si el coche médico fue salvado antes; si no, Aurora pierde otro coche y más personas.",
             "effects": [{"type": "flag", "key": "damian_dead", "value": true}, {"type": "flag", "key": "ending_fail_infeccion", "value": true}, {"type": "flag", "key": "denied_infection", "value": true}]
           }
