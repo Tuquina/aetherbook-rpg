@@ -379,14 +379,15 @@ El juego vive o muere por el contenido. Formatos que un humano escriba cómodo y
 - ✅ `FallbackNarratorAdapter` (Gemini → Groq) desplegado como Edge Function real.
 - ✅ Memoria de tres niveles (diario resumido vía Groq, `memory-digest`).
 - ✅ Motor híbrido completo (`core/narrative`): hitos fijos, corredores acotados, hubs de actividad, resoluciones, conflictos extendidos, combate por guard.
-- ✅ Dos campañas completas jugables de punta a punta: **"Los nombres que devora el cielo"** (híbrida, narrada por el modelo real) y **"El último tren no espera a los vivos"** (curada, 100% sin IA en runtime).
+- ✅ Tres campañas completas jugables de punta a punta: **"Los nombres que devora el cielo"** (híbrida, narrada por el modelo real), **"El último tren no espera a los vivos"** y **"Treinta y seis horas antes del apagón violeta"** (las dos últimas, curadas, 100% sin IA en runtime).
 - ✅ UI móvil pulida con theming por mundo, menú de historias en 3 módulos.
 - ✅ Generación de imágenes por turno (adelantada desde Fase 2 original — ver §6).
 - ✅ Narración en español neutro con tuteo en todo el contenido y prompts (`NARRATIVE_VOICE.md`).
 
 ### Fase 2 — Contenido y mundos *(en curso)*
 - ✅ Los 5 mundos freeform (Isekai, Xianxia, Superhéroes, Cyberpunk, Post-apocalíptico) con chargen y theming propio, jugables desde "Creá tu propia historia".
-- ⏳ 2-3 campañas pre-armadas/híbridas más, además de las dos actuales.
+- ✅ Una segunda historia completa 100% curada, sin IA: **"Treinta y seis horas antes del apagón violeta"** (cyberpunk, protagonista fijo Dante Rivas).
+- ⏳ Más campañas pre-armadas/híbridas, además de "Los nombres que devora el cielo".
 - ✅ Generación de imágenes (Pollinations) — ver nota arriba, ya se adelantó a Fase 1.
 
 ### Fase 3 — Pulido y profundidad

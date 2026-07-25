@@ -21,6 +21,7 @@ import 'widgets/atmosphere.dart';
 /// from content (no `graph` key in their JSON), same as every other module.
 const _availableWorldSlugs = [
   'curated_zombie_01_ultimo_tren',
+  'curated_cyberpunk_02_apagon_violeta',
   'xianxia_lianshu',
   'isekai',
   'xianxia',
