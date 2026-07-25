@@ -13,9 +13,13 @@ extension DiceRolls on Dice {
   int rollD20() => roll(20);
 }
 
-/// Production dice backed by a pseudo-random generator.
+/// Production dice backed by a cryptographically secure random generator
+/// (`Random.secure()`, sourced from the OS/browser's own entropy — not a
+/// deterministic, timestamp-seedable PRNG). Every platform Flutter targets
+/// (iOS, Android, web, desktop) backs this with a real CSPRNG, so this never
+/// needs a fallback to the weaker unseeded `Random()`.
 class RandomDice implements Dice {
-  RandomDice([Random? random]) : _random = random ?? Random();
+  RandomDice([Random? random]) : _random = random ?? Random.secure();
 
   final Random _random;
 
