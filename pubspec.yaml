@@ -89,3 +89,17 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+  # V2 design-system typography (V2 Implementation Plan, Stage 1): Marcellus
+  # for ceremonial display/title text, Spectral for narration/body — both
+  # vendored under assets/fonts/ (OFL-licensed, see the OFL-*.txt files
+  # alongside them) rather than fetched from a CDN at runtime.
+  fonts:
+    - family: Marcellus
+      fonts:
+        - asset: assets/fonts/Marcellus-Regular.ttf
+    - family: Spectral
+      fonts:
+        - asset: assets/fonts/Spectral-Regular.ttf
+        - asset: assets/fonts/Spectral-Italic.ttf
+          style: italic

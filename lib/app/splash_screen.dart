@@ -149,7 +149,7 @@ class _Wordmark extends StatelessWidget {
 
   static const _text = 'AETHERBOOK';
   static const _style = TextStyle(
-    fontFamily: 'Georgia',
+    fontFamily: 'Marcellus',
     fontSize: 40,
     fontWeight: FontWeight.w700,
     letterSpacing: 5,

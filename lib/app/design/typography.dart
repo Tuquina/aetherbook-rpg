@@ -2,20 +2,29 @@ import 'package:flutter/widgets.dart';
 
 import 'tokens.dart';
 
-/// Type system. Two voices:
-///  - **Serif** (`_serif`) is the tome's voice: world titles and narration.
-///    Warm, literary, generous line-height — this *is* the gameplay (GDD §9).
+/// Type system. Two serif voices plus one sans:
+///  - **Marcellus** (`_display`) is the ceremonial voice: world/screen titles,
+///    the wordmark. Used at its one shipped weight (400) — Flutter synthesizes
+///    the bold/emphasis some call sites request, since Marcellus has no bold
+///    cut to bundle.
+///  - **Spectral** (`_narration`) is the tome's reading voice: narration and
+///    body copy. Warm, literary, generous line-height — this *is* the
+///    gameplay (GDD §9).
 ///  - **Sans** (system default) is the chrome's voice: labels, stats, buttons.
 ///
-/// System fonts are used deliberately (offline, zero asset weight). A future
-/// pass can bundle display faces (e.g. Cinzel / EB Garamond) by swapping the
-/// family names here — nothing else changes.
+/// V2 Implementation Plan, Stage 1: both serif faces are vendored under
+/// `assets/fonts/` (see `pubspec.yaml`), replacing the system Georgia
+/// placeholder this file used through Fase 1. `AetherType` is a single shared
+/// token file by design ("nothing hardcoded in widgets" — see the module
+/// doc above) — every screen that reads `display`/`title`/`narration`/`body`
+/// picks up the new faces at once; there is no per-screen font override.
 abstract final class AetherType {
-  static const String _serif = 'Georgia';
+  static const String _display = 'Marcellus';
+  static const String _narration = 'Spectral';
 
   /// Big ceremonial moments: world name, screen titles.
   static const TextStyle display = TextStyle(
-    fontFamily: _serif,
+    fontFamily: _display,
     fontSize: 26,
     height: 1.2,
     fontWeight: FontWeight.w600,
@@ -25,7 +34,7 @@ abstract final class AetherType {
 
   /// Section titles inside the Codex and panels.
   static const TextStyle title = TextStyle(
-    fontFamily: _serif,
+    fontFamily: _display,
     fontSize: 19,
     height: 1.3,
     fontWeight: FontWeight.w600,
@@ -34,7 +43,7 @@ abstract final class AetherType {
 
   /// The narration — the sacred text. Serif, roomy, easy on the eyes.
   static const TextStyle narration = TextStyle(
-    fontFamily: _serif,
+    fontFamily: _narration,
     fontSize: 19,
     height: 1.68,
     color: AetherColors.parchment,
@@ -42,7 +51,7 @@ abstract final class AetherType {
 
   /// Body copy in the Codex and dialogs (still serif, slightly tighter).
   static const TextStyle body = TextStyle(
-    fontFamily: _serif,
+    fontFamily: _narration,
     fontSize: 16,
     height: 1.55,
     color: AetherColors.parchment,
