@@ -121,9 +121,12 @@ visually total but mechanically inert (no domain/persistence impact).
 
 ## Stage 2 — Story discovery and library
 
+**Status:** in progress (2026-07-27) — dialog consolidation done; the
+broader visual reflow (card layout, "continue" hierarchy, etc. per prototype
+`2a`/`2b`/`3a`-`3d`) is still open, see below.
+
 **Goal:** migrate `WorldSelectScreen`/`StoryModuleScreen`/`CreateStoryScreen`
-visuals; consolidate the 4 existing `AlertDialog` confirmations into
-`ConfirmSheet`.
+visuals; consolidate the app's `AlertDialog` confirmations into `ConfirmSheet`.
 
 **Non-goals:** no gameplay-engine changes; multi-session freeform behavior and
 story titles must survive unchanged (this is exactly what Stage 0's new test
@@ -132,13 +135,46 @@ guards against regressing).
 **Files:** `world_select_screen.dart`, `story_module_screen.dart`,
 `create_story_screen.dart`. No controller changes.
 
+**Done:**
+- **Dialog consolidation, corrected scope.** The original goal said "4
+  existing `AlertDialog` confirmations" but only 2 of them live in this
+  stage's files — `world_select_screen.dart`'s `_abandonStory` and
+  `_restart`. The other 2 (`game_screen.dart`'s story-choice and ending
+  confirmations) are Stage 4/5 files and stay on `AlertDialog` for now;
+  migrating them belongs to those stages, not this one. Both of this
+  stage's sites now call `showConfirmSheet` instead of
+  `showDialog`/`AlertDialog`.
+- **Bug found and fixed in the same file this stage already touches:**
+  `create_story_screen.dart`'s `_reload` was `setState(() => _stories =
+  _load())` — an *expression-bodied* closure, so its inferred return value
+  was the assignment's own value (a `Future`), which trips Flutter's "a
+  setState() callback returned a Future" assertion. Pre-existing, unrelated
+  to the dialog migration, and only surfaced now because this is the first
+  test to actually exercise abandon-then-reload through real widget
+  interaction rather than only through `GameController` directly. Fixed to
+  a block body (`setState(() { _stories = _load(); });`), which returns
+  `void` instead.
+- Tests: `test/app/world_select_confirm_sheet_test.dart` (2 cases —
+  abandon-via-`CreateStoryScreen` and restart-via-`StoryModuleScreen`, both
+  asserting the destructive action only fires *after* confirming, never
+  before). Full suite: 592/592 passing, `analyze` clean.
+
+**Still open in this stage (deliberately not attempted yet):** the broader
+visual reflow — richer story cards, "continue" as the clear primary action,
+grid/library presentation per prototype `2a`/`2b`/`3a`-`3d`. This needs
+either a `V2_DESIGN_SYSTEM.md` (spacing/layout conventions beyond what
+`AetherSpace`/`AetherRadius` already give) or explicit sign-off on specific
+layout choices before it's a well-scoped, reviewable change rather than a
+large subjective rewrite — not done silently as part of this pass.
+
 **Tests:** `test/app/story_resume_navigation_test.dart` must still pass
 unmodified in behavior; add abandon/restart confirmation widget tests against
 the new `ConfirmSheet`.
 
 **Acceptance criteria:** all 3 story modules still list/resume/restart/abandon
 correctly; visual parity with prototype sections `2a`/`2b`/`3a`-`3d`
-(screen-layout only, no new mechanics).
+(screen-layout only, no new mechanics). **Dialog consolidation done and
+verified; visual reflow still open.**
 
 **Risk:** low.
 
@@ -317,7 +353,7 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 |---|---|---|
 | 0 — Baseline and safeguards | ✅ Done (2026-07-27) | — |
 | 1 — Design-system foundation | ✅ Done (2026-07-27) — visual sign-off still recommended, see Stage 1 notes | — |
-| 2 — Story discovery and library | Not started | Stage 1 |
+| 2 — Story discovery and library | Partial: dialog consolidation done (2026-07-27), visual reflow still open | Stage 1 |
 | 3 — Character creation V2 | Not started | Stage 1 |
 | 4 — Gameplay reading experience | Not started | Stage 1 |
 | 5 — Character/inventory/story sheets | Not started | Stage 1 |

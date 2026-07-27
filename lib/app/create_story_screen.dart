@@ -64,7 +64,9 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   Future<List<GameSessionSummary>> _load() =>
       widget.controller.listCreatedStories([for (final w in widget.worlds) w.slug]);
 
-  void _reload() => setState(() => _stories = _load());
+  void _reload() => setState(() {
+        _stories = _load();
+      });
 
   Future<void> _abandon(GameSessionSummary summary) async {
     await widget.onAbandonStory(summary);

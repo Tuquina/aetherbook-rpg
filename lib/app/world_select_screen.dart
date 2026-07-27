@@ -11,6 +11,7 @@ import 'game_controller.dart';
 import 'game_screen.dart';
 import 'story_module_screen.dart';
 import 'widgets/atmosphere.dart';
+import 'widgets/confirm_sheet.dart';
 
 /// The stories offered in the menu (GDD §9). Adding a new campaign means
 /// adding its slug here once its content JSON exists in `assets/worlds/` —
@@ -206,28 +207,13 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
   /// Confirms and abandons one saved story — [CreateStoryScreen] awaits this
   /// and reloads its own list once it resolves.
   Future<void> _abandonStory(GameSessionSummary summary) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AetherColors.surface,
-        title: Text(summary.characterName, style: AetherType.title),
-        content: Text(
-          'Vas a abandonar esta historia. No se puede deshacer. ¿Confirmas?',
-          style: AetherType.body,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Abandonar'),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmSheet(
+      context,
+      title: summary.characterName,
+      message: 'Vas a abandonar esta historia. No se puede deshacer.',
+      confirmLabel: 'Abandonar',
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     await widget.controller.abandonStory(summary.id);
   }
 
@@ -236,28 +222,14 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
   /// a player who wants to play a curated campaign again from the top
   /// instead of always resuming where they left off.
   Future<void> _restart(World world) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AetherColors.surface,
-        title: Text(world.name, style: AetherType.title),
-        content: Text(
-          'Vas a reiniciar esta historia desde el principio. El progreso actual se pierde. ¿Confirmas?',
-          style: AetherType.body,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Reiniciar'),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmSheet(
+      context,
+      title: world.name,
+      message:
+          'Vas a reiniciar esta historia desde el principio. El progreso actual se pierde.',
+      confirmLabel: 'Reiniciar',
     );
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
 
     if (world.origins.isNotEmpty) {
       _goToChargen(world, forceNew: true);
