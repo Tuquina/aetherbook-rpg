@@ -353,17 +353,17 @@ Only proceed with a sub-stage once its blocking decision in
     http_narrator_adapter_test.dart` (resolves correctly; `null` for
     absent/unknown), 4 new Deno cases in `prompt_builder_test.ts`. 618/618
     Flutter tests + 54/54 Deno tests passing, both `analyze`/`deno check`
-    clean. **Not yet deployed** — this only takes effect for real once the
-    `narrator` Edge Function is redeployed; deploying is a separate,
-    later step this assistant will confirm before doing, since it's a
-    live-infrastructure change.
+    clean. **Deployed 2026-07-27** — `narrator` redeployed on the
+    `aetherbook` Supabase project (hsgdldztcolteyodiscu), version 8 → 9,
+    status ACTIVE, confirmed via `get_advisors`/`get_logs` with no new
+    issues introduced. The tone instruction is now live.
   - [x] Persistence: `supabase/migrations/20260727_characters_chosen_tone.sql`
     — additive nullable `characters.chosen_tone text`. `game_state_mappers
-    .dart`'s `characterToRow`/`characterFromRow` read and write it. **File
-    only, not applied to the live Supabase project** — that's a separate
-    go-ahead this assistant will ask for before running any
-    `apply_migration`-equivalent action. Tests: extended the existing
-    round-trip case in `test/adapters/game_state_mappers_test.dart` plus its
+    .dart`'s `characterToRow`/`characterFromRow` read and write it.
+    **Applied 2026-07-27** to the live Supabase project (migration
+    `20260727195209_characters_chosen_tone`, confirmed via
+    `list_migrations`). Tests: extended the existing round-trip case in
+    `test/adapters/game_state_mappers_test.dart` plus its
     missing-field-defaults case. 618/618 passing, `analyze` clean (no new
     test *count* here — existing cases gained assertions, no new `test()`
     blocks needed).
@@ -380,11 +380,10 @@ Only proceed with a sub-stage once its blocking decision in
     + preview on tap, deselect-by-re-tapping, confirms with a tone chosen,
     confirms with none chosen). 623/623 passing, `analyze` clean.
 
-  **Stage 6c is now fully done** at the code level. Two follow-ups remain
-  outside this assistant's unilateral authority: deploying the `narrator`
-  Edge Function (so the tone instruction takes effect live) and applying
-  the `20260727_characters_chosen_tone.sql` migration to the real Supabase
-  project — both confirmed with you before being executed.
+  **Stage 6c is now fully done, deployed, and live** (2026-07-27) — both
+  the Edge Function redeploy and the migration were explicitly confirmed
+  with you before being executed. `master` was also pushed to origin (14
+  commits) the same day, triggering Vercel's auto-deploy of the client.
 - **6d — Auth expansion.** Decision D accepted, **discontinuing magic-link**
   (user's explicit choice — see `V2_PRODUCT_DECISIONS.md`). Not started yet.
   `AuthPort` methods + `SupabaseAuthAdapter` + `account_screen.dart`/
