@@ -9,6 +9,7 @@ import 'game_controller.dart';
 import 'inventory_screen.dart';
 import 'widgets/atmosphere.dart';
 import 'widgets/choice_button.dart';
+import 'widgets/confirm_sheet.dart';
 import 'widgets/fate_roll.dart';
 import 'widgets/status_bar.dart';
 import 'world_select_screen.dart';
@@ -540,27 +541,14 @@ class _ChoicesBar extends StatelessWidget {
       controller.chooseStoryChoice(choice);
       return;
     }
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AetherColors.surface,
-        content: Text(
-          choice.confirmationText ?? '¿Confirmas esta decisión? No se puede deshacer.',
-          style: AetherType.body,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Confirmar'),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmSheet(
+      context,
+      title: choice.label,
+      message:
+          choice.confirmationText ?? 'No se puede deshacer. ¿Confirmas esta decisión?',
+      confirmLabel: 'Confirmar',
     );
-    if (confirmed == true) {
+    if (confirmed) {
       controller.chooseStoryChoice(choice);
     }
   }
@@ -571,28 +559,13 @@ class _ChoicesBar extends StatelessWidget {
   /// all of them as irreversible rather than asking content to say so once
   /// per ending.
   Future<void> _tapEnding(BuildContext context, Ending ending) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AetherColors.surface,
-        title: Text(ending.visibleChoice, style: AetherType.title),
-        content: const Text(
-          'Esta es una decisión final — no hay vuelta atrás. ¿Confirmas?',
-          style: AetherType.body,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Confirmar'),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmSheet(
+      context,
+      title: ending.visibleChoice,
+      message: 'Esta es una decisión final — no hay vuelta atrás.',
+      confirmLabel: 'Confirmar',
     );
-    if (confirmed == true) {
+    if (confirmed) {
       controller.chooseEnding(ending);
     }
   }

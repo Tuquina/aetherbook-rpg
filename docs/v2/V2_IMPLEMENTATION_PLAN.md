@@ -204,6 +204,11 @@ world-specific field variability across all 8 worlds.
 
 ## Stage 4 — Gameplay reading experience
 
+**Status:** in progress (2026-07-27) — dialog consolidation done early
+(low-risk, decision-free); the rest (header, choice cards, `FateRoll`,
+scene-image treatment) is still open, same reasoning as Stage 2's remaining
+visual reflow — needs layout decisions locked down first.
+
 **Goal:** collapsible header, numbered choices, redesigned `FateRoll` compact
 presentation, image-bleed scene open. Progressive-disclosure logic stays
 **unchanged** — it's already correct.
@@ -213,6 +218,28 @@ need small `GameController`/Edge-Function additions first — Stage 6/7).
 
 **Files:** `game_screen.dart`, `status_bar.dart`, `fate_roll.dart`,
 `atmosphere.dart`.
+
+**Done:**
+- `game_screen.dart`'s remaining 2 `AlertDialog` confirmations (story-choice
+  with `requiresConfirmation`, and the always-confirmed ending choice) now
+  use `showConfirmSheet`, completing the dialog consolidation this document
+  originally scoped as "4 sites" under Stage 2 — see Stage 2's note on why
+  it split across stages by file ownership. Pure mechanical swap, no new
+  design decision needed (same component, same call pattern already proven
+  in Stage 2).
+- Tests: `test/app/game_screen_confirm_sheet_test.dart` (3 cases —
+  no-confirmation choice resolves on one tap; confirmation-required choice
+  shows the authored `confirmationText` and does nothing until confirmed,
+  including a cancel-then-retry path; ending confirmation shows the sheet
+  titled with `Ending.visibleChoice` and only sets the ending flag after
+  confirming). Full suite: 595/595 passing, `analyze` clean.
+
+**Still open in this stage:** collapsible/adaptive header, numbered
+`ChoiceCard` actually wired in (built in Stage 1, unused until now), redesigned
+compact `FateRoll`, image-bleed scene-open treatment. Same blocker as Stage
+2's remaining work — these are real layout/interaction redesigns, not
+mechanical swaps, and deserve either a design-system doc or explicit
+sign-off on the specific choices before being attempted as one change.
 
 **Tests:** the 3 existing cases in `test/widget_test.dart` must stay green
 with unchanged *behavior* (only visuals change); add a header-collapse widget
@@ -355,7 +382,7 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 | 1 — Design-system foundation | ✅ Done (2026-07-27) — visual sign-off still recommended, see Stage 1 notes | — |
 | 2 — Story discovery and library | Partial: dialog consolidation done (2026-07-27), visual reflow still open | Stage 1 |
 | 3 — Character creation V2 | Not started | Stage 1 |
-| 4 — Gameplay reading experience | Not started | Stage 1 |
+| 4 — Gameplay reading experience | Partial: dialog consolidation done (2026-07-27), header/choices/FateRoll/image still open | Stage 1 |
 | 5 — Character/inventory/story sheets | Not started | Stage 1 |
 | 6a — Ending-discovery counter | ✅ Done (2026-07-27) | — |
 | 6b — Per-world visual theming | Not started | Decision E |
