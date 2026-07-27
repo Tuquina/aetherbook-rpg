@@ -315,9 +315,9 @@ Only proceed with a sub-stage once its blocking decision in
   atmosphere_test.dart` (2 cases: default gradient, themed gradient). Full
   suite: 605/605 passing, `analyze` clean, all `test/content/*` JSON-parsing
   tests re-verified green after editing all 8 world files.
-- **6c — Player-selectable tone.** Decision C accepted, **full mechanic**
-  (user explicitly chose this over the cheaper display-only option). In
-  progress (2026-07-27):
+- **6c — Player-selectable tone — ✅ DONE (2026-07-27).** Decision C
+  accepted, **full mechanic** (user explicitly chose this over the cheaper
+  display-only option):
   - [x] Domain: new `core/world/tone_option.dart` (`ToneOption{id, label,
     blurb, previewText}`), `World.tones`/`World.toneByIdOrNull`, parsed from
     a new `tones` JSON array (empty/no tone step for any world that
@@ -367,8 +367,24 @@ Only proceed with a sub-stage once its blocking decision in
     missing-field-defaults case. 618/618 passing, `analyze` clean (no new
     test *count* here — existing cases gained assertions, no new `test()`
     blocks needed).
-  - [ ] UI: new chargen step in `chargen_screen.dart`, shown only when
-    `world.tones.isNotEmpty`.
+  - [x] UI: `chargen_screen.dart` gained a "Tono de la narración (opcional)"
+    section, shown only when `world.tones.isNotEmpty` (every world except
+    the 5 freeform genres today). Reuses the existing `_SelectableCard`
+    (single-select, tap-to-toggle — tapping the already-selected tone again
+    clears it, since this is explicitly optional, unlike origin/vow) and
+    shows the selected tone's `previewText` in a highlighted box below the
+    options, matching the "Pasiva" highlight pattern already used for
+    origins. Threaded into `CreateCharacterInput.chosenTone` at confirm.
+    New `test/app/chargen_screen_test.dart` (5 cases — no widget test
+    existed for this screen before: step hidden with no tones, tones shown
+    + preview on tap, deselect-by-re-tapping, confirms with a tone chosen,
+    confirms with none chosen). 623/623 passing, `analyze` clean.
+
+  **Stage 6c is now fully done** at the code level. Two follow-ups remain
+  outside this assistant's unilateral authority: deploying the `narrator`
+  Edge Function (so the tone instruction takes effect live) and applying
+  the `20260727_characters_chosen_tone.sql` migration to the real Supabase
+  project — both confirmed with you before being executed.
 - **6d — Auth expansion.** Decision D accepted, **discontinuing magic-link**
   (user's explicit choice — see `V2_PRODUCT_DECISIONS.md`). Not started yet.
   `AuthPort` methods + `SupabaseAuthAdapter` + `account_screen.dart`/
@@ -465,7 +481,7 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 | 5 — Character/inventory/story sheets | Not started | Stage 1 |
 | 6a — Ending-discovery counter | ✅ Done (2026-07-27) | — |
 | 6b — Per-world visual theming | ✅ Done (2026-07-27) | — |
-| 6c — Player-selectable tone | Accepted (full mechanic), not started | — |
+| 6c — Player-selectable tone | ✅ Done (2026-07-27) — Edge Function deploy + migration apply still need your go-ahead | — |
 | 6d — Auth expansion | Accepted (drop magic-link), not started; Google OAuth needs user's Cloud Console setup | — |
 | 6e — Story-graph editor | Deferred (2026-07-27) | — |
 | 6f — Publishing/UGC | Deferred (2026-07-27) | — |

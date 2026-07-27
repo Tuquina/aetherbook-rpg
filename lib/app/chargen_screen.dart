@@ -51,6 +51,7 @@ class _ChargenScreenState extends State<ChargenScreen> {
   String? _originId;
   String? _freeAttributePoint;
   String? _vowId;
+  String? _chosenTone;
   bool _submitting = false;
   String? _error;
 
@@ -87,6 +88,7 @@ class _ChargenScreenState extends State<ChargenScreen> {
         freeAttributePoint: _freeAttributePoint,
         vowId: _vowId!,
         personalItem: _personalItemController.text.trim(),
+        chosenTone: _chosenTone,
       ),
       forceNew: widget.forceNew,
       alwaysCreateNew: widget.alwaysCreateNew,
@@ -218,6 +220,34 @@ class _ChargenScreenState extends State<ChargenScreen> {
                       selected: _vowId == vow.id,
                       onTap: () => setState(() => _vowId = vow.id),
                     ),
+                  if (world.tones.isNotEmpty) ...[
+                    const SizedBox(height: AetherSpace.xl),
+                    Text('Tono de la narración (opcional)', style: AetherType.overline),
+                    const SizedBox(height: AetherSpace.sm),
+                    for (final tone in world.tones)
+                      _SelectableCard(
+                        title: tone.label,
+                        subtitle: tone.blurb,
+                        selected: _chosenTone == tone.id,
+                        onTap: () => setState(
+                            () => _chosenTone = _chosenTone == tone.id ? null : tone.id),
+                      ),
+                    if (_chosenTone != null) ...[
+                      const SizedBox(height: AetherSpace.sm),
+                      Container(
+                        padding: const EdgeInsets.all(AetherSpace.md),
+                        decoration: BoxDecoration(
+                          color: AetherColors.goldGlow,
+                          borderRadius: AetherRadius.allSm,
+                        ),
+                        child: Text(
+                          world.toneByIdOrNull(_chosenTone)!.previewText,
+                          style: AetherType.caption.copyWith(
+                              fontStyle: FontStyle.italic, color: AetherColors.parchment),
+                        ),
+                      ),
+                    ],
+                  ],
                   const SizedBox(height: AetherSpace.xl),
                   Text('Objeto personal (opcional)', style: AetherType.overline),
                   const SizedBox(height: AetherSpace.sm),
