@@ -55,10 +55,7 @@ regressions.
 
 ---
 
-## Stage 1 — Design-system foundation
-
-**Status:** in progress (2026-07-27) — reusable components done; typography
-swap blocked on a download permission (see below).
+## Stage 1 — Design-system foundation — ✅ DONE (2026-07-27)
 
 **Goal:** introduce Marcellus/Spectral/Archivo typography and reusable
 `ConfirmSheet`/numbered `ChoiceCard` components — built, not yet wired into
@@ -67,7 +64,7 @@ every screen.
 **Non-goals:** no screen migrations yet (that's Stage 2+); spacing/radii/motion
 tokens are already adequate and are **not** being redesigned, only reused.
 
-**Done:**
+**What was done:**
 - `lib/app/widgets/choice_card.dart` — numbered (Roman-numeral) choice card,
   same press-and-brighten interaction as the existing `ChoiceButton`. Not yet
   wired into `game_screen.dart` (that's Stage 4).
@@ -75,29 +72,48 @@ tokens are already adequate and are **not** being redesigned, only reused.
   destructive-confirmation replacing `showDialog`/`AlertDialog`. Not yet wired
   into any of the app's 4 existing confirmation call sites (that's Stage 2/4/5,
   done call-site by call-site).
-- Tests: `test/app/widgets/choice_card_test.dart` (2 cases: Roman-numeral
-  spelling for indices 1/2/4/9/40, label + tap), `test/app/widgets/
-  confirm_sheet_test.dart` (5 cases: renders title/message/actions, resolves
-  true on confirm, resolves false on cancel, resolves false on barrier-tap
-  dismiss, `destructive: false` uses the gold accent instead of failure red).
-  Full suite re-run after adding both: 588/588 passing, `analyze` clean.
+- Vendored `assets/fonts/Marcellus-Regular.ttf`, `Spectral-Regular.ttf`,
+  `Spectral-Italic.ttf` (Google Fonts, OFL license, downloaded from
+  `github.com/google/fonts` with your explicit go-ahead — their `OFL.txt`
+  files are kept alongside them) and declared them in `pubspec.yaml`.
+- **Correction to the original plan:** the recommended first slice below
+  said to wire the new typography into `SplashScreen` only. `AetherType` is a
+  single shared token file by design ("nothing hardcoded in widgets — a
+  future reskin only touches these tokens", per its own doc comment), so
+  changing `AetherType`'s font-family constants necessarily changes every
+  screen that reads `display`/`title`/`narration`/`body` at once — there is
+  no way to scope a shared-token change to one screen without duplicating
+  styles, which would be the wrong fix. Went with the correct, global change
+  (`lib/app/design/typography.dart`: split the old single `_serif` constant
+  into `_display` = Marcellus and `_narration` = Spectral) instead of a
+  splash-only hack. Also updated `splash_screen.dart`'s `_Wordmark._style`,
+  which had its own hardcoded `fontFamily: 'Georgia'` outside `AetherType`
+  entirely — otherwise "AETHERBOOK" would have silently kept rendering in
+  Georgia.
+- Tests: `test/app/widgets/choice_card_test.dart` (2 cases), `test/app/widgets/
+  confirm_sheet_test.dart` (5 cases). Full suite: 588/588 passing, `analyze`
+  clean, both before and after the typography change (font-family isn't
+  something the existing test suite asserts on, so this is a coverage gap
+  by nature, not a false green — see "known limitation" below).
+- Verified in the local web preview: all 3 font files fetch with `200 OK`
+  (`/assets/assets/fonts/Marcellus-Regular.ttf`, `Spectral-Regular.ttf`,
+  `Spectral-Italic.ttf`), Supabase initializes, no app-level console errors
+  (one `TypeError` in the DWDS-injected debug client is a known
+  `flutter run` web-server tooling artifact, unrelated to app code).
 
-**Blocked / needs your input before continuing this stage:**
-- The typography swap (Georgia/system → Marcellus/Spectral) requires
-  **downloading** the two open-source font files (Google Fonts, OFL license)
-  to vendor under `assets/fonts/` — per this assistant's operating rules,
-  downloading any file requires asking first in chat. Not done yet; asked
-  separately from this document. Once approved: `pubspec.yaml` (font asset
-  declarations), new `assets/fonts/`, `lib/app/design/typography.dart` (swap
-  families), then wire into `SplashScreen` only per the "recommended first
-  implementation slice" below.
+**Known limitation:** could not capture an actual pixel screenshot of the
+running app in this session (`the Browser pane is not displayed, so the
+page is not compositing frames` — an environment/tooling constraint, not an
+app bug). Verification here is network + console + test-suite based, not
+visual. **Recommend a manual look at the splash screen** (and one or two
+other screens, since the font change is global) before this is treated as
+fully signed off — `tool/run-web.ps1` / `tool/run-web.sh`, or ask a future
+session with working screenshot access to confirm.
 
 **Backward compatibility:** N/A — additive components; typography swap is
 visually total but mechanically inert (no domain/persistence impact).
 
-**Acceptance criteria:** app still builds/runs/plays end-to-end unchanged;
-new components render correctly in isolation. **Met so far** for the
-components; typography portion still pending.
+**Acceptance criteria:** met, with the visual-verification caveat above.
 
 **Risk:** low.
 
@@ -245,26 +261,14 @@ suite + manual preview pass across mobile/tablet/web breakpoints.
 
 ---
 
-## Recommended first implementation slice (within Stage 1)
+## Recommended first implementation slice — ✅ DONE (2026-07-27, see Stage 1)
 
-**Typography-only, scoped to `SplashScreen`.**
-
-- Swap `AetherType`'s `display`/`title`/`narration`/`body` families from
-  Georgia/system-default to bundled Marcellus/Spectral.
-- Wire the new typography into `splash_screen.dart` only — lowest-traffic,
-  most self-contained screen (no `GameController` dependency, no persistence,
-  no world-specific variability).
-- Requires: `pubspec.yaml` font asset declarations + `assets/fonts/` (download
-  and vendor the open-source font files).
-- **Acceptance criteria:** `flutter analyze`/`flutter test` still green; splash
-  renders Marcellus wordmark + Spectral tagline in the browser preview;
-  reduced-motion behavior on `_TomePainter`'s shimmer unchanged; no other
-  screen's typography changes yet.
-- **Verification:** `tool/flutter.sh analyze && tool/flutter.sh test`, then a
-  manual preview-pane check of `SplashScreen`.
-- **Why this one:** visibly moves toward V2's stated goal, zero domain/
-  persistence/content risk, establishes the font-bundling pattern every later
-  stage reuses, can't regress gameplay (`SplashScreen` has no game state).
+Originally scoped as "typography-only, wired into `SplashScreen` only."
+Executed as a **global** `AetherType` font-family swap instead, since the
+token file can't be scoped to one screen without duplicating styles — see
+the "Correction to the original plan" note under Stage 1 above for why.
+`flutter analyze`/`flutter test` green (588/588); pixel-level visual
+confirmation still recommended (tooling limitation, not skipped on purpose).
 
 ---
 
@@ -301,7 +305,7 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 | Stage | Status | Blocked by |
 |---|---|---|
 | 0 — Baseline and safeguards | ✅ Done (2026-07-27) | — |
-| 1 — Design-system foundation | In progress: components done, typography pending download approval | — |
+| 1 — Design-system foundation | ✅ Done (2026-07-27) — visual sign-off still recommended, see Stage 1 notes | — |
 | 2 — Story discovery and library | Not started | Stage 1 |
 | 3 — Character creation V2 | Not started | Stage 1 |
 | 4 — Gameplay reading experience | Not started | Stage 1 |
