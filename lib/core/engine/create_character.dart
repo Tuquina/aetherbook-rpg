@@ -11,6 +11,7 @@ class CreateCharacterInput {
     this.freeAttributePoint,
     required this.vowId,
     this.personalItem = '',
+    this.chosenTone,
   });
 
   final String name;
@@ -32,6 +33,12 @@ class CreateCharacterInput {
   /// Free-text description of the personal object (§5.1). Never grants an
   /// automatic bonus.
   final String personalItem;
+
+  /// Which [ToneOption] the player picked (V2), or `null` for a world that
+  /// declares no [World.tones] at all — the tone step is skipped entirely
+  /// in that case, same as [freeAttributePoint] for a world with no free
+  /// point to assign.
+  final String? chosenTone;
 }
 
 /// Builds a fully-formed starting [Character] from a world's chargen data
@@ -104,6 +111,7 @@ class CreateCharacter {
       originTagId: origin.tagId,
       vowId: vow.id,
       personalItem: input.personalItem,
+      chosenTone: input.chosenTone,
     );
   }
 }

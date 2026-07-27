@@ -9,6 +9,7 @@ import 'progression.dart';
 import 'rank_definition.dart';
 import 'resource_formula.dart';
 import 'technique.dart';
+import 'tone_option.dart';
 import 'vow.dart';
 
 /// A declarative world package (CLAUDE.md §8, GDD §4.6). Everything that gives
@@ -36,6 +37,7 @@ class World {
     this.attributeKeys = const [],
     this.origins = const [],
     this.vows = const [],
+    this.tones = const [],
     this.ranks = const [],
     this.opponents = const [],
     this.npcs = const [],
@@ -131,6 +133,12 @@ class World {
 
   /// Chargen vows available for structured character creation (§5.4).
   final List<Vow> vows;
+
+  /// Narrative tones the player can pick at chargen (V2), each with its own
+  /// preview text for this world. Empty for a world that doesn't offer the
+  /// tone step at all (every world predating this field, and any curated/
+  /// hybrid campaign that intentionally keeps its own fixed authorial tone).
+  final List<ToneOption> tones;
 
   /// Milestone-gated ranks (§7.1). Empty for worlds using the simpler linear
   /// [progression] instead. See `core/engine/rank_progression.dart`.
@@ -259,6 +267,16 @@ class World {
         orElse: () => throw ArgumentError('unknown vow: $id'),
       );
 
+  /// Non-throwing, like [originByIdOrNull] — [id] may be `null` (a world
+  /// with no tone step) or, in principle, stale.
+  ToneOption? toneByIdOrNull(String? id) {
+    if (id == null) return null;
+    for (final tone in tones) {
+      if (tone.id == id) return tone;
+    }
+    return null;
+  }
+
   AbstractOpponent opponentById(String id) => opponents.firstWhere(
         (o) => o.id == id,
         orElse: () => throw ArgumentError('unknown opponent: $id'),
@@ -340,6 +358,7 @@ class World {
       attributeKeys: _stringList(json['attributes']),
       origins: _originsFromJson(json['origins']),
       vows: _vowsFromJson(json['vows']),
+      tones: _tonesFromJson(json['tones']),
       ranks: _ranksFromJson(json['ranks']),
       opponents: _opponentsFromJson(json['opponents']),
       npcs: _npcsFromJson(json['npcs']),
@@ -467,6 +486,16 @@ class World {
       return [
         for (final item in value)
           Vow.fromJson((item as Map).cast<String, dynamic>()),
+      ];
+    }
+    return const [];
+  }
+
+  static List<ToneOption> _tonesFromJson(Object? value) {
+    if (value is List) {
+      return [
+        for (final item in value)
+          ToneOption.fromJson((item as Map).cast<String, dynamic>()),
       ];
     }
     return const [];

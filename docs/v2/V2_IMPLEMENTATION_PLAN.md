@@ -316,10 +316,36 @@ Only proceed with a sub-stage once its blocking decision in
   suite: 605/605 passing, `analyze` clean, all `test/content/*` JSON-parsing
   tests re-verified green after editing all 8 world files.
 - **6c — Player-selectable tone.** Decision C accepted, **full mechanic**
-  (user explicitly chose this over the cheaper display-only option). Not
-  started yet. New field + chargen step + `prompt_builder.ts` instruction +
-  authored preview copy (15 snippets: 5 worlds × 3 tones) — narrator-contract
-  change, needs an Edge Function redeploy to actually take effect live.
+  (user explicitly chose this over the cheaper display-only option). In
+  progress (2026-07-27):
+  - [x] Domain: new `core/world/tone_option.dart` (`ToneOption{id, label,
+    blurb, previewText}`), `World.tones`/`World.toneByIdOrNull`, parsed from
+    a new `tones` JSON array (empty/no tone step for any world that
+    declares none — every world predating this). `Character.chosenTone`
+    (nullable) threaded through `CreateCharacterInput`/`CreateCharacter`,
+    same optional-step pattern as `freeAttributePoint`. Tests: `test/world/
+    tone_option_test.dart`, a new group in `test/world/world_test.dart`, 2
+    new cases in `test/engine/create_character_test.dart`. 611/611 passing,
+    `analyze` clean.
+  - [ ] Content: author the `tones` array (3 entries: épico/íntimo/ácido,
+    each with a per-world `preview`) for the 5 freeform genre worlds
+    (isekai/xianxia/superheroes/cyberpunk/postapoc) — 15 snippets total,
+    matching `NARRATIVE_VOICE.md`'s tuteo/register rules. Curated/hybrid
+    worlds (`xianxia_lianshu`, the 2 curated stories) intentionally keep
+    their own fixed authorial tone — no tone step for those.
+  - [ ] Narrator contract: thread `chosenTone`/its resolved `ToneOption`
+    into what's sent to `supabase/functions/narrator/`, and add an
+    instruction block in `prompt_builder.ts` so the chosen tone actually
+    shapes the narration. Deno tests locally verify the prompt-building
+    logic; **does not require deploying** to confirm correctness — deploying
+    the Edge Function so it's live is a separate, later step this assistant
+    will confirm before doing.
+  - [ ] Persistence: additive nullable `chosen_tone` column on `characters`
+    — migration **file** only for now (safe, versioned, git-only); actually
+    applying it to the live Supabase project needs a explicit go-ahead
+    before running any `apply_migration`-equivalent action.
+  - [ ] UI: new chargen step in `chargen_screen.dart`, shown only when
+    `world.tones.isNotEmpty`.
 - **6d — Auth expansion.** Decision D accepted, **discontinuing magic-link**
   (user's explicit choice — see `V2_PRODUCT_DECISIONS.md`). Not started yet.
   `AuthPort` methods + `SupabaseAuthAdapter` + `account_screen.dart`/

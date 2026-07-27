@@ -287,6 +287,34 @@ void main() {
     });
   });
 
+  group('World — tone options (V2 chargen tone step)', () {
+    test('tones default to empty (no tone step) when a world declares none', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(world.tones, isEmpty);
+      expect(world.toneByIdOrNull('epico'), isNull);
+      expect(world.toneByIdOrNull(null), isNull);
+    });
+
+    test('parses tones from the JSON and finds one by id', () {
+      final json = baseWorldJson()
+        ..['tones'] = [
+          {
+            'id': 'epico',
+            'label': 'Épico',
+            'blurb': 'Grande, mítico',
+            'preview': 'Todo comienza como si el cielo mismo lo exigiera.',
+          },
+          {'id': 'intimo', 'label': 'Íntimo', 'blurb': 'Cerca, humano'},
+        ];
+      final world = World.fromJson(json);
+
+      expect(world.tones, hasLength(2));
+      expect(world.toneByIdOrNull('epico')?.label, 'Épico');
+      expect(world.toneByIdOrNull('intimo')?.blurb, 'Cerca, humano');
+      expect(world.toneByIdOrNull('no-existe'), isNull);
+    });
+  });
+
   group('World — per-world theming (V2 design prototype §4a-4d)', () {
     test('theme hex fields default to null for a world that hasn\'t declared '
         'any (falls back to the global palette)', () {

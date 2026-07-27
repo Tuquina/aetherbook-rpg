@@ -17,6 +17,7 @@ class Character {
     this.originTagId,
     this.vowId,
     this.personalItem,
+    this.chosenTone,
   });
 
   final String name;
@@ -71,6 +72,13 @@ class Character {
   /// (campaign-bible §5.1). Confers no automatic bonus.
   final String? personalItem;
 
+  /// The [ToneOption.id] chosen at chargen for a world that declares
+  /// `tones` (V2), or `null` for a world without the tone step, or a
+  /// character created before this field existed. Purely a narrator-prompt
+  /// instruction — never gates mechanics or content, unlike every other
+  /// chargen field above.
+  final String? chosenTone;
+
   int attribute(String key) => attributes[key] ?? 0;
   int resource(String key) => resources[key] ?? 0;
   bool flag(String key) => flags[key] ?? false;
@@ -94,6 +102,7 @@ class Character {
     String? originTagId,
     String? vowId,
     String? personalItem,
+    String? chosenTone,
   }) {
     return Character(
       name: name ?? this.name,
@@ -110,6 +119,7 @@ class Character {
       originTagId: originTagId ?? this.originTagId,
       vowId: vowId ?? this.vowId,
       personalItem: personalItem ?? this.personalItem,
+      chosenTone: chosenTone ?? this.chosenTone,
     );
   }
 

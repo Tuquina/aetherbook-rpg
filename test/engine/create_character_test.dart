@@ -161,6 +161,35 @@ void main() {
       expect(character.personalItem, 'Un pincel con el mango reparado.');
     });
 
+    test('records the chosen tone (V2) when the world offers the step', () {
+      final world = _lianshuLikeWorld();
+      final character = create(
+        world,
+        const CreateCharacterInput(
+          name: 'Yuan',
+          originId: 'copista_itinerante',
+          freeAttributePoint: 'cuerpo',
+          vowId: 'saber_por_que',
+          chosenTone: 'epico',
+        ),
+      );
+      expect(character.chosenTone, 'epico');
+    });
+
+    test('chosenTone stays null for a world with no tone step', () {
+      final world = _lianshuLikeWorld();
+      final character = create(
+        world,
+        const CreateCharacterInput(
+          name: 'Yuan',
+          originId: 'copista_itinerante',
+          freeAttributePoint: 'cuerpo',
+          vowId: 'saber_por_que',
+        ),
+      );
+      expect(character.chosenTone, isNull);
+    });
+
     test('throws for an unknown origin id', () {
       final world = _lianshuLikeWorld();
       expect(
