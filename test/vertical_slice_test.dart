@@ -79,7 +79,8 @@ void main() {
         ),
       );
 
-      await tester.pumpWidget(MaterialApp(home: GameScreen(controller: controller)));
+      await tester.pumpWidget(MaterialApp(
+          home: GameScreen(controller: controller, worldSlug: 'xianxia_lianshu')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 

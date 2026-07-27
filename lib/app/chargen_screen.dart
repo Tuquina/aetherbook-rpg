@@ -106,7 +106,8 @@ class _ChargenScreenState extends State<ChargenScreen> {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: AetherMotion.slow,
-        pageBuilder: (_, _, _) => GameScreen(controller: widget.controller),
+        pageBuilder: (_, _, _) =>
+            GameScreen(controller: widget.controller, worldSlug: widget.worldSlug),
         transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
       ),

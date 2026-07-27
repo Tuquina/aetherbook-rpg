@@ -33,6 +33,35 @@ class _InMemoryWorldRepository implements WorldRepositoryPort {
       );
 }
 
+/// A second, distinct world, keyed by its own slug — used to prove
+/// [GameScreen] actually switches sessions instead of reusing whatever the
+/// controller already had loaded (see the "switching worlds" test below).
+class _TwoWorldRepository implements WorldRepositoryPort {
+  @override
+  Future<World> loadWorld(String slug) async => World(
+        slug: slug,
+        name: slug == 'xianxia' ? 'El Sendero del Qi' : 'Neón y Metal',
+        theme: slug,
+        tone: 'épico',
+        systemPrompt: '',
+        imageStyleSuffix: 'arte',
+        defaultDifficulty: 12,
+        criticalMargin: 5,
+        primaryAttribute: 'espiritu',
+        startingCharacter: const Character(
+          name: 'Protagonista',
+          level: 1,
+          exp: 0,
+          attributes: {'espiritu': 2},
+          resources: {'qi': 10},
+        ),
+        seedNarration: slug == 'xianxia'
+            ? 'Comienza el sendero de piedra.'
+            : 'Las luces de neón parpadean sobre la ciudad.',
+        seedChoices: const ['Avanzar'],
+      );
+}
+
 void main() {
   testWidgets('plays a turn end-to-end against the fake narrator',
       (tester) async {
@@ -88,5 +117,36 @@ void main() {
     expect(find.text('Meditar'), findsOneWidget,
         reason: 'choices must be revealed immediately for prose that never '
             'needed scrolling in the first place');
+  });
+
+  testWidgets(
+      'navigating to a different world re-starts the controller for it, '
+      "instead of silently showing whatever world it already had loaded",
+      (tester) async {
+    // Reproduces the WorldSelectScreen bug where picking any already-played
+    // curated/hybrid campaign always landed on whichever one was already
+    // active in the controller: WorldSelectScreen._select goes straight to
+    // GameScreen (skipping ChargenScreen) whenever a persisted session
+    // already exists, so GameScreen itself is the only thing left that can
+    // notice the mismatch and load the right session.
+    final controller = GameController(
+      worldRepository: _TwoWorldRepository(),
+      narrator: const FakeNarratorAdapter(latency: Duration.zero),
+      dice: const FixedDice(10),
+    );
+    await controller.start('xianxia');
+    expect(controller.world?.slug, 'xianxia');
+
+    // Simulates WorldSelectScreen navigating straight to a second, different
+    // world without calling controller.start() itself first (the
+    // needsChargen == false fast path).
+    await tester.pumpWidget(MaterialApp(
+        home: GameScreen(controller: controller, worldSlug: 'cyberpunk')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(controller.world?.slug, 'cyberpunk');
+    expect(find.textContaining('neón parpadean'), findsOneWidget);
+    expect(find.textContaining('sendero de piedra'), findsNothing);
   });
 }

@@ -22,10 +22,15 @@ class GameScreen extends StatefulWidget {
 
   final GameController controller;
 
-  /// Only used when the controller hasn't already been started elsewhere —
-  /// a curated world's [ChargenScreen] starts the session itself (with the
-  /// player's chargen input) before navigating here, so this screen must not
-  /// re-`start()` and discard that session.
+  /// Which world this screen is meant to show. Used both to start a session
+  /// when the controller hasn't been given one yet, and to detect a stale
+  /// one: a curated world's [ChargenScreen] starts the session itself (with
+  /// the player's chargen input) before navigating here, so in that case
+  /// this screen must not re-`start()` and discard it — but
+  /// [WorldSelectScreen] can also navigate straight here (skipping chargen)
+  /// for a world that already has a persisted session, and if the
+  /// controller is still holding a *different* world from an earlier story,
+  /// leaving it in place would silently show that other story instead.
   final String worldSlug;
 
   @override
@@ -60,7 +65,7 @@ class _GameScreenState extends State<GameScreen> {
     super.initState();
     widget.controller.addListener(_onControllerChange);
     _scroll.addListener(_onScroll);
-    if (!widget.controller.isReady) {
+    if (!widget.controller.isReady || widget.controller.world?.slug != widget.worldSlug) {
       widget.controller.start(widget.worldSlug);
     } else {
       // ChargenScreen already called start() and handed us a ready
