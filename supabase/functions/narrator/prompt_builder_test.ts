@@ -1,5 +1,9 @@
 import { assertEquals, assertStringIncludes } from "jsr:@std/assert@1";
-import { buildSystemPrompt, buildUserPrompt } from "./prompt_builder.ts";
+import {
+  buildSystemPrompt,
+  buildToneInstruction,
+  buildUserPrompt,
+} from "./prompt_builder.ts";
 import type { NarratorRequest } from "./types.ts";
 
 const baseRequest: NarratorRequest = {
@@ -154,6 +158,33 @@ Deno.test("system prompt includes the freeform-choices instruction when isFreefo
   assertStringIncludes(prompt, "preferentemente 2");
   assertStringIncludes(prompt, "SIEMPRE puede escribir su propia acción");
   assertStringIncludes(prompt, '"suggested_choices": []');
+});
+
+Deno.test("buildToneInstruction returns empty for null/undefined (no tone chosen)", () => {
+  assertEquals(buildToneInstruction(null), "");
+  assertEquals(buildToneInstruction(undefined), "");
+});
+
+Deno.test("buildToneInstruction names the tone and tells the narrator mechanics don't change", () => {
+  const instruction = buildToneInstruction({ label: "Épico", blurb: "Grande, mítico" });
+  assertStringIncludes(instruction, '"Épico"');
+  assertStringIncludes(instruction, "Grande, mítico");
+  assertStringIncludes(instruction, "nunca *qué* pasa mecánicamente");
+});
+
+Deno.test("system prompt omits any tone instruction when chosenTone is absent", () => {
+  const prompt = buildSystemPrompt(baseRequest);
+  assertEquals(prompt.includes("TONO ELEGIDO POR EL JUGADOR"), false);
+});
+
+Deno.test("system prompt includes the tone instruction when chosenTone is present", () => {
+  const prompt = buildSystemPrompt({
+    ...baseRequest,
+    chosenTone: { label: "Ácido", blurb: "Seco, irónico" },
+  });
+  assertStringIncludes(prompt, "TONO ELEGIDO POR EL JUGADOR");
+  assertStringIncludes(prompt, '"Ácido"');
+  assertStringIncludes(prompt, "Seco, irónico");
 });
 
 Deno.test("user prompt omits node-context sections when absent", () => {

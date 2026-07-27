@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:aetherbook/adapters/narrator/http_narrator_adapter.dart';
 import 'package:aetherbook/core/engine/action_resolution.dart';
 import 'package:aetherbook/core/state/character.dart';
+import 'package:aetherbook/core/world/tone_option.dart';
 import 'package:aetherbook/core/world/world.dart';
 import 'package:aetherbook/ports/narrator_port.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -172,6 +173,74 @@ void main() {
       ));
 
       expect(capturedBody!['resolution'], isNull);
+    });
+
+    test('resolves chosenTone against World.tones into {label, blurb} for '
+        'the Edge Function', () async {
+      final worldWithTones = World(
+        slug: 'isekai',
+        name: 'Isekai',
+        theme: 'isekai',
+        tone: 'aventurero',
+        systemPrompt: 'Eres el GM.',
+        imageStyleSuffix: 'arte',
+        defaultDifficulty: 12,
+        criticalMargin: 5,
+        primaryAttribute: 'ingenio',
+        startingCharacter: _character,
+        seedNarration: '',
+        seedChoices: const [],
+        tones: const [
+          ToneOption(
+              id: 'epico', label: 'Épico', blurb: 'Grande, mítico', previewText: ''),
+          ToneOption(
+              id: 'acido', label: 'Ácido', blurb: 'Seco, irónico', previewText: ''),
+        ],
+      );
+      final characterWithTone = _character.copyWith(chosenTone: 'acido');
+
+      Map<String, dynamic>? capturedBody;
+      final client = MockClient((request) async {
+        capturedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(_validResponseJson, 200);
+      });
+      final adapter = HttpNarratorAdapter(
+        endpoint: endpoint,
+        publishableKey: 'pub-key',
+        client: client,
+      );
+
+      await adapter.narrate(NarratorRequest(
+        world: worldWithTones,
+        character: characterWithTone,
+        playerAction: 'x',
+        resolution: null,
+      ));
+
+      expect(capturedBody!['chosenTone'], {'label': 'Ácido', 'blurb': 'Seco, irónico'});
+    });
+
+    test('sends chosenTone as null when the character never picked one, or '
+        'the id doesn\'t match anything the world declares', () async {
+      Map<String, dynamic>? capturedBody;
+      final client = MockClient((request) async {
+        capturedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(_validResponseJson, 200);
+      });
+      final adapter = HttpNarratorAdapter(
+        endpoint: endpoint,
+        publishableKey: 'pub-key',
+        client: client,
+      );
+
+      // _world/_character declare no tones/chosenTone at all.
+      await adapter.narrate(NarratorRequest(
+        world: _world,
+        character: _character,
+        playerAction: 'x',
+        resolution: null,
+      ));
+      expect(capturedBody!['chosenTone'], isNull);
     });
 
     test('throws NarratorHttpException on a non-200 response', () async {

@@ -3,7 +3,7 @@
 // output-format instruction. Shared by every provider adapter so the prompt
 // shape never drifts between Gemini and Groq.
 
-import type { NarratorRequest } from "./types.ts";
+import type { ChosenTone, NarratorRequest } from "./types.ts";
 
 // Applies to every world, every provider — the one place that shapes *how*
 // the narrator writes, as opposed to each world's own system prompt (which
@@ -79,6 +79,21 @@ export const FREEFORM_CHOICES_INSTRUCTION =
   `turno), devuelve "suggested_choices": [] — no hace falta forzar una ` +
   `elección en cada turno, la historia puede seguir su curso sin una.`;
 
+// Only injected when the player picked a tone at chargen (V2) — most worlds
+// and every character created before this field existed have `chosenTone`
+// null/absent, so this instruction simply doesn't apply there.
+export function buildToneInstruction(chosenTone: ChosenTone | null | undefined): string {
+  if (!chosenTone) return "";
+  return (
+    `TONO ELEGIDO POR EL JUGADOR: "${chosenTone.label}" (${chosenTone.blurb}). ` +
+    `Ajusta el registro de tu narración a este tono de principio a fin — ` +
+    `sin dejar de respetar el tono propio del mundo (arriba) y las reglas ` +
+    `de estilo de esta sección. El tono elegido afecta *cómo* se cuenta la ` +
+    `historia, nunca *qué* pasa mecánicamente: los resultados ya vienen ` +
+    `calculados y no cambian según el tono.`
+  );
+}
+
 export const OUTPUT_INSTRUCTION =
   `Devuelve SOLO un objeto JSON válido con esta forma exacta, sin markdown, ` +
   `sin backticks, sin preámbulo ni texto fuera del JSON:\n` +
@@ -96,6 +111,7 @@ export function buildSystemPrompt(request: NarratorRequest): string {
   return [
     request.world.systemPrompt,
     HUMAN_STYLE_INSTRUCTION,
+    buildToneInstruction(request.chosenTone),
     request.isFreeform ? FREEFORM_CHOICES_INSTRUCTION : "",
     OUTPUT_INSTRUCTION,
   ]

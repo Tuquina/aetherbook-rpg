@@ -40,6 +40,15 @@ export interface WorldContext {
   imageStyleSuffix: string;
 }
 
+/** A player-chosen narrative tone (V2), already resolved by the Dart client
+ * from `World.tones`/`Character.chosenTone` into what the prompt needs —
+ * this Edge Function never sees the raw tone id or the world's full tone
+ * list, only the two strings it has to work with. */
+export interface ChosenTone {
+  label: string;
+  blurb: string;
+}
+
 /** Body sent by the Dart client's HttpNarratorAdapter. */
 export interface NarratorRequest {
   world: WorldContext;
@@ -65,6 +74,10 @@ export interface NarratorRequest {
    * curated content) — tells the narrator to offer its own suggested_choices
    * instead of relying on curated content to drive the story forward. */
   isFreeform?: boolean;
+  /** The tone the player picked at chargen (V2), resolved for this world —
+   * `null`/absent for a world with no tone step, or a character created
+   * before this field existed. */
+  chosenTone?: ChosenTone | null;
 }
 
 /** A state delta as the narrator proposes it (campaign-bible §18.5/§19.3):

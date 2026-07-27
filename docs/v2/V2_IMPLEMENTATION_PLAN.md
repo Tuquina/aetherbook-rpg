@@ -339,13 +339,24 @@ Only proceed with a sub-stage once its blocking decision in
     are declared, every `label`/`blurb`/`previewText` is non-empty, and a
     regex sweep for common voseo markers (`vos`, `tenés`, `podés`, ...)
     catches any that slipped in. 616/616 passing, `analyze` clean.
-  - [ ] Narrator contract: thread `chosenTone`/its resolved `ToneOption`
-    into what's sent to `supabase/functions/narrator/`, and add an
-    instruction block in `prompt_builder.ts` so the chosen tone actually
-    shapes the narration. Deno tests locally verify the prompt-building
-    logic; **does not require deploying** to confirm correctness — deploying
-    the Edge Function so it's live is a separate, later step this assistant
-    will confirm before doing.
+  - [x] Narrator contract: `HttpNarratorAdapter._chosenToneJson` resolves
+    `Character.chosenTone` against `World.tones` into `{label, blurb}`
+    (never the raw id or the world's full tone list) and sends it as a new
+    top-level `chosenTone` request field — `null` for any world/character
+    without one. TS side: `types.ts` gained `ChosenTone`/`NarratorRequest
+    .chosenTone`; `prompt_builder.ts` gained `buildToneInstruction`, wired
+    into `buildSystemPrompt` right after `HUMAN_STYLE_INSTRUCTION` (a tone
+    instruction is a style directive, not per-turn context, so it belongs
+    in the system prompt, not the user prompt). Explicitly tells the model
+    the tone affects *how* the story is told, never *what* happens
+    mechanically. Tests: 2 new cases in `test/adapters/
+    http_narrator_adapter_test.dart` (resolves correctly; `null` for
+    absent/unknown), 4 new Deno cases in `prompt_builder_test.ts`. 618/618
+    Flutter tests + 54/54 Deno tests passing, both `analyze`/`deno check`
+    clean. **Not yet deployed** — this only takes effect for real once the
+    `narrator` Edge Function is redeployed; deploying is a separate,
+    later step this assistant will confirm before doing, since it's a
+    live-infrastructure change.
   - [ ] Persistence: additive nullable `chosen_tone` column on `characters`
     — migration **file** only for now (safe, versioned, git-only); actually
     applying it to the live Supabase project needs a explicit go-ahead

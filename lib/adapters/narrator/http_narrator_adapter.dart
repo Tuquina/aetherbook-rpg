@@ -90,7 +90,18 @@ class HttpNarratorAdapter implements NarratorPort {
       'nodeForbiddenReveals': request.nodeForbiddenReveals,
       'nodeGoal': request.nodeGoal,
       'isFreeform': request.isFreeform,
+      'chosenTone': _chosenToneJson(request.world, request.character),
     };
+  }
+
+  /// Resolves [Character.chosenTone] (just an id) against [World.tones] into
+  /// what the Edge Function's prompt actually needs — `null` for a world
+  /// with no tone step, a stale/unknown id, or a character that never
+  /// picked one.
+  Map<String, Object?>? _chosenToneJson(World world, Character character) {
+    final tone = world.toneByIdOrNull(character.chosenTone);
+    if (tone == null) return null;
+    return {'label': tone.label, 'blurb': tone.blurb};
   }
 
   Map<String, Object?> _worldJson(World world) => {
