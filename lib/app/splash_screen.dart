@@ -114,7 +114,7 @@ class _SplashScreenState extends State<SplashScreen>
                           onPressed: _openAccount,
                           child: Text(
                             widget.auth!.isAnonymous
-                                ? 'Guardar tu progreso con tu email'
+                                ? 'Guardar tu progreso'
                                 : 'Jugando como ${widget.auth!.email}',
                             style: AetherType.caption.copyWith(
                                 color: AetherColors.parchmentFaint,

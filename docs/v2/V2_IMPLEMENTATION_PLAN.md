@@ -384,13 +384,58 @@ Only proceed with a sub-stage once its blocking decision in
   the Edge Function redeploy and the migration were explicitly confirmed
   with you before being executed. `master` was also pushed to origin (14
   commits) the same day, triggering Vercel's auto-deploy of the client.
-- **6d — Auth expansion.** Decision D accepted, **discontinuing magic-link**
-  (user's explicit choice — see `V2_PRODUCT_DECISIONS.md`). Not started yet.
-  `AuthPort` methods + `SupabaseAuthAdapter` + `account_screen.dart`/
-  `splash_screen.dart` UI can all be finished in code; **enabling Google as
-  an OAuth provider itself requires the user to configure a Google Cloud
-  Console OAuth client and enter it into the Supabase Auth dashboard** — not
-  something this assistant can do unilaterally.
+- **6d — Auth expansion — ✅ code done (2026-07-27), not live yet.** Decision D
+  accepted, **discontinuing magic-link** (user's explicit choice — see
+  `V2_PRODUCT_DECISIONS.md`).
+  - `AuthPort` (`lib/ports/auth_port.dart`): `continueWithEmail`/
+    `EmailLinkOutcome` removed entirely. New surface: `signInWithGoogle()`,
+    `signUpWithPassword({email, password})`, `signInWithPassword({email,
+    password})`, `resetPassword(email)`, plus a new
+    `EmailAlreadyRegisteredException` (thrown by `signUpWithPassword` when
+    the email belongs to a different account — V2 design prototype §10d's
+    merge-warning case).
+  - `SupabaseAuthAdapter`: `signInWithGoogle` uses `linkIdentity(OAuthProvider
+    .google)` — deliberately **not** `signInWithOAuth`, which would create a
+    separate session instead of attaching Google to the current anonymous
+    one (losing the "keep today's progress" property every other auth path
+    has). `signUpWithPassword` reuses the existing `isEmailAlreadyTakenError`
+    helper (untouched, still tested by
+    `test/adapters/auth/supabase_auth_adapter_test.dart`) to turn Supabase's
+    error into `EmailAlreadyRegisteredException`. `signInWithPassword`/
+    `resetPassword` are thin `GoTrueClient` wrappers — per existing
+    precedent, these aren't unit-tested directly (no `GoTrueClient` mock
+    harness exists in this repo); coverage comes from `FakeAuthAdapter` +
+    `AccountScreen` widget tests instead, same as `continueWithEmail` always
+    was.
+  - `account_screen.dart` rewritten: Google button + sign-up (email/
+    password) as the default view + a sign-in mode + a forgot-password
+    mode, switchable via text links. Listens to `AuthPort.onChange` in
+    `initState` (not just reacting to each call's own `Future`) because
+    Google's `linkIdentity` only *launches* the consent screen — actual
+    completion arrives later via that stream, once the player returns from
+    the external browser.
+  - `splash_screen.dart`: button copy simplified from "Guardar tu progreso
+    con tu email" to "Guardar tu progreso" (no longer email-specific).
+  - Tests: `test/app/account_screen_test.dart` fully rewritten (14 cases —
+    sign-up form/disabled-submit/success/email-taken/generic-error, Google
+    link/success/failure, sign-in success/failure/links, forgot-password).
+    Found and fixed a real overflow bug in the email-taken warning card's
+    `Row` (missing `Expanded` around the message text) that the old tests
+    couldn't have caught since that card didn't exist before. Also hit the
+    same long-`ListView`-in-a-small-test-viewport issue `chargen_screen_test
+    .dart` did — fixed the same way (taller test viewport). 631/631 passing,
+    `analyze` clean.
+
+  **Not live yet — two things need your action in the Supabase/Google
+  dashboards before Google sign-in actually works for a player:**
+  1. Configure a Google Cloud Console OAuth client (ID + secret) and enable
+     Google as a provider in Supabase's Auth settings.
+  2. Enable **"Allow manual linking"** in Supabase's Auth settings —
+     `linkIdentity` requires it, and without it every Google attempt fails.
+
+  Email/password (sign-up, sign-in, reset) needs no extra dashboard
+  configuration beyond what magic-link already had — it works as soon as
+  this code is deployed.
 - **6e — Story-graph editor.** Decision A **deferred** (2026-07-27, user
   confirmed). Not scheduled.
 - **6f — Publishing/UGC.** Decision B **deferred** (2026-07-27, user
@@ -481,7 +526,7 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 | 6a — Ending-discovery counter | ✅ Done (2026-07-27) | — |
 | 6b — Per-world visual theming | ✅ Done (2026-07-27) | — |
 | 6c — Player-selectable tone | ✅ Done (2026-07-27) — Edge Function deploy + migration apply still need your go-ahead | — |
-| 6d — Auth expansion | Accepted (drop magic-link), not started; Google OAuth needs user's Cloud Console setup | — |
+| 6d — Auth expansion | ✅ Code done (2026-07-27), email/password ready to deploy; Google needs Cloud Console + "Allow manual linking" in Supabase | — |
 | 6e — Story-graph editor | Deferred (2026-07-27) | — |
 | 6f — Publishing/UGC | Deferred (2026-07-27) | — |
 | 7 — Ending/account/offline/resilience polish | Not started | Stage 4, 6a |

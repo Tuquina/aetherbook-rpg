@@ -5,16 +5,18 @@ import '../../ports/auth_port.dart';
 /// Wraps Supabase Auth (CLAUDE.md §4/§8: the only file that talks to
 /// `supabase_flutter`'s `auth` surface directly). Owns the whole identity
 /// lifecycle: the transparent anonymous bootstrap at launch
-/// ([ensureSignedIn]) and the player-initiated upgrade to a durable email
-/// ([continueWithEmail]).
+/// ([ensureSignedIn]), and the player-initiated upgrade to a durable
+/// identity via Google or email+password (V2 — see `AuthPort`'s doc comment
+/// for why magic-link was discontinued).
 class SupabaseAuthAdapter implements AuthPort {
   SupabaseAuthAdapter(this._client, {this.emailRedirectTo});
 
   final SupabaseClient _client;
 
-  /// Where Supabase redirects the player after they click the emailed link
-  /// — must be allow-listed in the project's Auth > URL Configuration.
-  /// `null` falls back to the project's configured Site URL.
+  /// Where Supabase redirects the player after an OAuth consent screen or a
+  /// password-reset email — must be allow-listed in the project's
+  /// Auth > URL Configuration. `null` falls back to the project's
+  /// configured Site URL.
   final String? emailRedirectTo;
 
   GoTrueClient get _auth => _client.auth;
@@ -39,27 +41,37 @@ class SupabaseAuthAdapter implements AuthPort {
   }
 
   @override
-  Future<EmailLinkOutcome> continueWithEmail(String email) async {
+  Future<void> signInWithGoogle() {
+    // linkIdentity (not signInWithOAuth) specifically so this attaches
+    // Google to the *current* anonymous session instead of switching to a
+    // separate one — requires "Enable Manual Linking" in the project's
+    // Auth settings, on top of the Google provider itself being configured.
+    return _auth.linkIdentity(OAuthProvider.google, redirectTo: emailRedirectTo);
+  }
+
+  @override
+  Future<void> signUpWithPassword({required String email, required String password}) async {
     try {
       await _auth.updateUser(
-        UserAttributes(email: email),
+        UserAttributes(email: email, password: password),
         emailRedirectTo: emailRedirectTo,
       );
-      return EmailLinkOutcome.linkConfirmationSent;
     } on AuthApiException catch (e) {
-      if (!isEmailAlreadyTakenError(e)) rethrow;
-      // Already someone else's account — most likely this same player,
-      // claimed from a previous device. Sign *that* account in instead of
-      // creating a new one (shouldCreateUser: false) — the current
-      // anonymous session's local state is left behind, same as any
-      // sign-in into a pre-existing account would.
-      await _auth.signInWithOtp(
-        email: email,
-        emailRedirectTo: emailRedirectTo,
-        shouldCreateUser: false,
-      );
-      return EmailLinkOutcome.signInLinkSent;
+      if (isEmailAlreadyTakenError(e)) {
+        throw EmailAlreadyRegisteredException(email);
+      }
+      rethrow;
     }
+  }
+
+  @override
+  Future<void> signInWithPassword({required String email, required String password}) {
+    return _auth.signInWithPassword(email: email, password: password);
+  }
+
+  @override
+  Future<void> resetPassword(String email) {
+    return _auth.resetPasswordForEmail(email, redirectTo: emailRedirectTo);
   }
 }
 

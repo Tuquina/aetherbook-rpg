@@ -152,12 +152,20 @@ alongside the new methods): "Agrega Google OAuth y pass con contraseña,
 quitando el enlace mágico. Total todavía estamos en etapa de pruebas, no hay
 usuarios reales más que yo hasta ahora." Recorded as the reasoning — no
 migration-safety concern applies while there are no real linked users yet.
-Scoped as Stage 6d. **External dependency the assistant cannot complete
-alone:** enabling Google as an OAuth provider requires a Google Cloud
-Console OAuth client (ID + secret) configured in the Supabase Auth
-dashboard — that setup is the user's to do; the code side (port methods,
-adapter, UI) can be finished without it, but Google sign-in won't actually
-work until that provider is enabled on the live project.
+Scoped as Stage 6d — **code finished 2026-07-27** (`AuthPort`/
+`SupabaseAuthAdapter`/`FakeAuthAdapter`/`account_screen.dart` all rewritten,
+631/631 tests passing). **External dependencies the assistant cannot
+complete alone, still outstanding:**
+1. A Google Cloud Console OAuth client (ID + secret) configured as a
+   provider in the Supabase Auth dashboard.
+2. **"Allow manual linking"** enabled in that same dashboard —
+   `SupabaseAuthAdapter.signInWithGoogle` uses `linkIdentity` (not
+   `signInWithOAuth`) specifically to attach Google to the current
+   anonymous session instead of switching to a separate one, and
+   `linkIdentity` requires this setting or every attempt fails.
+
+Email/password (sign-up/sign-in/reset) needs no dashboard changes beyond
+what magic-link already had — it's ready as soon as this code deploys.
 
 **Context.** Sections `10b`/`10d` assume Google OAuth and email/password
 sign-in/sign-up/reset exist. The prototype's own annotation on `10d` admits:
