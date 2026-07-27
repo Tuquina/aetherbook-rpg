@@ -288,19 +288,49 @@ Only proceed with a sub-stage once its blocking decision in
   `test/app/game_controller_ending_test.dart` (ordinal reflects the
   *attempted* ending even when a failure fallback redirects the flag
   elsewhere). Full suite: 590/590 passing, `analyze` clean.
-- **6b — Per-world visual theming.** Blocked by Decision E. `World.fromJson`
-  new nullable fields → all 8 world JSONs → `AetherColors` per-world resolver
-  → wired into `game_screen.dart`/`chargen_screen.dart`/library cards.
-- **6c — Player-selectable tone.** Blocked by Decision C. New field + chargen
-  step + `prompt_builder.ts` instruction + authored preview copy (15
-  snippets: 5 worlds × 3 tones).
-- **6d — Auth expansion.** Blocked by Decision D. `AuthPort` methods +
-  Supabase Auth provider config + `account_screen.dart`/`splash_screen.dart` UI.
-- **6e — Story-graph editor.** Blocked by Decision A. Own multi-week
-  initiative, likely a separate app/tool — not scoped further in this document.
-- **6f — Publishing/UGC.** Blocked by Decision B. Needs its own
-  `V2_DATA_MIGRATION.md`-equivalent deep-dive before any code — not scoped
-  further in this document.
+- **6b — Per-world visual theming — ✅ DONE (2026-07-27).** Decision E
+  accepted as-is. `World` gained nullable `themeAccentHex`/`themeBaseHex`/
+  `themeSecondaryHex` (raw hex strings, parsed from new `theme_accent`/
+  `theme_base`/`theme_secondary` JSON keys — kept as `String?` rather than
+  `Color` so `core/` stays Flutter-free per `core_purity_test.dart`). New
+  `lib/app/design/world_theme.dart` (`WorldTheme.forWorld`) resolves them
+  into real `Color`s in the presentation layer, falling back to the
+  existing global gold/ink/nova palette for any world that declares
+  nothing. `AetherBackground` (`widgets/atmosphere.dart`) gained a `base`
+  parameter — needed because `accent` alone only tints the drifting motes,
+  which `GameScreen` disables (`particles: false`); without `base` feeding
+  the backdrop gradient's mid stop, per-world theming would have been
+  invisible on the one screen it matters most. All 8 `assets/worlds/*.json`
+  files now declare real values (Isekai `#EAC978`/`#15120F`/`#9B5DE0`,
+  Xianxia `#7FD4C1`/`#0F1D1A`/`#D8B65E` — shared by `xianxia_lianshu`,
+  Superhéroes `#F0564A`/`#170F0E`/`#4C8BF0`, Cyberpunk `#55E0F0`/`#0C1016`/
+  `#FF4FA3` — shared by `curated_cyberpunk_02_apagon_violeta`,
+  Post-apocalíptico `#B8B27A`/`#161611`/`#D2762F` — shared by
+  `curated_zombie_01_ultimo_tren`). Wired into `GameScreen`'s
+  `AetherBackground` only so far — library cards, chargen, and the
+  title-treatment/texture dimensions are explicitly deferred, see
+  `V2_PRODUCT_DECISIONS.md`'s Decision E entry. Tests: `test/world/
+  world_test.dart` (2 cases), `test/app/design/world_theme_test.dart` (6
+  cases: hex parsing, fallback, per-field independence), `test/app/widgets/
+  atmosphere_test.dart` (2 cases: default gradient, themed gradient). Full
+  suite: 605/605 passing, `analyze` clean, all `test/content/*` JSON-parsing
+  tests re-verified green after editing all 8 world files.
+- **6c — Player-selectable tone.** Decision C accepted, **full mechanic**
+  (user explicitly chose this over the cheaper display-only option). Not
+  started yet. New field + chargen step + `prompt_builder.ts` instruction +
+  authored preview copy (15 snippets: 5 worlds × 3 tones) — narrator-contract
+  change, needs an Edge Function redeploy to actually take effect live.
+- **6d — Auth expansion.** Decision D accepted, **discontinuing magic-link**
+  (user's explicit choice — see `V2_PRODUCT_DECISIONS.md`). Not started yet.
+  `AuthPort` methods + `SupabaseAuthAdapter` + `account_screen.dart`/
+  `splash_screen.dart` UI can all be finished in code; **enabling Google as
+  an OAuth provider itself requires the user to configure a Google Cloud
+  Console OAuth client and enter it into the Supabase Auth dashboard** — not
+  something this assistant can do unilaterally.
+- **6e — Story-graph editor.** Decision A **deferred** (2026-07-27, user
+  confirmed). Not scheduled.
+- **6f — Publishing/UGC.** Decision B **deferred** (2026-07-27, user
+  confirmed). Not scheduled.
 
 ---
 
@@ -385,10 +415,10 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 | 4 — Gameplay reading experience | Partial: dialog consolidation done (2026-07-27), header/choices/FateRoll/image still open | Stage 1 |
 | 5 — Character/inventory/story sheets | Not started | Stage 1 |
 | 6a — Ending-discovery counter | ✅ Done (2026-07-27) | — |
-| 6b — Per-world visual theming | Not started | Decision E |
-| 6c — Player-selectable tone | Not started | Decision C |
-| 6d — Auth expansion | Not started | Decision D |
-| 6e — Story-graph editor | Not started | Decision A |
-| 6f — Publishing/UGC | Not started | Decision B |
+| 6b — Per-world visual theming | ✅ Done (2026-07-27) | — |
+| 6c — Player-selectable tone | Accepted (full mechanic), not started | — |
+| 6d — Auth expansion | Accepted (drop magic-link), not started; Google OAuth needs user's Cloud Console setup | — |
+| 6e — Story-graph editor | Deferred (2026-07-27) | — |
+| 6f — Publishing/UGC | Deferred (2026-07-27) | — |
 | 7 — Ending/account/offline/resilience polish | Not started | Stage 4, 6a |
 | 8 — Accessibility/responsiveness/performance/release | Not started | Stages 1-7 |

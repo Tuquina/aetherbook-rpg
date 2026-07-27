@@ -3,6 +3,9 @@
   "name": "El último tren no espera a los vivos",
   "theme": "postapoc_zombie",
   "tone": "suspenso de supervivencia, violencia seca, lectura directa",
+  "theme_accent": "#B8B27A",
+  "theme_base": "#161611",
+  "theme_secondary": "#D2762F",
   "system_prompt": "",
   "image_style_suffix": "",
 

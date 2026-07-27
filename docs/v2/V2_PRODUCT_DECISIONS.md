@@ -15,7 +15,8 @@ decision, stop and ask before writing code.
 
 ## Decision A — Story-graph editor (visual campaign authoring tool)
 
-**Status:** Pending — needs confirmation.
+**Status:** **Deferred (2026-07-27)** — user confirmed, alongside Decision B.
+Not scheduled; revisit only if explicitly requested as its own initiative.
 
 **Context.** The prototype's section 9 (`9a`–`9j`) specs a full visual editor —
 web node-graph canvas + a mobile list-based equivalent — for authoring
@@ -57,7 +58,9 @@ must be firewalled from production builds.
 
 ## Decision B — Publishing / user-generated-content library
 
-**Status:** Pending — **recommend explicit rejection/deferral** given the scope below.
+**Status:** **Deferred (2026-07-27)** — user confirmed, alongside Decision A.
+Not scheduled; no RLS/schema/legal work is to be attempted without this
+being explicitly revisited first.
 
 **Context.** Section `10c` (a rights/licensing notice shown "at publish time")
 and the "Publicar" button in `9a` imply other players can read stories a user
@@ -97,7 +100,12 @@ need its own `V2_DATA_MIGRATION.md`-equivalent deep-dive before any code).
 
 ## Decision C — Player-selectable narrative tone
 
-**Status:** Pending.
+**Status:** **Accepted, full mechanic (2026-07-27)** — user chose option (1),
+not the cheaper display-only option this document recommended. Implementing
+as a real new mechanic: chargen step + new field + `prompt_builder.ts`
+instruction + authored preview/tone copy for every world. Scoped as its own
+Stage 6c slice (see `V2_IMPLEMENTATION_PLAN.md`) — narrator-contract and
+Edge Function changes, not bundled with anything else.
 
 **Context.** The prototype's interactive JS mock (chargen state) includes a
 tone selector (épico / íntimo / ácido) with per-world preview copy.
@@ -138,7 +146,18 @@ pre-declare a tone at chargen.
 
 ## Decision D — Auth expansion: Google OAuth + email/password
 
-**Status:** Pending.
+**Status:** **Accepted, option (2) — discontinue magic-link (2026-07-27).**
+User explicitly overrode this document's recommendation (keep magic-link
+alongside the new methods): "Agrega Google OAuth y pass con contraseña,
+quitando el enlace mágico. Total todavía estamos en etapa de pruebas, no hay
+usuarios reales más que yo hasta ahora." Recorded as the reasoning — no
+migration-safety concern applies while there are no real linked users yet.
+Scoped as Stage 6d. **External dependency the assistant cannot complete
+alone:** enabling Google as an OAuth provider requires a Google Cloud
+Console OAuth client (ID + secret) configured in the Supabase Auth
+dashboard — that setup is the user's to do; the code side (port methods,
+adapter, UI) can be finished without it, but Google sign-in won't actually
+work until that provider is enabled on the live project.
 
 **Context.** Sections `10b`/`10d` assume Google OAuth and email/password
 sign-in/sign-up/reset exist. The prototype's own annotation on `10d` admits:
@@ -179,9 +198,20 @@ scope; magic-link remains the only account path.
 
 ## Decision E — Per-world visual theming: lock the token values
 
-**Status:** Pending confirmation of exact values (low product risk either way —
-this is really a "sign off on these specific numbers" decision, not a scope
-question).
+**Status:** **Accepted, option (1) — adopted as-is (2026-07-27).** Implemented
+in Stage 6b: `World` gained nullable `themeAccentHex`/`themeBaseHex`/
+`themeSecondaryHex` (raw hex strings — `core/` stays Flutter-free),
+`lib/app/design/world_theme.dart`'s `WorldTheme.forWorld` resolves them to
+real `Color`s falling back to the existing global palette, and
+`AetherBackground` gained a `base` parameter so the per-world tint shows in
+the backdrop gradient even with `particles: false` (as on `GameScreen`) —
+`accent`-only wiring would have been invisible there. All 8 world JSON files
+now declare the table below. **Not yet done:** the title-treatment
+(font-tracking per world) and background-texture (fog/scanline/grain
+`CustomPainter`s) dimensions from the original prototype, and wiring the
+per-world accent into story-library cards/chargen (currently still
+module-accent-colored, which is a separate, pre-existing system) — left
+for a follow-up pass, not silently dropped.
 
 **Context.** Section `4a` proposes 5 named token sets (accent / base /
 secondary / title-treatment / background-texture), one per world family. This

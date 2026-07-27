@@ -16,6 +16,7 @@ class AetherBackground extends StatefulWidget {
     required this.child,
     this.particles = true,
     this.accent = AetherColors.gold,
+    this.base = AetherColors.ink,
   });
 
   final Widget child;
@@ -25,8 +26,16 @@ class AetherBackground extends StatefulWidget {
   final bool particles;
 
   /// Tint for the drifting motes — lets a screen's dominant color (e.g. a
-  /// story module's accent) bleed faintly into the atmosphere.
+  /// story module's accent, or a world's [WorldTheme.accent]) bleed faintly
+  /// into the atmosphere.
   final Color accent;
+
+  /// The backdrop gradient's mid tone (V2 design prototype §4a-4d's per-world
+  /// "base" — e.g. `WorldTheme.forWorld(world).base`). Defaults to the app's
+  /// single global `AetherColors.ink`, so a screen that never passes this
+  /// (every screen predating per-world theming) looks exactly as before —
+  /// visible even with [particles] off, unlike [accent].
+  final Color base;
 
   @override
   State<AetherBackground> createState() => _AetherBackgroundState();
@@ -93,12 +102,22 @@ class _AetherBackgroundState extends State<AetherBackground>
     if (reduceMotion && c != null && c.isAnimating) c.stop();
 
     return DecoratedBox(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: RadialGradient(
-          center: Alignment(0, -1.1),
+          center: const Alignment(0, -1.1),
           radius: 1.5,
-          colors: [Color(0xFF201A13), AetherColors.ink, AetherColors.void_],
-          stops: [0.0, 0.45, 1.0],
+          // The warm top highlight leans slightly toward `accent` on top of
+          // `base` — for the default gold/ink pair this reproduces the
+          // original hardcoded `Color(0xFF201A13)` almost exactly; a
+          // themed world's own base/accent carry through instead. The
+          // deepest anchor (`void_`) stays constant across every world by
+          // design (V2 prototype §4a: "el resto del sistema... no se mueve").
+          colors: [
+            Color.lerp(widget.base, widget.accent, 0.12) ?? widget.base,
+            widget.base,
+            AetherColors.void_,
+          ],
+          stops: const [0.0, 0.45, 1.0],
         ),
       ),
       child: Stack(

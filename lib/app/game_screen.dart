@@ -5,6 +5,7 @@ import '../core/narrative/story_choice.dart';
 import 'codex_screen.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
+import 'design/world_theme.dart';
 import 'game_controller.dart';
 import 'inventory_screen.dart';
 import 'widgets/atmosphere.dart';
@@ -152,9 +153,14 @@ class _GameScreenState extends State<GameScreen> {
   @override
   Widget build(BuildContext context) {
     final c = widget.controller;
+    // `null` only while `start()` hasn't resolved a world yet (loading/error
+    // states below) — `AetherBackground`'s own defaults (gold/ink) apply then.
+    final theme = c.world != null ? WorldTheme.forWorld(c.world!) : null;
     return Scaffold(
       body: AetherBackground(
         particles: false,
+        accent: theme?.accent ?? AetherColors.gold,
+        base: theme?.base ?? AetherColors.ink,
         child: ListenableBuilder(
           listenable: c,
           builder: (context, _) {

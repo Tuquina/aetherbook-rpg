@@ -57,6 +57,9 @@ class World {
     this.hasFreeAttributePoint = true,
     this.chargenVowLabel = 'Juramento',
     this.hasCustomizableName = true,
+    this.themeAccentHex,
+    this.themeBaseHex,
+    this.themeSecondaryHex,
   });
 
   final String slug;
@@ -223,6 +226,17 @@ class World {
   /// the fixed name in that case.
   final bool hasCustomizableName;
 
+  /// Per-world visual accent/base/secondary colors, as raw `"#RRGGBB"` hex
+  /// strings (V2 design prototype §4a-4d: "un juego de tokens por
+  /// ambientación") — `null` for a world that hasn't declared theming yet,
+  /// which falls back to the app's single global palette. Hex strings, not
+  /// `Color`, because `core/` stays Flutter-free (`core_purity_test.dart`
+  /// forbids `dart:ui`/`package:flutter` imports here); parsing them into an
+  /// actual `Color` is `lib/app/design/world_theme.dart`'s job.
+  final String? themeAccentHex;
+  final String? themeBaseHex;
+  final String? themeSecondaryHex;
+
   CharacterOrigin originById(String id) => origins.firstWhere(
         (o) => o.id == id,
         orElse: () => throw ArgumentError('unknown origin: $id'),
@@ -356,6 +370,9 @@ class World {
           json['chargen_free_attribute_point'] as bool? ?? true,
       chargenVowLabel: json['chargen_vow_label'] as String? ?? 'Juramento',
       hasCustomizableName: json['chargen_customizable_name'] as bool? ?? true,
+      themeAccentHex: json['theme_accent'] as String?,
+      themeBaseHex: json['theme_base'] as String?,
+      themeSecondaryHex: json['theme_secondary'] as String?,
     );
   }
 

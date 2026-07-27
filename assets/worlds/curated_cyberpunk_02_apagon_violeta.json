@@ -3,6 +3,9 @@
   "name": "Treinta y seis horas antes del apagón violeta",
   "theme": "cyberpunk_lucerna",
   "tone": "acción criminal, thriller tecnológico, oscuridad de neón",
+  "theme_accent": "#55E0F0",
+  "theme_base": "#0C1016",
+  "theme_secondary": "#FF4FA3",
   "system_prompt": "",
   "image_style_suffix": "",
 

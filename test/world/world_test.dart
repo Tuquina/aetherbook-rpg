@@ -287,6 +287,27 @@ void main() {
     });
   });
 
+  group('World — per-world theming (V2 design prototype §4a-4d)', () {
+    test('theme hex fields default to null for a world that hasn\'t declared '
+        'any (falls back to the global palette)', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(world.themeAccentHex, isNull);
+      expect(world.themeBaseHex, isNull);
+      expect(world.themeSecondaryHex, isNull);
+    });
+
+    test('parses theme_accent, theme_base and theme_secondary from the JSON', () {
+      final json = baseWorldJson()
+        ..['theme_accent'] = '#7FD4C1'
+        ..['theme_base'] = '#0F1D1A'
+        ..['theme_secondary'] = '#D8B65E';
+      final world = World.fromJson(json);
+      expect(world.themeAccentHex, '#7FD4C1');
+      expect(world.themeBaseHex, '#0F1D1A');
+      expect(world.themeSecondaryHex, '#D8B65E');
+    });
+  });
+
   group('World — relationship delta bounds (ApplyStateDeltas wiring)', () {
     test('default to the original AI-safety values', () {
       final world = World.fromJson(baseWorldJson());
