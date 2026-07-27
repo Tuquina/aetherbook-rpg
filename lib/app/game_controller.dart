@@ -122,6 +122,17 @@ class GameController extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  /// The ending the player just chose at a `ResolutionNode`'s climax, as its
+  /// 1-based position among that node's [ResolutionNode.endings] (not a
+  /// ranking — authored order only) and the total the campaign declares.
+  /// `null` until [chooseEnding] is called, and reset by [start] — a V2
+  /// reading-screen detail ("Final descubierto · 1 de N", V2 design
+  /// prototype §1b), not a new mechanic: both numbers already exist on the
+  /// content, this just remembers them past the point where `currentNode`
+  /// moves on to the epilogue and the `ResolutionNode` is no longer reachable.
+  int? _achievedEndingOrdinal;
+  int? _achievedEndingsTotal;
+
   /// The current turn's scene illustration (GDD §6), or `null` if none was
   /// generated (no `imageGenerator` configured, the provider failed, or this
   /// world never calls the narrator at all). Never blocks anything else.
@@ -139,6 +150,8 @@ class GameController extends ChangeNotifier {
   String get tone => _tone;
   ActionResolution? get lastResolution => _lastResolution;
   int get lastLevelsGained => _lastLevelsGained;
+  int? get achievedEndingOrdinal => _achievedEndingOrdinal;
+  int? get achievedEndingsTotal => _achievedEndingsTotal;
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isReady => _world != null && _session != null;
@@ -389,6 +402,8 @@ class GameController extends ChangeNotifier {
       }
       _lastResolution = null;
       _lastLevelsGained = 0;
+      _achievedEndingOrdinal = null;
+      _achievedEndingsTotal = null;
     } catch (e) {
       _error = 'No se pudo cargar el mundo: $e';
     } finally {
@@ -636,6 +651,13 @@ class GameController extends ChangeNotifier {
         break;
       }
     }
+
+    // Captured here, not derived later: `currentNode` stops being this
+    // `ResolutionNode` the moment `_resolveTurn` advances to
+    // `epilogueNodeId` below, so `node.endings` wouldn't be reachable from
+    // the epilogue screen otherwise.
+    _achievedEndingOrdinal = node.endings.indexOf(ending) + 1;
+    _achievedEndingsTotal = node.endings.length;
 
     await _resolveTurn(
       world: world,

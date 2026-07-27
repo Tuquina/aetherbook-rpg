@@ -210,10 +210,21 @@ presentation, same assertions.
 Only proceed with a sub-stage once its blocking decision in
 `V2_PRODUCT_DECISIONS.md` is **Accepted**.
 
-- **6a — Ending-discovery counter.** No decision needed (purely additive,
-  already reusing `ResolutionNode.endings.length`). `GameController` getter +
-  UI in the ending screen. **Good early win, can run before or alongside
-  Stage 4.**
+- **6a — Ending-discovery counter — ✅ DONE (2026-07-27).** `GameController`
+  gained `achievedEndingOrdinal`/`achievedEndingsTotal` (`int?`, both `null`
+  until `chooseEnding` is called, reset by `start`), captured inside
+  `chooseEnding` itself — `node.endings.indexOf(ending) + 1` and
+  `node.endings.length` — since `currentNode` moves on to the epilogue
+  immediately after, at which point the `ResolutionNode` (and its `endings`
+  list) is no longer reachable. Wired into `_EndOfStory` in `game_screen.dart`
+  as a "Final descubierto · N de M" line, shown only when both values are
+  non-null (i.e. never for a curated AI-free story's dead end or a pure
+  epilogue node with no endings mechanic — no special-casing needed, the
+  values are simply `null` there). Tests: 2 new cases + assertions added to
+  the existing success/fallback-failure cases in
+  `test/app/game_controller_ending_test.dart` (ordinal reflects the
+  *attempted* ending even when a failure fallback redirects the flag
+  elsewhere). Full suite: 590/590 passing, `analyze` clean.
 - **6b — Per-world visual theming.** Blocked by Decision E. `World.fromJson`
   new nullable fields → all 8 world JSONs → `AetherColors` per-world resolver
   → wired into `game_screen.dart`/`chargen_screen.dart`/library cards.
@@ -310,7 +321,7 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 | 3 — Character creation V2 | Not started | Stage 1 |
 | 4 — Gameplay reading experience | Not started | Stage 1 |
 | 5 — Character/inventory/story sheets | Not started | Stage 1 |
-| 6a — Ending-discovery counter | Not started | — (can run anytime) |
+| 6a — Ending-discovery counter | ✅ Done (2026-07-27) | — |
 | 6b — Per-world visual theming | Not started | Decision E |
 | 6c — Player-selectable tone | Not started | Decision C |
 | 6d — Auth expansion | Not started | Decision D |

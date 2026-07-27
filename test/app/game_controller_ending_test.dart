@@ -137,6 +137,31 @@ void main() {
     });
   });
 
+  group('GameController achievedEndingOrdinal/achievedEndingsTotal '
+      '(V2 "Final descubierto · N de M")', () {
+    test('are null before any ending has been chosen', () async {
+      final controller = _controllerWith(const FixedDice(10));
+      await controller.start('climax_test');
+
+      expect(controller.achievedEndingOrdinal, isNull);
+      expect(controller.achievedEndingsTotal, isNull);
+    });
+
+    test('reset to null when start() begins a new session', () async {
+      final controller = _controllerWith(const FixedDice(20));
+      await controller.start('climax_test');
+      final ending =
+          controller.availableEndings.firstWhere((e) => e.id == 'final_luz');
+      await controller.chooseEnding(ending);
+      expect(controller.achievedEndingOrdinal, isNotNull);
+
+      await controller.start('climax_test', forceNew: true);
+
+      expect(controller.achievedEndingOrdinal, isNull);
+      expect(controller.achievedEndingsTotal, isNull);
+    });
+  });
+
   group('GameController.chooseEnding — success', () {
     test('sets the ending flag, grants the technique, and advances into the '
         "epilogue's matching beat", () async {
@@ -159,6 +184,12 @@ void main() {
       expect(controller.narration, contains('Todo termina en luz.'));
       // The unrelated fallback-only beat must not also show.
       expect(controller.narration, isNot(contains('fracturado')));
+
+      // 'final_luz' is authored first among 'climax's 3 declared endings —
+      // still true here even though 'currentNode' has already moved on to
+      // the epilogue and 'availableEndings' is empty again.
+      expect(controller.achievedEndingOrdinal, 1);
+      expect(controller.achievedEndingsTotal, 3);
     });
   });
 
@@ -184,6 +215,11 @@ void main() {
 
       expect(controller.currentNode!.id, 'epilogo');
       expect(controller.narration, contains('Todo termina fracturado.'));
+
+      // The ordinal reflects the ending the player attempted ('final_oscuro',
+      // authored 2nd), not the fallback id the failure redirected to.
+      expect(controller.achievedEndingOrdinal, 2);
+      expect(controller.achievedEndingsTotal, 3);
     });
   });
 }

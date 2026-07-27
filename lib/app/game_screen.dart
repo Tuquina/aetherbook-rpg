@@ -410,15 +410,34 @@ class _SceneImageShimmerState extends State<_SceneImageShimmer>
 /// thing left to read — the graph has nowhere further to go, so this is an
 /// explicit "you're done" instead of a silently empty choices bar.
 class _EndOfStory extends StatelessWidget {
-  const _EndOfStory({required this.onFinishStory});
+  const _EndOfStory({
+    required this.onFinishStory,
+    this.endingOrdinal,
+    this.endingsTotal,
+  });
 
   final VoidCallback onFinishStory;
 
+  /// This ending's 1-based position among the campaign's declared endings,
+  /// and how many it declares in total — both `null` for a curated, AI-free
+  /// story's dead end (no `ResolutionNode.endings` mechanic at all) or a
+  /// hybrid campaign's pure epilogue node with no endings of its own. V2
+  /// design prototype §1b: "Final descubierto · N de M".
+  final int? endingOrdinal;
+  final int? endingsTotal;
+
   @override
   Widget build(BuildContext context) {
+    final ordinal = endingOrdinal;
+    final total = endingsTotal;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (ordinal != null && total != null) ...[
+          Text('Final descubierto · $ordinal de $total',
+              style: AetherType.caption.copyWith(color: AetherColors.parchmentFaint)),
+          const SizedBox(height: AetherSpace.sm),
+        ],
         Text('Fin de la historia',
             style: AetherType.overline.copyWith(color: AetherColors.goldSoft)),
         const SizedBox(height: AetherSpace.md),
@@ -619,7 +638,11 @@ class _ChoicesBar extends StatelessWidget {
                   child: DestinyWriting(),
                 )
               : atEpilogue
-                  ? _EndOfStory(onFinishStory: onFinishStory)
+                  ? _EndOfStory(
+                      onFinishStory: onFinishStory,
+                      endingOrdinal: controller.achievedEndingOrdinal,
+                      endingsTotal: controller.achievedEndingsTotal,
+                    )
                   : Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
