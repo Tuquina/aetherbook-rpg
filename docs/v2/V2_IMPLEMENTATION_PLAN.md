@@ -357,10 +357,16 @@ Only proceed with a sub-stage once its blocking decision in
     `narrator` Edge Function is redeployed; deploying is a separate,
     later step this assistant will confirm before doing, since it's a
     live-infrastructure change.
-  - [ ] Persistence: additive nullable `chosen_tone` column on `characters`
-    — migration **file** only for now (safe, versioned, git-only); actually
-    applying it to the live Supabase project needs a explicit go-ahead
-    before running any `apply_migration`-equivalent action.
+  - [x] Persistence: `supabase/migrations/20260727_characters_chosen_tone.sql`
+    — additive nullable `characters.chosen_tone text`. `game_state_mappers
+    .dart`'s `characterToRow`/`characterFromRow` read and write it. **File
+    only, not applied to the live Supabase project** — that's a separate
+    go-ahead this assistant will ask for before running any
+    `apply_migration`-equivalent action. Tests: extended the existing
+    round-trip case in `test/adapters/game_state_mappers_test.dart` plus its
+    missing-field-defaults case. 618/618 passing, `analyze` clean (no new
+    test *count* here — existing cases gained assertions, no new `test()`
+    blocks needed).
   - [ ] UI: new chargen step in `chargen_screen.dart`, shown only when
     `world.tones.isNotEmpty`.
 - **6d — Auth expansion.** Decision D accepted, **discontinuing magic-link**

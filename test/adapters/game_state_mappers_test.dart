@@ -25,6 +25,7 @@ void main() {
         originTagId: 'disciplina_de_secta',
         vowId: 'nadie_me_posee',
         personalItem: 'Un pincel reparado tres veces.',
+        chosenTone: 'epico',
       );
 
       final row = characterToRow('session-1', character);
@@ -47,6 +48,7 @@ void main() {
       expect(restored.originTagId, character.originTagId);
       expect(restored.vowId, character.vowId);
       expect(restored.personalItem, character.personalItem);
+      expect(restored.chosenTone, character.chosenTone);
     });
 
     test('characterFromRow defaults missing jsonb maps to empty and chargen fields to null', () {
@@ -65,6 +67,7 @@ void main() {
         'origin_tag_id': null,
         'vow_id': null,
         'personal_item': null,
+        'chosen_tone': null,
       });
       expect(restored.attributes, isEmpty);
       expect(restored.resources, isEmpty);
@@ -75,6 +78,7 @@ void main() {
       expect(restored.vars, isEmpty);
       expect(restored.originId, isNull);
       expect(restored.vowId, isNull);
+      expect(restored.chosenTone, isNull);
     });
   });
 
