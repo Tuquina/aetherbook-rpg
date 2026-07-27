@@ -80,6 +80,27 @@
     {"id": "voy_a_demostrar_que_merezco_esto", "text": "Voy a demostrar que merezco este poder."}
   ],
 
+  "tones": [
+    {
+      "id": "epico",
+      "label": "Épico",
+      "blurb": "Grande, mítico",
+      "preview": "El poder llegó como llega una tormenta: sin pedir permiso, cambiando todo lo que toca a su paso."
+    },
+    {
+      "id": "intimo",
+      "label": "Íntimo",
+      "blurb": "Cerca, humano",
+      "preview": "Te temblaban las manos después. No de miedo —de algo más parecido a la sorpresa de descubrir que tu cuerpo podía hacer eso."
+    },
+    {
+      "id": "acido",
+      "label": "Ácido",
+      "blurb": "Seco, irónico",
+      "preview": "Consigues poderes el mismo día que se te vence el alquiler. La ciudad ni se entera; el casero, sí."
+    }
+  ],
+
   "starting_character": {
     "name": "Enmascarado",
     "level": 1,

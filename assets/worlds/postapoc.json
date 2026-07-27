@@ -81,6 +81,27 @@
     {"id": "voy_a_sobrevivir_sin_importar_el_costo", "text": "Voy a sobrevivir sin importar el costo."}
   ],
 
+  "tones": [
+    {
+      "id": "epico",
+      "label": "Épico",
+      "blurb": "Grande, mítico",
+      "preview": "El mundo viejo se apagó como se apaga una vela: de golpe, y sin que nadie estuviera mirando."
+    },
+    {
+      "id": "intimo",
+      "label": "Íntimo",
+      "blurb": "Cerca, humano",
+      "preview": "Contaste las latas dos veces esa mañana, como si desearlo lo suficiente pudiera multiplicarlas."
+    },
+    {
+      "id": "acido",
+      "label": "Ácido",
+      "blurb": "Seco, irónico",
+      "preview": "El fin del mundo llegó sin avisar, como todo lo demás en tu vida. Al menos fue puntual."
+    }
+  ],
+
   "starting_character": {
     "name": "Sobreviviente",
     "level": 1,

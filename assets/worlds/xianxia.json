@@ -80,6 +80,27 @@
     {"id": "proteger_a_los_que_quedan", "text": "Voy a proteger a los que todavía me quedan."}
   ],
 
+  "tones": [
+    {
+      "id": "epico",
+      "label": "Épico",
+      "blurb": "Grande, mítico",
+      "preview": "El cielo mismo pareció inclinarse a mirarte nacer una segunda vez, aunque tú todavía no lo sabías."
+    },
+    {
+      "id": "intimo",
+      "label": "Íntimo",
+      "blurb": "Cerca, humano",
+      "preview": "El primer qi que sentiste circular no fue una revelación: fue un cosquilleo raro en el pecho, como cuando se te duerme un brazo."
+    },
+    {
+      "id": "acido",
+      "label": "Ácido",
+      "blurb": "Seco, irónico",
+      "preview": "Toda una secta esperando al elegido de las profecías, y les tocaste tú. Ni ellos parecían muy convencidos."
+    }
+  ],
+
   "starting_character": {
     "name": "Cultivador",
     "level": 1,

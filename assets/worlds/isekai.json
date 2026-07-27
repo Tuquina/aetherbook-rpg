@@ -80,6 +80,27 @@
     {"id": "no_deberle_nada_a_nadie", "text": "No le voy a deber nada a nadie acá."}
   ],
 
+  "tones": [
+    {
+      "id": "epico",
+      "label": "Épico",
+      "blurb": "Grande, mítico",
+      "preview": "El umbral no te pidió permiso: te reclamó como el mar reclama a los ríos, sin devolver nada a cambio."
+    },
+    {
+      "id": "intimo",
+      "label": "Íntimo",
+      "blurb": "Cerca, humano",
+      "preview": "Tardaste un segundo en notar que las dos lunas de arriba no eran la tuya. El olor dulce y raro del aire, eso lo notaste antes."
+    },
+    {
+      "id": "acido",
+      "label": "Ácido",
+      "blurb": "Seco, irónico",
+      "preview": "Ibas camino a algo aburrido —pagar una factura, quizás— y terminaste de rodillas sobre un círculo mágico. El universo, evidentemente, tiene un sentido del humor pésimo."
+    }
+  ],
+
   "starting_character": {
     "name": "Convocado",
     "level": 1,

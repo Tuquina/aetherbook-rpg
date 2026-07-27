@@ -327,12 +327,18 @@ Only proceed with a sub-stage once its blocking decision in
     tone_option_test.dart`, a new group in `test/world/world_test.dart`, 2
     new cases in `test/engine/create_character_test.dart`. 611/611 passing,
     `analyze` clean.
-  - [ ] Content: author the `tones` array (3 entries: épico/íntimo/ácido,
-    each with a per-world `preview`) for the 5 freeform genre worlds
+  - [x] Content: authored the `tones` array (3 entries: épico/íntimo/ácido,
+    each with a per-world `preview`) for all 5 freeform genre worlds
     (isekai/xianxia/superheroes/cyberpunk/postapoc) — 15 snippets total,
-    matching `NARRATIVE_VOICE.md`'s tuteo/register rules. Curated/hybrid
+    grounded in each world's own opening scenario, matching
+    `NARRATIVE_VOICE.md`'s tuteo/register/rhythm rules. Curated/hybrid
     worlds (`xianxia_lianshu`, the 2 curated stories) intentionally keep
-    their own fixed authorial tone — no tone step for those.
+    their own fixed authorial tone — no `tones` array added there, no tone
+    step for those. New test group in `test/content/freeform_worlds_test.dart`
+    (one case per world, 5 total) checks exactly `{epico, intimo, acido}`
+    are declared, every `label`/`blurb`/`previewText` is non-empty, and a
+    regex sweep for common voseo markers (`vos`, `tenés`, `podés`, ...)
+    catches any that slipped in. 616/616 passing, `analyze` clean.
   - [ ] Narrator contract: thread `chosenTone`/its resolved `ToneOption`
     into what's sent to `supabase/functions/narrator/`, and add an
     instruction block in `prompt_builder.ts` so the chosen tone actually

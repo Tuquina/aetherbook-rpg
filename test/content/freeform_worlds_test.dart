@@ -103,6 +103,24 @@ void main() {
           expect(world.systemPrompt, isNotEmpty);
           expect(world.imageStyleSuffix, isNotEmpty);
         });
+
+        test('declares exactly the 3 V2 tones (épico/íntimo/ácido), each '
+            "with its own non-empty preview text for this world", () {
+          final world = _loadWorld(slug);
+          expect(world.tones.map((t) => t.id).toSet(), {'epico', 'intimo', 'acido'});
+          final voseoMarkers = RegExp(
+              r'\bvos\b|tenés|podés|querés|sabés|hacés|decís|sentís|\bsos\b',
+              caseSensitive: false);
+          for (final tone in world.tones) {
+            expect(tone.label, isNotEmpty, reason: '${tone.id} has no label');
+            expect(tone.blurb, isNotEmpty, reason: '${tone.id} has no blurb');
+            expect(tone.previewText, isNotEmpty,
+                reason: '${tone.id} has no preview for $slug');
+            expect(voseoMarkers.hasMatch(tone.previewText), isFalse,
+                reason:
+                    "${tone.id}'s preview for $slug reads like it slipped into voseo");
+          }
+        });
       });
     }
 

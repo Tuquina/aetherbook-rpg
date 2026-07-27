@@ -80,6 +80,27 @@
     {"id": "voy_a_ser_alguien_en_esta_ciudad", "text": "Voy a ser alguien en esta ciudad, cueste lo que cueste."}
   ],
 
+  "tones": [
+    {
+      "id": "epico",
+      "label": "Épico",
+      "blurb": "Grande, mítico",
+      "preview": "La ciudad no duerme porque no puede permitirse soñar —y esa noche, tampoco tú."
+    },
+    {
+      "id": "intimo",
+      "label": "Íntimo",
+      "blurb": "Cerca, humano",
+      "preview": "El implante nuevo te dolía en un punto exacto detrás de la oreja, como un diente que no termina de doler del todo."
+    },
+    {
+      "id": "acido",
+      "label": "Ácido",
+      "blurb": "Seco, irónico",
+      "preview": "Debes dinero a gente que cobra con intereses y con extremidades. Genial forma de empezar la semana."
+    }
+  ],
+
   "starting_character": {
     "name": "Corredor",
     "level": 1,
