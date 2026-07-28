@@ -63,8 +63,18 @@ class _CharacterSheetBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('${world.name} · ${moduleFor(world).title} · turno $turnCount',
-              style: AetherType.caption.copyWith(color: AetherColors.parchmentDim)),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _AvatarThumbnail(
+                  avatarUrl: character.avatarUrl, name: character.name, accent: theme.accent),
+              const SizedBox(width: AetherSpace.md),
+              Expanded(
+                child: Text('${world.name} · ${moduleFor(world).title} · turno $turnCount',
+                    style: AetherType.caption.copyWith(color: AetherColors.parchmentDim)),
+              ),
+            ],
+          ),
           const SizedBox(height: AetherSpace.lg),
           if (origin != null || personalItem.isNotEmpty || activeTags.isNotEmpty) ...[
             Wrap(
@@ -150,6 +160,54 @@ class _CharacterSheetBody extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// The generated portrait (V2 §4c), or a neutral initial-letter placeholder
+/// while it's still generating (or if it never succeeds —
+/// `ImageGeneratorPort` never throws, a missing avatar is a normal outcome,
+/// not an error). No "still loading" state read from `GameController` here
+/// on purpose — this is a modal sheet, not worth wiring up a live listener
+/// for; reopening it once the portrait lands is enough (same "nice to have"
+/// bar as scene images).
+class _AvatarThumbnail extends StatelessWidget {
+  const _AvatarThumbnail({required this.avatarUrl, required this.name, required this.accent});
+
+  final String? avatarUrl;
+  final String name;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = avatarUrl;
+    return ClipRRect(
+      borderRadius: AetherRadius.allMd,
+      child: SizedBox(
+        width: 48,
+        height: 48,
+        child: url != null
+            ? Image.network(
+                url,
+                key: ValueKey(url),
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => _initialPlaceholder(),
+              )
+            : _initialPlaceholder(),
+      ),
+    );
+  }
+
+  Widget _initialPlaceholder() {
+    return DecoratedBox(
+      decoration: BoxDecoration(color: accent.withValues(alpha: 0.18)),
+      child: Center(
+        child: Text(
+          name.isNotEmpty ? name[0].toUpperCase() : '?',
+          style: TextStyle(
+              fontFamily: 'Marcellus', fontSize: 20, color: accent, fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }

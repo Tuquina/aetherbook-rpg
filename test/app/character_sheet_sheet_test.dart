@@ -101,4 +101,25 @@ void main() {
       expect(find.text('Marca: deuda impaga'), findsNothing);
     });
   });
+
+  group('avatar (V2 §4c)', () {
+    testWidgets('renders the generated portrait when avatarUrl is set', (tester) async {
+      final world = World.fromJson(baseWorldJson());
+      final character = world.startingCharacter
+          .copyWith(avatarUrl: 'https://cdn.aetherbook.dev/scene-images/avatar1.png');
+      await openSheet(tester, world, character: character);
+
+      expect(find.byType(Image), findsOneWidget);
+    });
+
+    testWidgets('falls back to an accent-tinted initial when avatarUrl is null',
+        (tester) async {
+      final world = World.fromJson(baseWorldJson()..['theme_accent'] = '#7FD4C1');
+      // startingCharacter's name is "Protagonista" -> initial "P".
+      await openSheet(tester, world);
+
+      expect(find.byType(Image), findsNothing);
+      expect(find.text('P'), findsOneWidget);
+    });
+  });
 }
