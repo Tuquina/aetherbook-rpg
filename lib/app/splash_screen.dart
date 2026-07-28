@@ -70,59 +70,71 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       body: AetherBackground(
         child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Padding(
-                padding: const EdgeInsets.all(AetherSpace.xl),
-                child: _EntranceFade(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Spacer(flex: 2),
-                      SizedBox(
-                        height: 170,
-                        child: AnimatedBuilder(
-                          animation: _c,
-                          builder: (context, _) => CustomPaint(
-                            painter: _TomePainter(t: _c.value),
-                            size: const Size(220, 170),
-                          ),
+          // A fixed-height tome + wordmark + button never fits every viewport
+          // this same code runs on (phone/tablet/web, CLAUDE.md §3) — a short
+          // window (landscape phone, a resized desktop browser) needs this to
+          // scroll instead of overflowing. `Spacer` can't live inside a
+          // `SingleChildScrollView` (unbounded main axis), so centering comes
+          // from `ConstrainedBox(minHeight)` + `Center` instead: content
+          // centers when it fits, scrolls when it doesn't — never clips.
+          child: LayoutBuilder(
+            builder: (context, viewport) => SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: viewport.maxHeight),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AetherSpace.xl),
+                      child: _EntranceFade(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              height: 170,
+                              child: AnimatedBuilder(
+                                animation: _c,
+                                builder: (context, _) => CustomPaint(
+                                  painter: _TomePainter(t: _c.value),
+                                  size: const Size(220, 170),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: AetherSpace.xl),
+                            AnimatedBuilder(
+                              animation: _c,
+                              builder: (context, _) => _Wordmark(shimmer: _c.value),
+                            ),
+                            const SizedBox(height: AetherSpace.lg),
+                            const _OrnamentDivider(),
+                            const SizedBox(height: AetherSpace.lg),
+                            Text(
+                              'Un multiverso que se escribe contigo',
+                              textAlign: TextAlign.center,
+                              style: AetherType.body.copyWith(
+                                  color: AetherColors.parchmentDim,
+                                  fontSize: 15,
+                                  fontStyle: FontStyle.italic),
+                            ),
+                            const SizedBox(height: AetherSpace.huge),
+                            _PrimaryButton(label: 'Comenzar', onTap: _begin),
+                            const SizedBox(height: AetherSpace.md),
+                            if (widget.auth != null)
+                              TextButton(
+                                onPressed: _openAccount,
+                                child: Text(
+                                  widget.auth!.isAnonymous
+                                      ? 'Guardar tu progreso'
+                                      : 'Jugando como ${widget.auth!.email}',
+                                  style: AetherType.caption.copyWith(
+                                      color: AetherColors.parchmentFaint,
+                                      fontSize: 13),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: AetherSpace.xl),
-                      AnimatedBuilder(
-                        animation: _c,
-                        builder: (context, _) => _Wordmark(shimmer: _c.value),
-                      ),
-                      const SizedBox(height: AetherSpace.lg),
-                      const _OrnamentDivider(),
-                      const SizedBox(height: AetherSpace.lg),
-                      Text(
-                        'Un multiverso que se escribe contigo',
-                        textAlign: TextAlign.center,
-                        style: AetherType.body.copyWith(
-                            color: AetherColors.parchmentDim,
-                            fontSize: 15,
-                            fontStyle: FontStyle.italic),
-                      ),
-                      const Spacer(flex: 3),
-                      _PrimaryButton(label: 'Comenzar', onTap: _begin),
-                      const SizedBox(height: AetherSpace.md),
-                      if (widget.auth != null)
-                        TextButton(
-                          onPressed: _openAccount,
-                          child: Text(
-                            widget.auth!.isAnonymous
-                                ? 'Guardar tu progreso'
-                                : 'Jugando como ${widget.auth!.email}',
-                            style: AetherType.caption.copyWith(
-                                color: AetherColors.parchmentFaint,
-                                fontSize: 13),
-                          ),
-                        ),
-                      const Spacer(flex: 1),
-                    ],
+                    ),
                   ),
                 ),
               ),
