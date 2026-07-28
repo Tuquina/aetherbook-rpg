@@ -897,6 +897,70 @@ Only proceed with a sub-stage once its blocking decision in
     error suggesting a `.claude/launch.json` `autoPort` fix — not attempted,
     judged out of scope for this stage). Recommend a manual look once
     deployed, same as every prior stage.
+- **6j — The 4 lost gaps from the original gap analysis.** ✅ **Done
+  (2026-07-28)**. A full audit of this plan against `V2_GAP_ANALYSIS.md`
+  found four items that no stage ever picked up, deferred, or flagged as
+  deliberately out of scope — they'd simply fallen through the cracks. You
+  chose to close all four, with maximal fidelity at both ambiguity points
+  (a full discovered-lore glossary, not just the mode-partitioned Codex
+  restructure; real discovery tracking + authored content, not an
+  always-available index).
+  - **`FreeActionField` restyle**: it used `AetherColors.void_`/`hairline`
+    (a darker fill, a fainter border than any choice card) — a visual
+    generation older than `ChoiceCard`/`ChoiceButton`/`_NarratorErrorPanel`.
+    Now shares their `surface`/`hairlineStrong` resting state.
+  - **Codex restructured by mode**: `CodexScreen` was one flat page with 8
+    hardcoded rule sections. Now two tabs — "Formas de jugar" (the 3 module
+    cards, now tappable, each opening a deep-dive with feature rows, a "qué
+    controlas" check/block grid, and a CTA — copy adapted to how each module
+    actually works in *this* app, not translated verbatim from the mockup,
+    whose own "pre-armadas"/"crea tu propia" text describes a different
+    module split than this app has) and "Reglas" (the original 5 general
+    sections, unchanged).
+  - **Per-story discovered-lore glossary** (new, biggest piece): a third
+    "Glosario" tab appears only when `CodexScreen` opens from inside an
+    active story (`GameScreen`'s status-bar icon now passes `world`/
+    `character`; every other entry point still doesn't). Chips filter
+    Lugares/Personas/Objetos/Términos, with a running "X de Y entradas"
+    count and locked (`???`) rows for anything undiscovered. Discovery design
+    chosen to minimize engine risk: **Personas**/**Objetos** ride signals
+    that already exist (`character.relationships`/`character.list('inventory')`)
+    — zero new tracking. **Lugares**/**Términos** are new domain
+    (`CodexPlace`/`CodexTerm`, `World.places`/`terms`) with a new
+    `codexReveals` field on every `StoryNode` subtype, synthesized as
+    ordinary `flag` deltas in `GameController._resolveTurn` when the graph
+    advances to a node that declares them — no new `StateDeltaType`, no
+    narrator/contract change, purely curated. Content: 5 places + 5 terms
+    per curated world (`xianxia_lianshu`, the train, apagón violeta — 15
+    each, 30 total), revealed only at the ~30 nodes chosen to introduce
+    them, not all ~185 nodes across the three graphs.
+  - **`ChargenScreen` wide layout**: was a single 560px column at every
+    width, no breakpoint logic at all. Now, at/above `AetherBreakpoints.tablet`,
+    a side panel (world name, a 3-step checklist, the same live
+    `_CharacterPreview` step 3 already had) runs alongside the step content
+    — same "wide gets more context, not more steps" pattern as
+    `game_screen.dart`/`world_select_screen.dart`. Step 3 no longer repeats
+    the preview inline once the side panel already shows it.
+  - **Real app icon/favicon**: no exported image of the brand mark existed
+    anywhere — not in this repo, not in the design handoff folder you
+    pointed to (its own §7 "icono de aplicación" turned out to be the same
+    hexagon drawn with CSS `clip-path`, identical geometry to
+    `lib/app/widgets/brand_mark.dart`, not a raster/vector asset). New
+    one-off `tool/generate_app_icons.dart` renders that same widget through
+    the Flutter test harness (`RenderRepaintBoundary` → PNG, `Marcellus`
+    loaded by hand for the "A") to produce all 5 required files in one run.
+    No `android`/`ios` folders exist in this repo, so scope stayed web-only:
+    `web/favicon.png` + 4 `web/icons/*.png` (maskable ones keep the hexagon
+    inside the PWA safe zone) + `web/manifest.json`/`index.html`'s
+    `theme_color`/`background_color`, previously the Flutter-template
+    default blue (`#0175C2`), now the app's real ink/gold.
+  - 726 Flutter tests passing (up from 705), `analyze` clean. One new
+    migration-free backend touch: none — this stage is pure Flutter/web
+    assets, no Supabase changes.
+  - **Not independently re-verified visually this session**: same
+    recurring caveat as every stage in this section — the browser preview
+    tooling issue hasn't been fixed. Recommend a manual look once deployed,
+    especially for the new Códice tabs/glossary and the chargen side panel.
 
 ---
 
@@ -989,5 +1053,6 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 | 6g — Perfil, Ajustes, onboarding | ✅ Done and deployed (2026-07-28) — 2 migrations applied, Edge Function redeployed (v10); visual sign-off still recommended, see 6g notes | — |
 | 6h — Home dashboard, responsive | ✅ Done and deployed (2026-07-28), migration applied; visual sign-off still recommended, see 6h notes | — |
 | 6i — Game screen states + wide layout | ✅ Done (2026-07-28), no backend changes; visual sign-off still recommended, see 6i notes | — |
+| 6j — The 4 lost gaps (FreeActionField, Codex, chargen wide layout, app icon) | ✅ Done (2026-07-28), no backend changes; visual sign-off still recommended, see 6j notes | — |
 | 7 — Ending/account/offline/resilience polish | Not started | Stage 4, 6a |
 | 8 — Accessibility/responsiveness/performance/release | Not started | Stages 1-7 |
