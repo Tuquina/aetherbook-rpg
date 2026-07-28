@@ -70,6 +70,21 @@ GameSessionSummary gameSessionSummaryFromRow(Map<String, dynamic> row) {
   );
 }
 
+/// One row of the `reading_stats()` RPC (see its migration) into a
+/// [SessionReadingStat] — Perfil's per-session raw material.
+SessionReadingStat sessionReadingStatFromRow(Map<String, dynamic> row) {
+  return SessionReadingStat(
+    sessionId: row['session_id'] as String,
+    worldSlug: row['world_slug'] as String,
+    status: row['status'] as String,
+    title: row['title'] as String?,
+    turnCount: (row['turn_count'] as num).toInt(),
+    vowId: row['vow_id'] as String?,
+    vowStatus: row['vow_status'] as String?,
+    vowTestedCount: (row['vow_tested_count'] as num?)?.toInt() ?? 0,
+  );
+}
+
 /// The `game_sessions` columns that track graph position — read alongside
 /// the session row in `loadLatestSession`, written by `saveGraphPosition`.
 Map<String, Object?> graphPositionToRow({

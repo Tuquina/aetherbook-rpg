@@ -95,4 +95,16 @@ abstract class GameStateRepositoryPort {
   /// (`GameController.start(..., forceNew: true)`) instead of resuming where
   /// they left off. The turn log itself is left intact, not deleted.
   Future<void> abandonSession(String sessionId);
+
+  /// Marks [sessionId] as finished — called once when a `ResolutionNode`'s
+  /// climax is resolved (`GameController.chooseEnding`), the one deterministic
+  /// "this story is done" moment the engine knows about. Powers Perfil's
+  /// "Terminada" stat (V2 design prototype §6a).
+  Future<void> completeSession(String sessionId);
+
+  /// One [SessionReadingStat] per session the current account has ever
+  /// started, for Perfil's aggregate stats (§6a) — tomos/turnos/terminadas,
+  /// the per-world turn breakdown, and each session's vow outcome. A single
+  /// round trip instead of loading every session's full turn history.
+  Future<List<SessionReadingStat>> readingStats();
 }

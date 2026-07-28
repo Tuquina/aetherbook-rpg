@@ -35,6 +35,10 @@ abstract class AuthPort {
   /// The email attached to the current session, or `null` while anonymous.
   String? get email;
 
+  /// When the current account was created, or `null` while anonymous —
+  /// powers Perfil's "Lector desde" (a month name, V2 design prototype §6a).
+  DateTime? get accountCreatedAt;
+
   /// Fires whenever the signed-in identity changes (signed in, switched
   /// accounts, signed out) — lets UI reflect the current state reactively
   /// instead of polling. Load-bearing for [signInWithGoogle] specifically:
@@ -62,4 +66,9 @@ abstract class AuthPort {
   /// registered (V2 design prototype §10d: "no confirmar si el correo existe
   /// evita que alguien averigüe quién tiene cuenta").
   Future<void> resetPassword(String email);
+
+  /// Ends the current session (V2 design prototype §6b: "Cerrar sesión").
+  /// [isAnonymous] becomes `true` again afterwards — the same state as
+  /// before ever signing in.
+  Future<void> signOut();
 }

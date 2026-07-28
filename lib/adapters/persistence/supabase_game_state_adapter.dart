@@ -199,6 +199,20 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
   }
 
   @override
+  Future<void> completeSession(String sessionId) async {
+    await _client
+        .from('game_sessions')
+        .update({'status': 'completed'})
+        .eq('id', sessionId);
+  }
+
+  @override
+  Future<List<SessionReadingStat>> readingStats() async {
+    final rows = await _client.rpc('reading_stats');
+    return [for (final row in rows as List) sessionReadingStatFromRow(row as Map<String, dynamic>)];
+  }
+
+  @override
   Future<String?> loadLatestMemoryDigest(String sessionId) async {
     final row = await _client
         .from('memory_digests')

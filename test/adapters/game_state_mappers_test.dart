@@ -312,4 +312,44 @@ void main() {
       expect(summary.title, isNull);
     });
   });
+
+  group('sessionReadingStatFromRow', () {
+    test('maps a full reading_stats() row', () {
+      final stat = sessionReadingStatFromRow({
+        'session_id': 'session-6',
+        'world_slug': 'xianxia_lianshu',
+        'status': 'completed',
+        'title': 'La deuda de Aldren',
+        'turn_count': 46,
+        'vow_id': 'nadie_me_posee',
+        'vow_status': 'sostenido',
+        'vow_tested_count': 2,
+      });
+      expect(stat.sessionId, 'session-6');
+      expect(stat.worldSlug, 'xianxia_lianshu');
+      expect(stat.status, 'completed');
+      expect(stat.title, 'La deuda de Aldren');
+      expect(stat.turnCount, 46);
+      expect(stat.vowId, 'nadie_me_posee');
+      expect(stat.vowStatus, 'sostenido');
+      expect(stat.vowTestedCount, 2);
+    });
+
+    test('defaults vow fields to null/0 when the session has no character yet', () {
+      final stat = sessionReadingStatFromRow({
+        'session_id': 'session-7',
+        'world_slug': 'isekai',
+        'status': 'active',
+        'title': null,
+        'turn_count': 0,
+        'vow_id': null,
+        'vow_status': null,
+        'vow_tested_count': null,
+      });
+      expect(stat.title, isNull);
+      expect(stat.vowId, isNull);
+      expect(stat.vowStatus, isNull);
+      expect(stat.vowTestedCount, 0);
+    });
+  });
 }

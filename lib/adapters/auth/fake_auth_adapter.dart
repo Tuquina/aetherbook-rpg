@@ -13,17 +13,20 @@ import '../../ports/auth_port.dart';
 /// [simulateEmailConfirmed] to fake the player clicking a confirmation
 /// email without a real redirect round-trip.
 class FakeAuthAdapter implements AuthPort {
-  FakeAuthAdapter({bool anonymous = true, String? email})
+  FakeAuthAdapter({bool anonymous = true, String? email, DateTime? accountCreatedAt})
       : _isAnonymous = anonymous,
-        _email = email;
+        _email = email,
+        _accountCreatedAt = anonymous ? null : accountCreatedAt;
 
   bool _isAnonymous;
   String? _email;
+  DateTime? _accountCreatedAt;
 
   final List<void> signInWithGoogleCalls = [];
   final List<({String email, String password})> signUpWithPasswordCalls = [];
   final List<({String email, String password})> signInWithPasswordCalls = [];
   final List<String> resetPasswordCalls = [];
+  int signOutCalls = 0;
 
   /// Set by a test to make the *next* call throw instead of succeeding —
   /// checked once, then cleared, so a test can make one call fail and a
@@ -37,6 +40,9 @@ class FakeAuthAdapter implements AuthPort {
 
   @override
   String? get email => _email;
+
+  @override
+  DateTime? get accountCreatedAt => _accountCreatedAt;
 
   @override
   Stream<void> get onChange => _controller.stream;
@@ -58,6 +64,7 @@ class FakeAuthAdapter implements AuthPort {
     // real browser round trip to wait for in a fake.
     _isAnonymous = false;
     _email = 'jugador@gmail.com';
+    _accountCreatedAt ??= DateTime.now();
     _controller.add(null);
   }
 
@@ -77,6 +84,7 @@ class FakeAuthAdapter implements AuthPort {
     if (error != null) throw error;
     _isAnonymous = false;
     _email = email;
+    _accountCreatedAt ??= DateTime.now();
     _controller.add(null);
   }
 
@@ -87,12 +95,22 @@ class FakeAuthAdapter implements AuthPort {
     if (error != null) throw error;
   }
 
+  @override
+  Future<void> signOut() async {
+    signOutCalls++;
+    _isAnonymous = true;
+    _email = null;
+    _accountCreatedAt = null;
+    _controller.add(null);
+  }
+
   /// Fakes the player having confirmed the emailed link after
   /// [signUpWithPassword] — that's the only real-world way a signed-up
   /// account actually stops being anonymous.
   void simulateEmailConfirmed(String email) {
     _isAnonymous = false;
     _email = email;
+    _accountCreatedAt ??= DateTime.now();
     _controller.add(null);
   }
 

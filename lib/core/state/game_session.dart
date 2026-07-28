@@ -114,3 +114,32 @@ class GameSessionSummary {
   /// every non-freeform module, which never asks for one.
   final String? title;
 }
+
+/// One row of `GameStateRepositoryPort.readingStats()` — everything Perfil
+/// (V2 design prototype §6a) needs about a single session to compute the
+/// tomos/turnos/terminadas/per-world/juramentos display, without loading its
+/// full turn history. `status` is `game_sessions.status`
+/// (`active`/`completed`/`abandoned`); `vowStatus`/`vowTestedCount` mirror
+/// the session's character (`vars['vow_status']`/`meters['vow_tested_count']`,
+/// see `core/engine/apply_state_deltas.dart`'s `vowStatus` delta case).
+class SessionReadingStat {
+  const SessionReadingStat({
+    required this.sessionId,
+    required this.worldSlug,
+    required this.status,
+    required this.turnCount,
+    this.title,
+    this.vowId,
+    this.vowStatus,
+    this.vowTestedCount = 0,
+  });
+
+  final String sessionId;
+  final String worldSlug;
+  final String status;
+  final String? title;
+  final int turnCount;
+  final String? vowId;
+  final String? vowStatus;
+  final int vowTestedCount;
+}

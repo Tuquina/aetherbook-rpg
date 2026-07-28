@@ -27,6 +27,13 @@ class SupabaseAuthAdapter implements AuthPort {
   String? get email => _auth.currentUser?.email;
 
   @override
+  DateTime? get accountCreatedAt {
+    final raw = _auth.currentUser?.createdAt;
+    if (raw == null) return null;
+    return DateTime.tryParse(raw);
+  }
+
+  @override
   Stream<void> get onChange => _auth.onAuthStateChange;
 
   @override
@@ -62,6 +69,9 @@ class SupabaseAuthAdapter implements AuthPort {
   Future<void> resetPassword(String email) {
     return _auth.resetPasswordForEmail(email, redirectTo: emailRedirectTo);
   }
+
+  @override
+  Future<void> signOut() => _auth.signOut();
 }
 
 /// Whether [e] means "this email already belongs to a different account"
