@@ -746,6 +746,77 @@ Only proceed with a sub-stage once its blocking decision in
     including the full sign-in → onboarding → world-select navigation chain)
     and the backend deploy succeeding, not a screenshot. Recommend a manual
     look once deployed.
+- **6h — Home dashboard, responsive (V2 prototype §8a/§8b web-tablet, §2a/§2b
+  mobile).** ✅ **Done (2026-07-28)**. The prototype's own roadmap note at the
+  end of its §2 turn had already named this as the next step ("versión web
+  de 2b") — not a new idea, the planned continuation of Stage 2's
+  single-column reflow. Per your explicit choices: **adds** a cross-module
+  dashboard/library rather than merging `StoryModuleScreen`/`CreateStoryScreen`
+  away; backend is one new purpose-built RPC instead of overloading
+  `readingStats()`/`listActiveSessions`; "Explorar" renders but is inert (a
+  "todavía no está disponible" snackbar, same treatment as Ajustes' "Exportar
+  mis tomos").
+  - New backend: `story_library()` RPC (one row per session the account owns,
+    any status — session id/world slug/status/title/character name/turn
+    count/updated_at), migrated with `security invoker`/`search_path`
+    hardening applied up front this time (the previous migration,
+    `reading_stats()`, needed a follow-up fix for this — learned from that).
+    Applied to the live Supabase project; `get_advisors` confirmed no new
+    security warnings.
+  - New domain: `SessionLibraryEntry` (`lib/core/state/game_session.dart`),
+    `GameStateRepositoryPort.storyLibrary()` +
+    `SupabaseGameStateAdapter`/mapper, `GameController.storyLibrary()` (same
+    null-persistence-degrades-to-`[]` pattern as `readingStats()`).
+  - New responsive infrastructure: `AetherBreakpoints` (`tablet = 700`,
+    `desktop = 1100` — new constants, distinct from `game_screen.dart`'s
+    pre-existing `_ReadingFrame` 720px content-frame width, which is a
+    different concern and stays untouched), `HomeSidebar` (desktop: brand,
+    nav, per-world story counts, account row) and `HomeBottomNav` (tablet: 4
+    destinations, no Ajustes — sidebar-only per the mockup).
+  - New `MyStoriesScreen` (§2b) — unified cross-module story list (Todas/En
+    curso/Sin empezar filters), reachable from "Sigue leyendo → Ver todos"
+    and from the sidebar/bottom-nav "Mis historias" item. `library_rows.dart`
+    (`buildLibraryRows`) and `story_navigation.dart` (`StoryNavigation.open`/
+    `resume`, extracted verbatim from `WorldSelectScreen`'s prior `_select`/
+    `_resumeStory`) are shared by both screens so the resume/chargen-or-not
+    decision logic isn't duplicated.
+  - `WorldSelectScreen` rewritten around `LayoutBuilder` +
+    `AetherBreakpoints` into 3 chrome modes: mobile keeps its original
+    single-column shape (title, a real hero + up to 2 more library rows
+    where `_ContinueHero` previously only reflected whatever session
+    happened to be in memory, then the unchanged module-card list); tablet
+    adds `HomeBottomNav` + a 2-column "sigue leyendo" grid; desktop adds
+    `HomeSidebar` + a 3-column grid. `_ContinueHero` now takes a `LibraryRow`
+    instead of an in-memory `World`/`Character` pair, so "what did I leave
+    open" is a real query result that survives a fresh launch, not something
+    that only worked mid-session.
+  - Deliberately **not** built: a full visual redesign of mobile's home
+    screen to match prototype §2a exactly (full-bleed background image,
+    centered brand mark) — mobile keeps its pre-existing, already-tested
+    visual identity, just gaining the real hero/list data. Scoped out for
+    time, not asked about explicitly; worth a follow-up if the mismatch
+    bothers you once you see it deployed.
+  - Fixed along the way (see "Errors and fixes" precedent in prior stages
+    for this pattern): a `Border`-with-non-uniform-colors +
+    `borderRadius` crash in `MyStoriesScreen`'s card (accent stripe moved to
+    a separate `Container` inside a `ClipRRect`); an infinite-height
+    constraint crash from a `Row(crossAxisAlignment: stretch)` with a
+    childless sized `Container` (wrapped in `IntrinsicHeight`); text overflow
+    in `HomeSidebar` at its fixed width (`Flexible`/`Expanded` +
+    `TextOverflow.ellipsis`). Also: setting `tablet = 700` meant Flutter's
+    default 800×600 test surface now resolves to tablet chrome instead of
+    the historically-assumed mobile layout, breaking 3 pre-existing tests
+    (`world_select_confirm_sheet_test.dart`×2, `story_resume_navigation_test.dart`×1)
+    — fixed by explicitly forcing those tests to a 600×1000 viewport.
+  - **Not independently re-verified visually this session** as of writing —
+    recommend the same manual look once deployed as every prior stage in
+    this section.
+  - **Noted but out of scope**: a pre-existing overflow bug in
+    `create_story_screen.dart`'s `_GenreGridCard` at very narrow widths
+    (~400px), found incidentally while picking a test viewport size for the
+    fix above (never previously exercised since the test default was always
+    800px wide). Not fixed — flagging here since it wasn't reported
+    elsewhere yet.
 
 ---
 
@@ -836,5 +907,6 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 | 6e — Story-graph editor | Deferred (2026-07-27) | — |
 | 6f — Publishing/UGC | Deferred (2026-07-27) | — |
 | 6g — Perfil, Ajustes, onboarding | ✅ Done and deployed (2026-07-28) — 2 migrations applied, Edge Function redeployed (v10); visual sign-off still recommended, see 6g notes | — |
+| 6h — Home dashboard, responsive | ✅ Done (2026-07-28), migration applied, not yet pushed; visual sign-off still recommended, see 6h notes | — |
 | 7 — Ending/account/offline/resilience polish | Not started | Stage 4, 6a |
 | 8 — Accessibility/responsiveness/performance/release | Not started | Stages 1-7 |
