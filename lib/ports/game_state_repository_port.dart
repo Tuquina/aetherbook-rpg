@@ -66,6 +66,15 @@ abstract class GameStateRepositoryPort {
     required String imageUrl,
   });
 
+  /// Fills in the character's generated portrait (V2 §4c) after the fact —
+  /// same "arrives later, patch it in" shape as [saveTurnImage], but on
+  /// `characters` instead of `turns`, and fired at most once per session
+  /// (right after chargen creates a brand-new character), not per turn.
+  Future<void> saveCharacterAvatar({
+    required String sessionId,
+    required String avatarUrl,
+  });
+
   /// Returns the most recent memory digest text for [sessionId], or `null`
   /// if none has been generated yet (CLAUDE.md §6, GDD §5.3).
   Future<String?> loadLatestMemoryDigest(String sessionId);

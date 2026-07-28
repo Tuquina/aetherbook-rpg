@@ -100,6 +100,12 @@ class _FakeGameStateRepository implements GameStateRepositoryPort {
   }) async {}
 
   @override
+  Future<void> saveCharacterAvatar({
+    required String sessionId,
+    required String avatarUrl,
+  }) async {}
+
+  @override
   Future<String?> loadLatestMemoryDigest(String sessionId) async => null;
 
   @override

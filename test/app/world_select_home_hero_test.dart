@@ -75,6 +75,11 @@ class _FakeGameStateRepository implements GameStateRepositoryPort {
     required String imageUrl,
   }) async {}
   @override
+  Future<void> saveCharacterAvatar({
+    required String sessionId,
+    required String avatarUrl,
+  }) async {}
+  @override
   Future<void> saveGraphPosition({
     required String sessionId,
     String? currentNodeId,

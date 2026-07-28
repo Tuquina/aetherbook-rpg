@@ -155,6 +155,19 @@ class _FakeGameStateRepository implements GameStateRepositoryPort {
     savedTurnImages.add((sessionId, turnIndex, imageUrl));
   }
 
+  /// `(sessionId, avatarUrl)` per call, so a test can assert a fresh
+  /// character's generated portrait got persisted (and only once, unlike
+  /// [savedTurnImages]).
+  final List<(String, String)> savedCharacterAvatars = [];
+
+  @override
+  Future<void> saveCharacterAvatar({
+    required String sessionId,
+    required String avatarUrl,
+  }) async {
+    savedCharacterAvatars.add((sessionId, avatarUrl));
+  }
+
   @override
   Future<String?> loadLatestMemoryDigest(String sessionId) async => seededDigest;
 

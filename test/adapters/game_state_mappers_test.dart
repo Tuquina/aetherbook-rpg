@@ -26,6 +26,7 @@ void main() {
         vowId: 'nadie_me_posee',
         personalItem: 'Un pincel reparado tres veces.',
         chosenTone: 'epico',
+        avatarUrl: 'https://cdn.aetherbook.dev/scene-images/avatar123.png',
       );
 
       final row = characterToRow('session-1', character);
@@ -49,6 +50,7 @@ void main() {
       expect(restored.vowId, character.vowId);
       expect(restored.personalItem, character.personalItem);
       expect(restored.chosenTone, character.chosenTone);
+      expect(restored.avatarUrl, character.avatarUrl);
     });
 
     test('characterFromRow defaults missing jsonb maps to empty and chargen fields to null', () {
@@ -68,6 +70,7 @@ void main() {
         'vow_id': null,
         'personal_item': null,
         'chosen_tone': null,
+        'avatar_url': null,
       });
       expect(restored.attributes, isEmpty);
       expect(restored.resources, isEmpty);
@@ -79,6 +82,7 @@ void main() {
       expect(restored.originId, isNull);
       expect(restored.vowId, isNull);
       expect(restored.chosenTone, isNull);
+      expect(restored.avatarUrl, isNull);
     });
   });
 

@@ -174,6 +174,17 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
   }
 
   @override
+  Future<void> saveCharacterAvatar({
+    required String sessionId,
+    required String avatarUrl,
+  }) async {
+    await _client
+        .from('characters')
+        .update({'avatar_url': avatarUrl})
+        .eq('session_id', sessionId);
+  }
+
+  @override
   Future<void> saveGraphPosition({
     required String sessionId,
     String? currentNodeId,

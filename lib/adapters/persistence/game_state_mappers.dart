@@ -26,6 +26,7 @@ Map<String, Object?> characterToRow(String sessionId, Character character) {
     'vow_id': character.vowId,
     'personal_item': character.personalItem,
     'chosen_tone': character.chosenTone,
+    'avatar_url': character.avatarUrl,
   };
 }
 
@@ -46,6 +47,7 @@ Character characterFromRow(Map<String, dynamic> row) {
     vowId: row['vow_id'] as String?,
     personalItem: row['personal_item'] as String?,
     chosenTone: row['chosen_tone'] as String?,
+    avatarUrl: row['avatar_url'] as String?,
   );
 }
 

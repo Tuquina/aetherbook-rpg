@@ -18,6 +18,7 @@ class Character {
     this.vowId,
     this.personalItem,
     this.chosenTone,
+    this.avatarUrl,
   });
 
   final String name;
@@ -79,6 +80,13 @@ class Character {
   /// chargen field above.
   final String? chosenTone;
 
+  /// A generated portrait (V2 design prototype §4c), `null` until
+  /// `GameController`'s fire-and-forget generation after chargen resolves,
+  /// or forever if it failed (`ImageGeneratorPort` never throws, just
+  /// returns `null`). Distinct from a turn's scene image: this one is fixed
+  /// for the whole story, generated exactly once, never regenerated.
+  final String? avatarUrl;
+
   int attribute(String key) => attributes[key] ?? 0;
   int resource(String key) => resources[key] ?? 0;
   bool flag(String key) => flags[key] ?? false;
@@ -103,6 +111,7 @@ class Character {
     String? vowId,
     String? personalItem,
     String? chosenTone,
+    String? avatarUrl,
   }) {
     return Character(
       name: name ?? this.name,
@@ -120,6 +129,7 @@ class Character {
       vowId: vowId ?? this.vowId,
       personalItem: personalItem ?? this.personalItem,
       chosenTone: chosenTone ?? this.chosenTone,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
     );
   }
 
