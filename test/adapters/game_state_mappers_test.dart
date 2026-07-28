@@ -364,6 +364,8 @@ void main() {
         'turn_count': 27,
         'updated_at': '2026-07-24T10:00:00.000Z',
         'current_node_id': 'c4_n02_bifurcacion',
+        'last_narration': 'El metal retumbó en la estancia como una campana de alarma.',
+        'last_image_url': 'https://cdn.aetherbook.dev/scene-images/abc123.png',
       });
       expect(entry.sessionId, 'session-8');
       expect(entry.worldSlug, 'cyberpunk');
@@ -373,9 +375,13 @@ void main() {
       expect(entry.turnCount, 27);
       expect(entry.updatedAt, DateTime.parse('2026-07-24T10:00:00.000Z'));
       expect(entry.currentNodeId, 'c4_n02_bifurcacion');
+      expect(entry.lastNarration,
+          'El metal retumbó en la estancia como una campana de alarma.');
+      expect(entry.imageUrl, 'https://cdn.aetherbook.dev/scene-images/abc123.png');
     });
 
-    test('falls back to "???" when the character row is missing, title/node stay null', () {
+    test('falls back to "???" when the character row is missing, title/node/narration/image '
+        'stay null', () {
       final entry = sessionLibraryEntryFromRow({
         'session_id': 'session-9',
         'world_slug': 'isekai',
@@ -385,10 +391,14 @@ void main() {
         'turn_count': 0,
         'updated_at': '2026-07-24T10:00:00.000Z',
         'current_node_id': null,
+        'last_narration': null,
+        'last_image_url': null,
       });
       expect(entry.characterName, '???');
       expect(entry.title, isNull);
       expect(entry.currentNodeId, isNull);
+      expect(entry.lastNarration, isNull);
+      expect(entry.imageUrl, isNull);
     });
   });
 }

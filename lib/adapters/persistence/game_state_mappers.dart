@@ -98,6 +98,8 @@ SessionLibraryEntry sessionLibraryEntryFromRow(Map<String, dynamic> row) {
     turnCount: (row['turn_count'] as num).toInt(),
     updatedAt: DateTime.parse(row['updated_at'] as String),
     currentNodeId: row['current_node_id'] as String?,
+    lastNarration: row['last_narration'] as String?,
+    imageUrl: row['last_image_url'] as String?,
   );
 }
 

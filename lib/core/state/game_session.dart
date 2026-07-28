@@ -161,6 +161,8 @@ class SessionLibraryEntry {
     required this.updatedAt,
     this.title,
     this.currentNodeId,
+    this.lastNarration,
+    this.imageUrl,
   });
 
   final String sessionId;
@@ -171,6 +173,14 @@ class SessionLibraryEntry {
   final String characterName;
   final int turnCount;
   final DateTime updatedAt;
+
+  /// The most recent turn's narration/image (`turns.narration`/`image_url`
+  /// for the session's highest `turn_index`) — the home dashboard's
+  /// "Dejaste el tomo abierto" hero (V2 §8a) quotes [lastNarration] and uses
+  /// [imageUrl] as its background; both `null` for a session with no turns
+  /// yet, or a freeform world whose narrator never generated an image.
+  final String? lastNarration;
+  final String? imageUrl;
 
   /// The player-chosen title, or `null` for a module that never asks for one
   /// (same convention as [GameSessionSummary.title]).
