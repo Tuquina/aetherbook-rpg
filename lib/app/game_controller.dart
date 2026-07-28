@@ -171,6 +171,13 @@ class GameController extends ChangeNotifier {
   /// interactive while this is still `true`.
   bool _imageLoading = false;
 
+  /// Whether the character's portrait (V2 §4c) is currently being
+  /// generated — fired at most once per session, right after a brand-new
+  /// character is actually created. The portrait itself lives on
+  /// `character.avatarUrl`, not a separate field here, since it belongs to
+  /// the character and survives resuming a session.
+  bool _avatarLoading = false;
+
   World? get world => _world;
   Character? get character => _session?.character;
 
@@ -213,6 +220,7 @@ class GameController extends ChangeNotifier {
   bool get isReady => _world != null && _session != null;
   String? get imageUrl => _imageUrl;
   bool get imageLoading => _imageLoading;
+  bool get avatarLoading => _avatarLoading;
 
   /// The current medium-term memory digest, if any has been generated yet.
   String? get memoryDigestText => _memoryDigestText;
@@ -418,6 +426,12 @@ class GameController extends ChangeNotifier {
 
       final persistence = _persistence;
       GameSession session;
+      // Whether `session.character` is genuinely brand-new this call, as
+      // opposed to a resumed/pre-existing one — the trigger for the
+      // one-time avatar generation below, regardless of whether chargen
+      // actually ran (a fixed-protagonist curated world with no origins
+      // still gets a portrait for its one character).
+      var isFreshCharacter = false;
       if (persistence != null) {
         if (sessionId != null) {
           final existing = await persistence.loadSession(sessionId);
@@ -434,6 +448,7 @@ class GameController extends ChangeNotifier {
             character: _initialCharacter(world, chargenInput),
             title: title,
           );
+          isFreshCharacter = true;
         } else {
           var existing = await persistence.loadLatestSession(worldSlug);
           if (forceNew && existing != null) {
@@ -441,6 +456,7 @@ class GameController extends ChangeNotifier {
             if (staleId != null) await persistence.abandonSession(staleId);
             existing = null;
           }
+          isFreshCharacter = existing == null;
           session = existing ??
               await persistence.createSession(
                 worldSlug: world.slug,
@@ -452,6 +468,7 @@ class GameController extends ChangeNotifier {
           worldSlug: world.slug,
           character: _initialCharacter(world, chargenInput),
         );
+        isFreshCharacter = true;
       }
 
       final graph = world.storyGraph;
@@ -459,6 +476,25 @@ class GameController extends ChangeNotifier {
         session = session.copyWith(currentNodeId: graph.startNodeId);
       }
       _session = session;
+
+      // Portrait generation (V2 §4c): fired at most once per session, right
+      // here where a brand-new character was just established — never on
+      // resume. Unlike scene images, this doesn't check
+      // `world.aiRuntimeRequired`: a fully curated world's fixed
+      // protagonist gets a portrait too, since the prompt is composed
+      // client-side (name + origin, if any) rather than depending on the
+      // narrator.
+      _avatarLoading = false;
+      final imageGenerator = _imageGenerator;
+      if (isFreshCharacter && imageGenerator != null && settings.illustrateScenes) {
+        _avatarLoading = true;
+        unawaited(_generateAvatarForCharacter(
+          imageGenerator: imageGenerator,
+          world: world,
+          character: session.character,
+          sessionId: session.id,
+        ));
+      }
 
       _memoryDigestText = null;
       if (persistence != null && session.id != null) {
@@ -1116,6 +1152,50 @@ class GameController extends ChangeNotifier {
       }
     } else {
       notifyListeners();
+    }
+  }
+
+  /// Generates the character's fixed portrait (V2 §4c), fired once from
+  /// [start] right after a brand-new character is created. The prompt is
+  /// composed entirely client-side — name plus origin, when the world
+  /// declares chargen origins — so this works for a fully curated world's
+  /// fixed protagonist too, unlike [_generateImageForTurn], which depends on
+  /// the narrator's own `image_prompt`.
+  Future<void> _generateAvatarForCharacter({
+    required ImageGeneratorPort imageGenerator,
+    required World world,
+    required Character character,
+    required String? sessionId,
+  }) async {
+    final origin = world.originByIdOrNull(character.originId);
+    final promptCore = origin != null
+        ? 'Retrato de ${character.name}: ${origin.displayName}.'
+        : 'Retrato de ${character.name}.';
+    final fullPrompt =
+        world.imageStyleSuffix.isEmpty ? promptCore : '$promptCore ${world.imageStyleSuffix}';
+    final url = await imageGenerator.generateImage(fullPrompt);
+
+    // Guard against having moved on to a different session by the time this
+    // resolves (same idea as `_generateImageForTurn`'s turn-index guard,
+    // but keyed on session id — there's no "avatar index" to compare).
+    if (sessionId != null && _session?.id != sessionId) return;
+
+    _avatarLoading = false;
+    if (url == null) {
+      notifyListeners();
+      return;
+    }
+    // Applied against whatever the session's character *currently* is, not
+    // the snapshot passed in — turns may have played out during the
+    // (possibly several-second) generation window, and this must not
+    // clobber that progress.
+    final current = _session?.character;
+    if (current != null) {
+      _session = _session!.copyWith(character: current.copyWith(avatarUrl: url));
+    }
+    notifyListeners();
+    if (sessionId != null) {
+      await _persistence?.saveCharacterAvatar(sessionId: sessionId, avatarUrl: url);
     }
   }
 

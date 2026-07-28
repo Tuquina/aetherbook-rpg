@@ -799,12 +799,19 @@ void main() {
         // (and the persistence write after it) settle before asserting.
         await Future<void>.delayed(Duration.zero);
 
-        expect(imageGenerator.prompts, hasLength(1));
-        expect(imageGenerator.prompts.single, endsWith(', arte xianxia'));
+        // Two prompts, not one: `start()` also fired a one-time avatar
+        // generation for this brand-new character (V2 §4c) before `choose`
+        // ever ran — the scene image is still the *last* one requested.
+        expect(imageGenerator.prompts, hasLength(2));
+        expect(imageGenerator.prompts.first, 'Retrato de Discípulo. arte xianxia');
+        expect(imageGenerator.prompts.last, endsWith(', arte xianxia'));
         expect(controller.imageUrl, 'https://cdn.example/scene.jpg');
         expect(controller.imageLoading, isFalse);
         expect(persistence.savedTurnImages, [
           ('new-session', 0, 'https://cdn.example/scene.jpg'),
+        ]);
+        expect(persistence.savedCharacterAvatars, [
+          ('new-session', 'https://cdn.example/scene.jpg'),
         ]);
       });
 
@@ -888,11 +895,18 @@ void main() {
         );
 
         await controller.start('curated_test');
+        // The one-time avatar generation (V2 §4c) fires regardless of
+        // `aiRuntimeRequired` — it doesn't depend on the narrator at all —
+        // so it's the only prompt here; asserting on it *before* the choice
+        // is what proves the choice itself added nothing.
+        await Future<void>.delayed(Duration.zero);
+        expect(imageGenerator.prompts, ['Retrato de Discípulo. arte curado']);
+
         final node = graph.nodeById('p0') as FixedAnchorNode;
         await controller.chooseStoryChoice(node.choices.first);
         await Future<void>.delayed(Duration.zero);
 
-        expect(imageGenerator.prompts, isEmpty);
+        expect(imageGenerator.prompts, ['Retrato de Discípulo. arte curado']);
         expect(controller.imageUrl, isNull);
         expect(controller.imageLoading, isFalse);
       });
