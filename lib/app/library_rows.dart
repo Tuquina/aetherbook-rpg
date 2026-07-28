@@ -66,6 +66,19 @@ int? _maxChapter(Iterable<String> nodeIds) {
   return max;
 }
 
+/// "hace 2 d" / "hace 3 h" / "hace 5 min" / "ahora mismo" — shared between
+/// `MyStoriesScreen`'s cards and the home dashboard's hero/"Sigue leyendo"
+/// tiles (`world_select_screen.dart`), which both need the exact same
+/// relative-time phrasing against [DateTime.now] and previously computed it
+/// separately.
+String relativeTimeLabel(DateTime updatedAt) {
+  final since = DateTime.now().difference(updatedAt);
+  if (since.inMinutes < 1) return 'ahora mismo';
+  if (since.inHours < 1) return 'hace ${since.inMinutes} min';
+  if (since.inDays < 1) return 'hace ${since.inHours} h';
+  return 'hace ${since.inDays} d';
+}
+
 /// Combines [entries] (from `GameController.storyLibrary()`) with
 /// [catalogWorlds] into one list: a [LibraryRow] per non-abandoned session,
 /// newest first (the RPC already orders them), followed by a [LibraryRow]

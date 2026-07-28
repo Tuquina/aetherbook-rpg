@@ -93,4 +93,24 @@ void main() {
       expect(row.progress, 1.0);
     });
   });
+
+  group('relativeTimeLabel', () {
+    test('"ahora mismo" for under a minute ago', () {
+      expect(relativeTimeLabel(DateTime.now().subtract(const Duration(seconds: 30))),
+          'ahora mismo');
+    });
+
+    test('minutes for under an hour ago', () {
+      expect(relativeTimeLabel(DateTime.now().subtract(const Duration(minutes: 5))),
+          'hace 5 min');
+    });
+
+    test('hours for under a day ago', () {
+      expect(relativeTimeLabel(DateTime.now().subtract(const Duration(hours: 3))), 'hace 3 h');
+    });
+
+    test('days for a day or more ago', () {
+      expect(relativeTimeLabel(DateTime.now().subtract(const Duration(days: 2))), 'hace 2 d');
+    });
+  });
 }

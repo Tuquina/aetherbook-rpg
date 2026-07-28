@@ -19,6 +19,7 @@ import 'widgets/atmosphere.dart';
 import 'widgets/confirm_sheet.dart';
 import 'widgets/home_bottom_nav.dart';
 import 'widgets/home_sidebar.dart';
+import 'widgets/library_thumbnail.dart';
 
 /// The stories offered in the menu (GDD §9). Adding a new campaign means
 /// adding its slug here once its content JSON exists in `assets/worlds/` —
@@ -419,13 +420,25 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
                     entries: librarySnapshot.data ?? const [],
                   );
                   final active = rows.where((r) => r.entry?.status == 'active').toList();
-                  if (active.isEmpty) return const SizedBox.shrink();
+                  if (active.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: AetherSpace.lg),
+                      child: _StartHero(
+                        onTap: () => _openModule(StoryModule.complete, byModule[StoryModule.complete]!),
+                      ),
+                    );
+                  }
                   final hero = active.first;
                   final rest = active.skip(1).take(2).toList();
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _ContinueHero(row: hero, onTap: () => _openRow(hero)),
+                      _ContinueHero(
+                        row: hero,
+                        onResume: () => _openRow(hero),
+                        onStartNew: () =>
+                            _openModule(StoryModule.complete, byModule[StoryModule.complete]!),
+                      ),
                       if (rest.isNotEmpty) ...[
                         const SizedBox(height: AetherSpace.md),
                         for (final row in rest)
@@ -577,7 +590,17 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (hero != null) ...[
-              _ContinueHero(row: hero, onTap: () => _openRow(hero)),
+              _ContinueHero(
+                row: hero,
+                onResume: () => _openRow(hero),
+                onStartNew: () =>
+                    _openModule(StoryModule.complete, byModule[StoryModule.complete]!),
+              ),
+              const SizedBox(height: AetherSpace.xl),
+            ] else ...[
+              _StartHero(
+                onTap: () => _openModule(StoryModule.complete, byModule[StoryModule.complete]!),
+              ),
               const SizedBox(height: AetherSpace.xl),
             ],
             if (carousel.isNotEmpty) ...[
@@ -631,72 +654,241 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
   }
 }
 
-/// "Dejaste el tomo abierto" (V2 design prototype §2a/§8a) — the account's
-/// most recently played active session, from [GameController.storyLibrary]
-/// rather than whatever happens to be in memory, so it survives a fresh
-/// launch. Carries the world's own per-world accent (Stage 6b) rather than
-/// a module accent, since at this point it's one specific story, not a
-/// category of them.
+/// "Dejaste el tomo abierto" (V2 design prototype §2a/§8a/§8b) — the
+/// account's most recently played active session, from
+/// [GameController.storyLibrary] rather than whatever happens to be in
+/// memory, so it survives a fresh launch. A real hero, not a compact pill:
+/// the latest turn's scene image as a background (falling back to a
+/// gradient wash in the world's own accent — Stage 6b — when there isn't
+/// one yet), the session's own title, a 2-line quote from the latest
+/// narration, and two explicit actions rather than one ambient
+/// tap-anywhere: [onResume] ("Retomar el turno N") and [onStartNew]
+/// ("Empezar una historia nueva" — always the same destination as
+/// [_StartHero]'s own CTA, your call: both point at "Historia completa").
 class _ContinueHero extends StatelessWidget {
-  const _ContinueHero({required this.row, required this.onTap});
+  const _ContinueHero({
+    required this.row,
+    required this.onResume,
+    required this.onStartNew,
+  });
 
   final LibraryRow row;
-  final VoidCallback onTap;
+  final VoidCallback onResume;
+  final VoidCallback onStartNew;
 
   @override
   Widget build(BuildContext context) {
     final world = row.world;
-    final entry = row.entry;
+    final entry = row.entry!; // only ever built for a row with an active session
     final theme = WorldTheme.forWorld(world);
+    final title = entry.title?.trim().isNotEmpty == true ? entry.title!.trim() : world.name;
+    final quote = entry.lastNarration?.trim();
+    final imageUrl = entry.imageUrl;
+
+    return ClipRRect(
+      borderRadius: AetherRadius.allLg,
+      child: DecoratedBox(
+        decoration: BoxDecoration(border: Border.all(color: theme.accent.withValues(alpha: 0.5))),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: imageUrl != null
+                  ? Image.network(
+                      imageUrl,
+                      key: ValueKey(imageUrl),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => _HeroFallback(accent: theme.accent),
+                    )
+                  : _HeroFallback(accent: theme.accent),
+            ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, AetherColors.void_.withValues(alpha: 0.94)],
+                    stops: const [0.0, 0.8],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AetherSpace.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Dejaste el tomo abierto'.toUpperCase(),
+                      style: AetherType.overline.copyWith(color: theme.accent)),
+                  const SizedBox(height: AetherSpace.sm),
+                  Text(title, style: AetherType.display.copyWith(fontSize: 26)),
+                  if (quote != null && quote.isNotEmpty) ...[
+                    const SizedBox(height: AetherSpace.sm),
+                    Text('«$quote»',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AetherType.body.copyWith(
+                            fontStyle: FontStyle.italic, color: AetherColors.parchmentDim)),
+                  ],
+                  const SizedBox(height: AetherSpace.lg),
+                  Wrap(
+                    spacing: AetherSpace.sm,
+                    runSpacing: AetherSpace.sm,
+                    children: [
+                      _HeroButton(
+                        label: 'Retomar el turno ${entry.turnCount}',
+                        icon: Icons.play_arrow_rounded,
+                        filled: true,
+                        accent: theme.accent,
+                        onTap: onResume,
+                      ),
+                      _HeroButton(
+                        label: 'Empezar una historia nueva',
+                        icon: Icons.add_rounded,
+                        filled: false,
+                        accent: theme.accent,
+                        onTap: onStartNew,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AetherSpace.sm),
+                  Text('${world.name} · ${relativeTimeLabel(entry.updatedAt)}',
+                      style: AetherType.caption),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Shown instead of [_ContinueHero] when the account has no active session
+/// at all — same container/format (V2's own consistency point: no ad-hoc
+/// "smaller" empty state), a neutral gold/ink wash rather than any one
+/// world's accent (there's no "current" world in this state), and a single
+/// CTA into "Historia completa" — the same destination [_ContinueHero]'s
+/// own "Empezar una historia nueva" uses, your call.
+class _StartHero extends StatelessWidget {
+  const _StartHero({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: AetherRadius.allLg,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: AetherColors.gold.withValues(alpha: 0.4)),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AetherColors.goldGlow, AetherColors.surface],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AetherSpace.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Empieza tu historia'.toUpperCase(),
+                  style: AetherType.overline.copyWith(color: AetherColors.goldBright)),
+              const SizedBox(height: AetherSpace.sm),
+              Text('Todavía no abriste ningún tomo',
+                  style: AetherType.display.copyWith(fontSize: 24)),
+              const SizedBox(height: AetherSpace.sm),
+              Text(
+                'Elige un mundo y escribe tu primer capítulo. Cuando vuelvas, todo sigue '
+                'donde lo dejaste.',
+                style: AetherType.body.copyWith(color: AetherColors.parchmentDim, fontSize: 13.5),
+              ),
+              const SizedBox(height: AetherSpace.lg),
+              _HeroButton(
+                label: 'Empezar una historia',
+                icon: Icons.auto_stories_rounded,
+                filled: true,
+                accent: AetherColors.gold,
+                onTap: onTap,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// [_ContinueHero]'s background when its session has no scene image yet
+/// (a curated, AI-free world, or a session whose first turn hasn't
+/// generated one) — the accent-to-surface wash the hero always used before
+/// this rebuild, now demoted to a fallback rather than the only treatment.
+class _HeroFallback extends StatelessWidget {
+  const _HeroFallback({required this.accent});
+
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [accent.withValues(alpha: 0.22), AetherColors.surface],
+        ),
+      ),
+    );
+  }
+}
+
+/// One of [_ContinueHero]/[_StartHero]'s CTAs — [filled] true is the
+/// primary action (solid accent wash), false is secondary (outline only).
+class _HeroButton extends StatelessWidget {
+  const _HeroButton({
+    required this.label,
+    required this.icon,
+    required this.filled,
+    required this.accent,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool filled;
+  final Color accent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
     return Pressable(
       onTap: onTap,
       child: (pressed) => AnimatedContainer(
         duration: AetherMotion.fast,
-        padding: const EdgeInsets.all(AetherSpace.lg),
+        padding: const EdgeInsets.symmetric(horizontal: AetherSpace.lg, vertical: AetherSpace.md),
         decoration: BoxDecoration(
-          borderRadius: AetherRadius.allLg,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [theme.accent.withValues(alpha: 0.18), AetherColors.surface],
-          ),
-          border: Border.all(
-            color: theme.accent.withValues(alpha: pressed ? 0.75 : 0.5),
-          ),
-          boxShadow: pressed ? AetherShadow.glow(theme.accent, strength: 0.2) : null,
+          color: filled
+              ? accent.withValues(alpha: pressed ? 0.32 : 0.22)
+              : (pressed ? AetherColors.surfaceRaised : null),
+          borderRadius: AetherRadius.allMd,
+          border: Border.all(color: accent.withValues(alpha: filled ? 0.75 : 0.4)),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: theme.accent.withValues(alpha: 0.18),
-                shape: BoxShape.circle,
-                border: Border.all(color: theme.accent.withValues(alpha: 0.5)),
-              ),
-              child: Icon(Icons.play_arrow_rounded, color: theme.accent, size: 24),
-            ),
-            const SizedBox(width: AetherSpace.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Dejaste el tomo abierto',
-                      style: AetherType.overline.copyWith(color: theme.accent)),
-                  const SizedBox(height: 4),
-                  Text(entry?.title?.trim().isNotEmpty == true ? entry!.title! : world.name,
-                      style: AetherType.title),
-                  const SizedBox(height: 2),
-                  Text(
-                    entry == null ? world.name : '${entry.characterName} · turno ${entry.turnCount}',
-                    style: AetherType.caption,
-                  ),
-                ],
+            Icon(icon, size: 16, color: filled ? accent : AetherColors.parchmentDim),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: AetherType.label.copyWith(
+                fontSize: 13,
+                fontWeight: filled ? FontWeight.w700 : FontWeight.w500,
+                color: filled ? accent : AetherColors.parchmentDim,
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: theme.accent),
           ],
         ),
       ),
@@ -720,6 +912,7 @@ class _LibraryListTile extends StatelessWidget {
     final subtitle = entry == null
         ? 'Sin empezar'
         : '${entry.characterName} · turno ${entry.turnCount}';
+    final progress = row.progress;
     return Pressable(
       onTap: onTap,
       child: (pressed) => AnimatedContainer(
@@ -732,7 +925,7 @@ class _LibraryListTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(width: 6, height: 6, decoration: BoxDecoration(color: accent, shape: BoxShape.circle)),
+            LibraryThumbnail(imageUrl: entry?.imageUrl, accent: accent, size: 40),
             const SizedBox(width: AetherSpace.sm),
             Expanded(
               child: Column(
@@ -743,6 +936,22 @@ class _LibraryListTile extends StatelessWidget {
                       style: AetherType.label.copyWith(fontSize: 13),
                       overflow: TextOverflow.ellipsis),
                   Text(subtitle, style: AetherType.caption.copyWith(fontSize: 10.5)),
+                  if (progress != null) ...[
+                    const SizedBox(height: 4),
+                    ClipRRect(
+                      borderRadius: AetherRadius.allPill,
+                      child: SizedBox(
+                        height: 3,
+                        child: Stack(children: [
+                          Container(color: AetherColors.void_),
+                          FractionallySizedBox(
+                            widthFactor: progress,
+                            child: Container(color: accent),
+                          ),
+                        ]),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

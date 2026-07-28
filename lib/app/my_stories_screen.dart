@@ -11,6 +11,7 @@ import 'library_rows.dart';
 import 'story_module_screen.dart' show Pressable;
 import 'story_navigation.dart';
 import 'widgets/atmosphere.dart';
+import 'widgets/library_thumbnail.dart';
 
 enum _Filter { todas, enCurso, sinEmpezar }
 
@@ -256,15 +257,8 @@ class _LibraryCard extends StatelessWidget {
     final entry = row.entry;
     if (entry == null) return 'Sin empezar';
     if (entry.status == 'completed') return '${entry.characterName} · terminada';
-    final since = DateTime.now().difference(entry.updatedAt);
-    final relative = since.inMinutes < 1
-        ? 'ahora mismo'
-        : since.inHours < 1
-            ? 'hace ${since.inMinutes} min'
-            : since.inDays < 1
-                ? 'hace ${since.inHours} h'
-                : 'hace ${since.inDays} d';
-    return '${entry.characterName} · turno ${entry.turnCount} · $relative';
+    return '${entry.characterName} · turno ${entry.turnCount} · '
+        '${relativeTimeLabel(entry.updatedAt)}';
   }
 
   String get _title {
@@ -301,6 +295,17 @@ class _LibraryCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(width: 3, color: accent),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AetherSpace.sm),
+                // `Center`, not a bare `LibraryThumbnail`: the row's own
+                // `stretch` would otherwise force-fit the fixed-size square
+                // thumbnail to the full (variable) card height instead of
+                // just centering it within that space.
+                child: Center(
+                  child: LibraryThumbnail(
+                      imageUrl: row.entry?.imageUrl, accent: accent, size: 40),
+                ),
+              ),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(AetherSpace.md),
@@ -319,6 +324,8 @@ class _LibraryCard extends StatelessWidget {
                                   borderRadius: AetherRadius.allSm,
                                 ),
                                 child: Text(row.world.name.toUpperCase(),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                         fontSize: 8.5,
                                         fontWeight: FontWeight.w700,
