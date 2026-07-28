@@ -8,6 +8,7 @@ import 'design/typography.dart';
 import 'game_controller.dart';
 import 'game_screen.dart';
 import 'widgets/atmosphere.dart';
+import 'widgets/step_dots.dart';
 import 'world_select_screen.dart';
 
 /// Structured character creation (campaign-bible §5): name, origin, the free
@@ -293,20 +294,7 @@ class _StepHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          Row(
-            children: [
-              for (var i = 0; i < _stepCount; i++)
-                Container(
-                  margin: const EdgeInsets.only(left: 5),
-                  width: 18,
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: i <= step ? AetherColors.gold : AetherColors.hairlineStrong,
-                    borderRadius: AetherRadius.allPill,
-                  ),
-                ),
-            ],
-          ),
+          StepDots(count: _stepCount, current: step),
         ],
       ),
     );

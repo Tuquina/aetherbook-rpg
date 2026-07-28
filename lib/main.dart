@@ -7,11 +7,13 @@ import 'adapters/image/http_image_generator_adapter.dart';
 import 'adapters/memory/http_memory_digest_adapter.dart';
 import 'adapters/narrator/http_narrator_adapter.dart';
 import 'adapters/persistence/supabase_game_state_adapter.dart';
+import 'adapters/settings/supabase_settings_adapter.dart';
 import 'app/game_controller.dart';
 import 'app/splash_screen.dart';
 import 'app/theme.dart';
 import 'ports/auth_port.dart';
 import 'ports/game_state_repository_port.dart';
+import 'ports/settings_port.dart';
 
 // Project URL + publishable key (CLAUDE.md §8: this is NOT a secret — it's
 // meant to ship in client code, protected by RLS — unlike the Gemini/Groq
@@ -51,6 +53,8 @@ Future<void> main() async {
       endpoint: _generateImageEndpoint,
       publishableKey: _supabasePublishableKey,
     ),
+    auth: supabase?.auth,
+    settingsPort: supabase?.settings,
   );
 
   runApp(AetherbookApp(controller: controller, auth: supabase?.auth));
@@ -63,7 +67,8 @@ Future<void> main() async {
 /// Degrades gracefully to in-memory play with no account features (both
 /// `null`, same as Fase 0) if Supabase itself fails to initialize, instead of
 /// crashing the app at startup.
-Future<({GameStateRepositoryPort persistence, AuthPort auth})?> _tryInitSupabase() async {
+Future<({GameStateRepositoryPort persistence, AuthPort auth, SettingsPort settings})?>
+    _tryInitSupabase() async {
   try {
     await Supabase.initialize(
       url: _supabaseUrl,
@@ -73,6 +78,7 @@ Future<({GameStateRepositoryPort persistence, AuthPort auth})?> _tryInitSupabase
     return (
       persistence: SupabaseGameStateAdapter(client),
       auth: SupabaseAuthAdapter(client),
+      settings: SupabaseSettingsAdapter(client),
     );
   } catch (e) {
     debugPrint('Persistencia no disponible, se juega solo en memoria: $e');

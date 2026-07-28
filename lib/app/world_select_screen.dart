@@ -11,6 +11,7 @@ import 'design/typography.dart';
 import 'design/world_theme.dart';
 import 'game_controller.dart';
 import 'game_screen.dart';
+import 'profile_screen.dart';
 import 'story_module_screen.dart';
 import 'widgets/atmosphere.dart';
 import 'widgets/confirm_sheet.dart';
@@ -119,9 +120,16 @@ StoryModule _moduleFor(World world) {
 /// reused either way, so picking the story already in progress just resumes
 /// it.
 class WorldSelectScreen extends StatefulWidget {
-  const WorldSelectScreen({super.key, required this.controller});
+  const WorldSelectScreen({super.key, required this.controller, this.autoOpenModule});
 
   final GameController controller;
+
+  /// Set once, right after the first-run onboarding flow (V2 §6c-e) hands
+  /// off here — immediately opens the module the player tapped on
+  /// onboarding's last page, instead of making them tap it again on a screen
+  /// they haven't even seen render yet. `null` on every other route into
+  /// this screen (splash, the in-story back arrow, chargen's own handoff).
+  final StoryModule? autoOpenModule;
 
   @override
   State<WorldSelectScreen> createState() => _WorldSelectScreenState();
@@ -131,6 +139,18 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
   late final Future<List<World>> _worlds = Future.wait(
     _availableWorldSlugs.map(widget.controller.loadWorldInfo),
   );
+
+  @override
+  void initState() {
+    super.initState();
+    final autoOpen = widget.autoOpenModule;
+    if (autoOpen == null) return;
+    _worlds.then((worlds) {
+      if (!mounted) return;
+      final matching = worlds.where((w) => _moduleFor(w) == autoOpen).toList();
+      _openModule(autoOpen, matching);
+    });
+  }
 
   /// `Future<void>` even though this is wired up as a `ValueChanged<World>`
   /// (`void Function(World)`) callback — Dart allows that assignment since an
@@ -283,6 +303,17 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
 
   void _openCodex() => Navigator.of(context).push(CodexScreen.route());
 
+  void _openProfile() {
+    final auth = widget.controller.auth;
+    final settingsPort = widget.controller.settingsPort;
+    if (auth == null || settingsPort == null) return;
+    Navigator.of(context).push(ProfileScreen.route(
+      controller: widget.controller,
+      authPort: auth,
+      settingsPort: settingsPort,
+    ));
+  }
+
   /// The story left open in memory, if any — the same one the back arrow
   /// already resumes (`_select`'s already-active-session branch). Read once,
   /// synchronously: nothing async changes it while this screen is on top, so
@@ -304,11 +335,33 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Elige tu historia', style: AetherType.display),
-                    const SizedBox(height: AetherSpace.xs),
-                    Text('Cada mundo se escribe distinto.',
-                        style: AetherType.body
-                            .copyWith(color: AetherColors.parchmentDim, fontSize: 15)),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Elige tu historia', style: AetherType.display),
+                              const SizedBox(height: AetherSpace.xs),
+                              Text('Cada mundo se escribe distinto.',
+                                  style: AetherType.body
+                                      .copyWith(color: AetherColors.parchmentDim, fontSize: 15)),
+                            ],
+                          ),
+                        ),
+                        // Only reachable with a real account behind it — the
+                        // degraded in-memory mode (auth/settingsPort both
+                        // null) has nothing to show in Perfil/Ajustes.
+                        if (widget.controller.auth != null &&
+                            widget.controller.settingsPort != null)
+                          IconButton(
+                            onPressed: _openProfile,
+                            icon: const Icon(Icons.person_outline_rounded,
+                                color: AetherColors.parchmentDim),
+                          ),
+                      ],
+                    ),
                     const SizedBox(height: AetherSpace.lg),
                     // "Retomar es la acción principal, no un botón más" (V2
                     // design prototype §2a) — when a story is already open in
