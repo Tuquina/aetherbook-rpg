@@ -107,23 +107,19 @@ class _BrandMarkPainter extends CustomPainter {
     );
   }
 
-  /// Matches the prototype's exact CSS
-  /// `clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)` —
-  /// a hexagon stretched to touch all four edges of its bounding box, not a
-  /// regular (equilateral) one. That means the horizontal and vertical
-  /// radii differ: the pointy top/bottom vertices reach the full half-height,
-  /// but the flat-side vertices (at ±30°) need `rx = halfWidth / cos(30°)`
-  /// to still land exactly on the left/right edges once that angle's cosine
-  /// is applied.
+  /// A regular (equilateral) pointy-top hexagon, circumradius `size/2` —
+  /// every call site passes a square box (`SizedBox(size, size)` in
+  /// [BrandMark.build]), so this touches the top and bottom edges exactly
+  /// and leaves a small even margin on the left/right, the usual d20-die
+  /// silhouette.
   Path _hexagonPath(Offset center, Size size) {
-    final ry = size.height / 2;
-    final rx = size.width / 2 / math.cos(math.pi / 6);
+    final r = math.min(size.width, size.height) / 2;
     final path = Path();
     for (var i = 0; i < 6; i++) {
       final angle = -math.pi / 2 + i * math.pi / 3;
       final point = Offset(
-        center.dx + rx * math.cos(angle),
-        center.dy + ry * math.sin(angle),
+        center.dx + r * math.cos(angle),
+        center.dy + r * math.sin(angle),
       );
       if (i == 0) {
         path.moveTo(point.dx, point.dy);

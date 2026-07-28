@@ -119,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen>
                             const _OrnamentDivider(),
                             const SizedBox(height: AetherSpace.lg),
                             Text(
-                              'Un multiverso que se escribe contigo',
+                              'Un multiverso que se escribe contigo.',
                               textAlign: TextAlign.center,
                               style: AetherType.body.copyWith(
                                   color: AetherColors.parchmentDim,
@@ -158,12 +158,12 @@ class _Wordmark extends StatelessWidget {
   /// screen breathes on one clock instead of several out-of-sync timers.
   final double shimmer;
 
-  static const _text = 'AETHERBOOK';
+  static const _text = 'Aetherbook';
   static const _style = TextStyle(
     fontFamily: 'Marcellus',
     fontSize: 40,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 5,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 1.2,
     color: Colors.white,
   );
 

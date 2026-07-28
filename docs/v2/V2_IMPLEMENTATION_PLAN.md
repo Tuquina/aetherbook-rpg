@@ -150,6 +150,35 @@ a distinct **web-only** layout for the splash (prototype §8a/8b) — today's
 bounded by `ConstrainedBox(maxWidth: 440)`; a real two-column web treatment
 would be new work, not a fix to what's here.
 
+**Follow-up closed (2026-07-27, later the same day):** the Google icon gap
+above was closed in the same pass as the anonymous-auth removal below — added
+`flutter_svg` and a new `google_logo.dart` (`GoogleLogo`) rendering the real
+4-color "G" mark verbatim from the prototype's inline SVG, replacing the
+Material glyph in `account_screen.dart`. Two more things reported against the
+deployed app (screenshots of the live site, not the prototype) were fixed in
+a further pass right after:
+- `splash_screen.dart`'s `_Wordmark` read "AETHERBOOK" in bold caps with wide
+  tracking — the prototype's §10a CSS is `font:400 42px/1.05
+  Marcellus,serif;letter-spacing:1.2px` over the text "Aetherbook" (normal
+  case, normal weight). Matched exactly; also added the trailing period the
+  prototype's tagline has (`Un multiverso que se escribe contigo.`) that was
+  missing.
+- `brand_mark.dart`'s hexagon path used an elliptical radius (`rx ≠ ry`) to
+  match the prototype's `clip-path` exactly touching all four edges of its
+  box — re-derived vertex-by-vertex twice and confirmed it was mathematically
+  correct, so it isn't why the filled variant read as warped in the user's
+  screenshots at `size: 44` in `account_screen.dart`. Simplified anyway to a
+  regular hexagon (single radius, `size/2`) since every call site passes a
+  square box, so nothing is lost, and it removes a whole axis of doubt.
+  **This screen's actual pixels were never re-confirmed visually in this
+  session** — the Browser pane's screenshot tool stayed non-functional
+  throughout ("the Browser pane is not displayed, so the page is not
+  compositing frames"), so this fix is verified by `flutter analyze`/`flutter
+  test` and by re-deriving the geometry, not by seeing the render. If it
+  still looks off after this deploys, it's worth ruling out a stale Flutter
+  web service-worker cache on the client (a hard refresh / incognito load)
+  before assuming the code is still wrong.
+
 ---
 
 ## Stage 2 — Story discovery and library
