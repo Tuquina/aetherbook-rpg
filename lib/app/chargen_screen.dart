@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/engine/create_character.dart';
+import '../core/state/character.dart';
 import '../core/world/world.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
@@ -14,6 +15,14 @@ import 'world_select_screen.dart';
 /// minutes. Only shown for a world that declares chargen origins; a world
 /// without them (Fase 0 style) skips straight from [WorldSelectScreen] to
 /// [GameScreen] with `world.startingCharacter`.
+///
+/// Reflowed (V2 design prototype §2c/§5b) into 3 steps rather than one long
+/// scroll: "Nombre y origen", "Tu voz" (tone + vow), "Últimos detalles"
+/// (personal item + a live-updating character-sheet preview). The world
+/// itself is never a step here — unlike the prototype's own mockup, which
+/// bundles world selection into chargen, this app always picks the world
+/// first (`WorldSelectScreen`/`CreateStoryScreen`), so by the time a player
+/// reaches this screen the world is already fixed.
 class ChargenScreen extends StatefulWidget {
   const ChargenScreen({
     super.key,
@@ -44,6 +53,9 @@ class ChargenScreen extends StatefulWidget {
   State<ChargenScreen> createState() => _ChargenScreenState();
 }
 
+const _stepCount = 3;
+const _stepTitles = ['Nombre y origen', 'Tu voz', 'Últimos detalles'];
+
 class _ChargenScreenState extends State<ChargenScreen> {
   final _nameController = TextEditingController();
   final _titleController = TextEditingController();
@@ -52,6 +64,7 @@ class _ChargenScreenState extends State<ChargenScreen> {
   String? _freeAttributePoint;
   String? _vowId;
   String? _chosenTone;
+  int _step = 0;
   bool _submitting = false;
   String? _error;
 
@@ -63,12 +76,68 @@ class _ChargenScreenState extends State<ChargenScreen> {
     super.dispose();
   }
 
-  bool get _canConfirm =>
+  bool get _step1Valid =>
       (!widget.world.hasCustomizableName || _nameController.text.trim().isNotEmpty) &&
       _originId != null &&
-      (!widget.world.hasFreeAttributePoint || _freeAttributePoint != null) &&
-      _vowId != null &&
-      !_submitting;
+      (!widget.world.hasFreeAttributePoint || _freeAttributePoint != null);
+
+  bool get _step2Valid => _vowId != null;
+
+  bool get _canConfirm => _step1Valid && _step2Valid && !_submitting;
+
+  bool get _canAdvance => switch (_step) {
+        0 => _step1Valid,
+        1 => _step2Valid,
+        _ => _canConfirm,
+      };
+
+  /// A live preview of the character these choices would build, via the same
+  /// pure domain call [_confirm] eventually makes for real — shown on the
+  /// last step (V2 prototype's "Así entras al mundo"). `null` until both an
+  /// origin and a vow are chosen, which step gating already guarantees by
+  /// the time step 2 (the last one) is reachable.
+  Character? get _preview {
+    final originId = _originId;
+    final vowId = _vowId;
+    if (originId == null || vowId == null) return null;
+    return const CreateCharacter().call(
+      widget.world,
+      CreateCharacterInput(
+        name: widget.world.hasCustomizableName
+            ? _nameController.text.trim()
+            : widget.world.startingCharacter.name,
+        originId: originId,
+        freeAttributePoint: _freeAttributePoint,
+        vowId: vowId,
+        personalItem: _personalItemController.text.trim(),
+        chosenTone: _chosenTone,
+      ),
+    );
+  }
+
+  void _goBack() {
+    if (_step > 0) {
+      setState(() => _step -= 1);
+      return;
+    }
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        transitionDuration: AetherMotion.slow,
+        pageBuilder: (_, _, _) => WorldSelectScreen(controller: widget.controller),
+        transitionsBuilder: (_, anim, _, child) =>
+            FadeTransition(opacity: anim, child: child),
+      ),
+    );
+  }
+
+  void _advance() {
+    if (!_canAdvance) return;
+    if (_step < _stepCount - 1) {
+      setState(() => _step += 1);
+    } else {
+      _confirm();
+    }
+  }
 
   Future<void> _confirm() async {
     if (!_canConfirm) return;
@@ -118,156 +187,401 @@ class _ChargenScreenState extends State<ChargenScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final world = widget.world;
     return Scaffold(
       body: AetherBackground(
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
-              child: ListView(
-                padding: const EdgeInsets.all(AetherSpace.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      onPressed: () => Navigator.of(context).pushReplacement(
-                        PageRouteBuilder(
-                          transitionDuration: AetherMotion.slow,
-                          pageBuilder: (_, _, _) =>
-                              WorldSelectScreen(controller: widget.controller),
-                          transitionsBuilder: (_, anim, _, child) =>
-                              FadeTransition(opacity: anim, child: child),
+                  _StepHeader(step: _step, onBack: _goBack),
+                  Expanded(
+                    child: AnimatedSwitcher(
+                      duration: AetherMotion.base,
+                      switchInCurve: AetherMotion.standard,
+                      transitionBuilder: (child, animation) => FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween(begin: const Offset(0, 0.03), end: Offset.zero)
+                              .animate(animation),
+                          child: child,
                         ),
                       ),
-                      tooltip: 'Volver a las historias',
-                      icon: const Icon(Icons.arrow_back_rounded,
-                          color: AetherColors.goldSoft, size: 22),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ),
-                  const SizedBox(height: AetherSpace.md),
-                  Text(world.name, style: AetherType.display),
-                  const SizedBox(height: AetherSpace.md),
-                  Container(
-                    width: 40,
-                    height: 2,
-                    color: AetherColors.hairlineStrong,
-                  ),
-                  if (widget.alwaysCreateNew) ...[
-                    const SizedBox(height: AetherSpace.xl),
-                    Text('Título de tu historia (opcional)',
-                        style: AetherType.overline),
-                    const SizedBox(height: AetherSpace.sm),
-                    _NameField(
-                      controller: _titleController,
-                      hint: 'Cómo quieres llamar a esta historia',
-                      onChanged: () => setState(() {}),
-                    ),
-                  ],
-                  const SizedBox(height: AetherSpace.md),
-                  Text('CREA TU PERSONAJE', style: AetherType.overline),
-                  const SizedBox(height: AetherSpace.xl),
-                  if (world.hasCustomizableName) ...[
-                    Text('Nombre', style: AetherType.overline),
-                    const SizedBox(height: AetherSpace.sm),
-                    _NameField(controller: _nameController, onChanged: () => setState(() {})),
-                    const SizedBox(height: AetherSpace.xl),
-                  ] else ...[
-                    Text('Protagonista', style: AetherType.overline),
-                    const SizedBox(height: AetherSpace.sm),
-                    Text(world.startingCharacter.name, style: AetherType.title),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Esta historia sigue a un personaje ya definido — tú eliges cómo llegó hasta acá y qué hace de ahora en más.',
-                      style: AetherType.caption,
-                    ),
-                    const SizedBox(height: AetherSpace.xl),
-                  ],
-                  Text('Origen', style: AetherType.overline),
-                  const SizedBox(height: AetherSpace.sm),
-                  for (final origin in world.origins)
-                    _SelectableCard(
-                      title: origin.displayName,
-                      subtitle: origin.narrativeConnection,
-                      selected: _originId == origin.id,
-                      onTap: () => setState(() => _originId = origin.id),
-                    ),
-                  if (world.hasFreeAttributePoint) ...[
-                    const SizedBox(height: AetherSpace.xl),
-                    Text('Punto libre (+1 a un atributo)', style: AetherType.overline),
-                    const SizedBox(height: AetherSpace.sm),
-                    Wrap(
-                      spacing: AetherSpace.sm,
-                      runSpacing: AetherSpace.sm,
-                      children: [
-                        for (final attribute in world.attributeKeys)
-                          _AttributeChip(
-                            label: attribute,
-                            selected: _freeAttributePoint == attribute,
-                            onTap: () => setState(() => _freeAttributePoint = attribute),
-                          ),
-                      ],
-                    ),
-                  ],
-                  const SizedBox(height: AetherSpace.xl),
-                  Text(world.chargenVowLabel, style: AetherType.overline),
-                  const SizedBox(height: AetherSpace.sm),
-                  for (final vow in world.vows)
-                    _SelectableCard(
-                      title: '"${vow.text}"',
-                      selected: _vowId == vow.id,
-                      onTap: () => setState(() => _vowId = vow.id),
-                    ),
-                  if (world.tones.isNotEmpty) ...[
-                    const SizedBox(height: AetherSpace.xl),
-                    Text('Tono de la narración (opcional)', style: AetherType.overline),
-                    const SizedBox(height: AetherSpace.sm),
-                    for (final tone in world.tones)
-                      _SelectableCard(
-                        title: tone.label,
-                        subtitle: tone.blurb,
-                        selected: _chosenTone == tone.id,
-                        onTap: () => setState(
-                            () => _chosenTone = _chosenTone == tone.id ? null : tone.id),
+                      child: SingleChildScrollView(
+                        key: ValueKey(_step),
+                        padding: const EdgeInsets.fromLTRB(
+                            AetherSpace.xl, AetherSpace.lg, AetherSpace.xl, AetherSpace.xl),
+                        child: switch (_step) {
+                          0 => _StepOne(
+                              world: widget.world,
+                              alwaysCreateNew: widget.alwaysCreateNew,
+                              titleController: _titleController,
+                              nameController: _nameController,
+                              originId: _originId,
+                              freeAttributePoint: _freeAttributePoint,
+                              onOriginTap: (id) => setState(() => _originId = id),
+                              onFreePointTap: (attr) =>
+                                  setState(() => _freeAttributePoint = attr),
+                              onFieldChanged: () => setState(() {}),
+                            ),
+                          1 => _StepTwo(
+                              world: widget.world,
+                              vowId: _vowId,
+                              chosenTone: _chosenTone,
+                              onVowTap: (id) => setState(() => _vowId = id),
+                              onToneTap: (id) => setState(
+                                  () => _chosenTone = _chosenTone == id ? null : id),
+                            ),
+                          _ => _StepThree(
+                              personalItemController: _personalItemController,
+                              preview: _preview,
+                              world: widget.world,
+                              onFieldChanged: () => setState(() {}),
+                              error: _error,
+                            ),
+                        },
                       ),
-                    if (_chosenTone != null) ...[
-                      const SizedBox(height: AetherSpace.sm),
-                      Container(
-                        padding: const EdgeInsets.all(AetherSpace.md),
-                        decoration: BoxDecoration(
-                          color: AetherColors.goldGlow,
-                          borderRadius: AetherRadius.allSm,
-                        ),
-                        child: Text(
-                          world.toneByIdOrNull(_chosenTone)!.previewText,
-                          style: AetherType.caption.copyWith(
-                              fontStyle: FontStyle.italic, color: AetherColors.parchment),
-                        ),
-                      ),
-                    ],
-                  ],
-                  const SizedBox(height: AetherSpace.xl),
-                  Text('Objeto personal (opcional)', style: AetherType.overline),
-                  const SizedBox(height: AetherSpace.sm),
-                  _NameField(
-                    controller: _personalItemController,
-                    hint: 'Algo que alguien importante te entregó',
-                    onChanged: () => setState(() {}),
+                    ),
                   ),
-                  const SizedBox(height: AetherSpace.xxl),
-                  if (_error != null) ...[
-                    Text(_error!,
-                        style: AetherType.body.copyWith(color: AetherColors.failure)),
-                    const SizedBox(height: AetherSpace.lg),
-                  ],
-                  _ConfirmButton(enabled: _canConfirm, onTap: _confirm, busy: _submitting),
+                  Padding(
+                    padding: const EdgeInsets.all(AetherSpace.xl),
+                    child: _StepCta(
+                      enabled: _canAdvance,
+                      busy: _submitting,
+                      label: _step < _stepCount - 1 ? 'Siguiente' : 'Confirmar ficha',
+                      onTap: _advance,
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Back arrow + step title + progress pips — the only chrome shared by every
+/// step (V2 prototype §2c's `cgBack`/`cgStepLabel`/pip row). The back arrow
+/// steps backward, or leaves chargen entirely from step 0.
+class _StepHeader extends StatelessWidget {
+  const _StepHeader({required this.step, required this.onBack});
+
+  final int step;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(AetherSpace.md, AetherSpace.lg, AetherSpace.xl, 0),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: onBack,
+            tooltip: 'Atrás',
+            icon: const Icon(Icons.arrow_back_rounded,
+                color: AetherColors.goldSoft, size: 22),
+          ),
+          const SizedBox(width: AetherSpace.xs),
+          Expanded(
+            child: Text(
+              'Paso ${step + 1} de $_stepCount · ${_stepTitles[step]}',
+              style: AetherType.overline.copyWith(color: AetherColors.parchmentFaint),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Row(
+            children: [
+              for (var i = 0; i < _stepCount; i++)
+                Container(
+                  margin: const EdgeInsets.only(left: 5),
+                  width: 18,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: i <= step ? AetherColors.gold : AetherColors.hairlineStrong,
+                    borderRadius: AetherRadius.allPill,
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StepOne extends StatelessWidget {
+  const _StepOne({
+    required this.world,
+    required this.alwaysCreateNew,
+    required this.titleController,
+    required this.nameController,
+    required this.originId,
+    required this.freeAttributePoint,
+    required this.onOriginTap,
+    required this.onFreePointTap,
+    required this.onFieldChanged,
+  });
+
+  final World world;
+  final bool alwaysCreateNew;
+  final TextEditingController titleController;
+  final TextEditingController nameController;
+  final String? originId;
+  final String? freeAttributePoint;
+  final ValueChanged<String> onOriginTap;
+  final ValueChanged<String> onFreePointTap;
+  final VoidCallback onFieldChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(world.name, style: AetherType.display),
+        const SizedBox(height: AetherSpace.xl),
+        if (alwaysCreateNew) ...[
+          Text('Título de tu historia (opcional)', style: AetherType.overline),
+          const SizedBox(height: AetherSpace.sm),
+          _NameField(
+            controller: titleController,
+            hint: 'Cómo quieres llamar a esta historia',
+            onChanged: onFieldChanged,
+          ),
+          const SizedBox(height: AetherSpace.xl),
+        ],
+        if (world.hasCustomizableName) ...[
+          Text('Nombre', style: AetherType.overline),
+          const SizedBox(height: AetherSpace.sm),
+          _NameField(controller: nameController, onChanged: onFieldChanged),
+          const SizedBox(height: AetherSpace.xl),
+        ] else ...[
+          Text('Protagonista', style: AetherType.overline),
+          const SizedBox(height: AetherSpace.sm),
+          Text(world.startingCharacter.name, style: AetherType.title),
+          const SizedBox(height: 4),
+          Text(
+            'Esta historia sigue a un personaje ya definido — tú eliges cómo llegó hasta acá y qué hace de ahora en más.',
+            style: AetherType.caption,
+          ),
+          const SizedBox(height: AetherSpace.xl),
+        ],
+        Text('Origen', style: AetherType.overline),
+        const SizedBox(height: AetherSpace.sm),
+        for (final origin in world.origins)
+          _SelectableCard(
+            title: origin.displayName,
+            subtitle: origin.narrativeConnection,
+            selected: originId == origin.id,
+            onTap: () => onOriginTap(origin.id),
+          ),
+        if (world.hasFreeAttributePoint) ...[
+          const SizedBox(height: AetherSpace.xl),
+          Text('Punto libre (+1 a un atributo)', style: AetherType.overline),
+          const SizedBox(height: AetherSpace.sm),
+          Wrap(
+            spacing: AetherSpace.sm,
+            runSpacing: AetherSpace.sm,
+            children: [
+              for (final attribute in world.attributeKeys)
+                _AttributeChip(
+                  label: attribute,
+                  selected: freeAttributePoint == attribute,
+                  onTap: () => onFreePointTap(attribute),
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _StepTwo extends StatelessWidget {
+  const _StepTwo({
+    required this.world,
+    required this.vowId,
+    required this.chosenTone,
+    required this.onVowTap,
+    required this.onToneTap,
+  });
+
+  final World world;
+  final String? vowId;
+  final String? chosenTone;
+  final ValueChanged<String> onVowTap;
+  final ValueChanged<String> onToneTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (world.tones.isNotEmpty) ...[
+          Text('Tono de la narración (opcional)', style: AetherType.overline),
+          const SizedBox(height: AetherSpace.sm),
+          for (final tone in world.tones)
+            _SelectableCard(
+              title: tone.label,
+              subtitle: tone.blurb,
+              selected: chosenTone == tone.id,
+              onTap: () => onToneTap(tone.id),
+            ),
+          if (chosenTone != null) ...[
+            const SizedBox(height: AetherSpace.sm),
+            Container(
+              padding: const EdgeInsets.all(AetherSpace.md),
+              decoration: BoxDecoration(
+                color: AetherColors.goldGlow,
+                borderRadius: AetherRadius.allSm,
+              ),
+              child: Text(
+                world.toneByIdOrNull(chosenTone)!.previewText,
+                style: AetherType.caption
+                    .copyWith(fontStyle: FontStyle.italic, color: AetherColors.parchment),
+              ),
+            ),
+          ],
+          const SizedBox(height: AetherSpace.xl),
+        ],
+        Text(world.chargenVowLabel, style: AetherType.overline),
+        const SizedBox(height: AetherSpace.sm),
+        for (final vow in world.vows)
+          _SelectableCard(
+            title: '"${vow.text}"',
+            selected: vowId == vow.id,
+            onTap: () => onVowTap(vow.id),
+          ),
+      ],
+    );
+  }
+}
+
+class _StepThree extends StatelessWidget {
+  const _StepThree({
+    required this.personalItemController,
+    required this.preview,
+    required this.world,
+    required this.onFieldChanged,
+    required this.error,
+  });
+
+  final TextEditingController personalItemController;
+  final Character? preview;
+  final World world;
+  final VoidCallback onFieldChanged;
+  final String? error;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Objeto personal (opcional)', style: AetherType.overline),
+        const SizedBox(height: AetherSpace.sm),
+        _NameField(
+          controller: personalItemController,
+          hint: 'Algo que alguien importante te entregó',
+          onChanged: onFieldChanged,
+        ),
+        const SizedBox(height: AetherSpace.xl),
+        if (preview != null) _CharacterPreview(world: world, character: preview!),
+        if (error != null) ...[
+          const SizedBox(height: AetherSpace.lg),
+          Text(error!, style: AetherType.body.copyWith(color: AetherColors.failure)),
+        ],
+      ],
+    );
+  }
+}
+
+/// A live-updating summary of the character these choices would build (V2
+/// prototype §2c: "Así entras al mundo") — every field on it already exists
+/// on [Character]; this just surfaces it before the player commits, instead
+/// of finding out for the first time on the game screen.
+class _CharacterPreview extends StatelessWidget {
+  const _CharacterPreview({required this.world, required this.character});
+
+  final World world;
+  final Character character;
+
+  @override
+  Widget build(BuildContext context) {
+    final vow = world.vowById(character.vowId!);
+    return Container(
+      padding: const EdgeInsets.all(AetherSpace.lg),
+      decoration: BoxDecoration(
+        color: AetherColors.surfaceRaised,
+        borderRadius: AetherRadius.allLg,
+        border: Border.all(color: AetherColors.gold.withValues(alpha: 0.32)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Así entras al mundo',
+              style: AetherType.overline.copyWith(color: AetherColors.goldSoft)),
+          const SizedBox(height: AetherSpace.md),
+          Text(
+            character.name.isEmpty ? world.startingCharacter.name : character.name,
+            style: AetherType.title,
+          ),
+          if (world.attributeKeys.isNotEmpty) ...[
+            const SizedBox(height: AetherSpace.md),
+            Wrap(
+              spacing: AetherSpace.sm,
+              runSpacing: AetherSpace.sm,
+              children: [
+                for (final key in world.attributeKeys)
+                  _StatPill(label: key, value: character.attributes[key] ?? 1),
+              ],
+            ),
+          ],
+          if ((character.personalItem ?? '').isNotEmpty) ...[
+            const SizedBox(height: AetherSpace.md),
+            Text(character.personalItem!, style: AetherType.caption),
+          ],
+          const SizedBox(height: AetherSpace.md),
+          Container(height: 1, color: AetherColors.hairline),
+          const SizedBox(height: AetherSpace.md),
+          Text('"${vow.text}"',
+              style: AetherType.body.copyWith(
+                  fontStyle: FontStyle.italic, color: AetherColors.goldSoft)),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatPill extends StatelessWidget {
+  const _StatPill({required this.label, required this.value});
+
+  final String label;
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AetherSpace.md, vertical: 6),
+      decoration: BoxDecoration(
+        color: AetherColors.void_,
+        borderRadius: AetherRadius.allPill,
+        border: Border.all(color: AetherColors.hairline),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label,
+              style: AetherType.caption.copyWith(color: AetherColors.parchmentDim)),
+          const SizedBox(width: 6),
+          Text('$value',
+              style: const TextStyle(
+                  color: AetherColors.parchment,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13)),
+        ],
       ),
     );
   }
@@ -440,12 +754,18 @@ class _AttributeChip extends StatelessWidget {
   }
 }
 
-class _ConfirmButton extends StatelessWidget {
-  const _ConfirmButton({required this.enabled, required this.onTap, required this.busy});
+class _StepCta extends StatelessWidget {
+  const _StepCta({
+    required this.enabled,
+    required this.onTap,
+    required this.busy,
+    required this.label,
+  });
 
   final bool enabled;
   final VoidCallback onTap;
   final bool busy;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -470,14 +790,23 @@ class _ConfirmButton extends StatelessWidget {
                   child: CircularProgressIndicator(
                       strokeWidth: 2, color: AetherColors.void_),
                 )
-              : Text(
-                  'Confirmar ficha',
-                  style: TextStyle(
-                    color: enabled ? AetherColors.void_ : AetherColors.parchmentFaint,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    letterSpacing: 0.5,
-                  ),
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: enabled ? AetherColors.void_ : AetherColors.parchmentFaint,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(width: AetherSpace.sm),
+                    Icon(Icons.east_rounded,
+                        size: 19,
+                        color: enabled ? AetherColors.void_ : AetherColors.parchmentFaint),
+                  ],
                 ),
         ),
       ),

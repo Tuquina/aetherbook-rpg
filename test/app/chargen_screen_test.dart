@@ -1,7 +1,8 @@
-// No widget test existed for ChargenScreen before this file. Covers the new
-// V2 tone step (Stage 6c) specifically: hidden for a world with no `tones`,
-// shown and optional for one that declares them, and threaded through to
-// the created Character on confirm.
+// ChargenScreen is a 3-step wizard (V2 Stage 3): step 1 (name/origin/free
+// point), step 2 (tone/vow), step 3 (personal item + live preview + confirm).
+// Every test below drives it exactly as a player would — filling one step,
+// tapping "Siguiente", filling the next — rather than assuming every field is
+// visible at once, which was true before the Stage 3 reflow but isn't anymore.
 import 'package:aetherbook/adapters/narrator/fake_narrator_adapter.dart';
 import 'package:aetherbook/app/chargen_screen.dart';
 import 'package:aetherbook/app/game_controller.dart';
@@ -25,7 +26,11 @@ const _origins = [
 ];
 const _vows = [Vow(id: 'volver', text: 'Voy a volver a casa.')];
 
-World _worldWith({List<ToneOption> tones = const []}) => World(
+World _worldWith({
+  List<ToneOption> tones = const [],
+  bool hasFreeAttributePoint = false,
+}) =>
+    World(
       slug: 'isekai',
       name: 'Isekai',
       theme: 'isekai',
@@ -39,7 +44,7 @@ World _worldWith({List<ToneOption> tones = const []}) => World(
       origins: _origins,
       vows: _vows,
       tones: tones,
-      hasFreeAttributePoint: false,
+      hasFreeAttributePoint: hasFreeAttributePoint,
       startingCharacter: const Character(
         name: 'Convocado', level: 1, exp: 0, attributes: {}, resources: {}),
       seedNarration: 'Comienza.',
@@ -54,10 +59,8 @@ class _FakeWorldRepository implements WorldRepositoryPort {
   Future<World> loadWorld(String slug) async => world;
 }
 
-/// ChargenScreen is a long single-scroll form; a `ListView` only builds
-/// elements near its viewport, so a widget far down (the tone step, the
-/// confirm button) may not exist in the tree at all at the default
-/// 800x600 test surface. A tall viewport avoids needing to scroll to it.
+/// ChargenScreen's step content is a `SingleChildScrollView`; a tall test
+/// viewport avoids needing to scroll to reach anything on a given step.
 void _useTallViewport(WidgetTester tester) {
   tester.view.physicalSize = const Size(900, 3000);
   tester.view.devicePixelRatio = 1.0;
@@ -78,15 +81,131 @@ Future<GameController> _pumpChargen(WidgetTester tester, World world) async {
   return controller;
 }
 
+/// Fills step 1 (name + the only origin) and advances to step 2.
+Future<void> _completeStepOne(WidgetTester tester, {String name = 'Yuki'}) async {
+  await tester.enterText(find.byType(TextField).first, name);
+  await tester.tap(find.text('Convocado'));
+  await tester.pump();
+  await tester.tap(find.text('Siguiente'));
+  await tester.pump(const Duration(milliseconds: 300));
+}
+
+/// Fills step 2 (optional [toneLabel], the only vow) and advances to step 3.
+Future<void> _completeStepTwo(WidgetTester tester, {String? toneLabel}) async {
+  if (toneLabel != null) {
+    await tester.tap(find.text(toneLabel));
+    await tester.pump();
+  }
+  await tester.tap(find.text('"Voy a volver a casa."'));
+  await tester.pump();
+  await tester.tap(find.text('Siguiente'));
+  await tester.pump(const Duration(milliseconds: 300));
+}
+
 const _tones = [
   ToneOption(id: 'epico', label: 'Épico', blurb: 'Grande, mítico', previewText: 'El umbral te reclamó.'),
   ToneOption(id: 'acido', label: 'Ácido', blurb: 'Seco, irónico', previewText: 'El destino tiene humor pésimo.'),
 ];
 
 void main() {
+  group('ChargenScreen — step structure (V2 Stage 3)', () {
+    testWidgets('shows step 1 first, with "Siguiente" disabled until name and origin are set',
+        (tester) async {
+      await _pumpChargen(tester, _worldWith());
+
+      expect(find.textContaining('Paso 1 de 3'), findsOneWidget);
+      expect(find.text('Origen'), findsOneWidget);
+      expect(find.text('Tono de la narración (opcional)'), findsNothing);
+
+      await tester.tap(find.text('Siguiente'));
+      await tester.pump();
+      expect(find.textContaining('Paso 1 de 3'), findsOneWidget,
+          reason: 'still on step 1 — nothing filled in yet');
+
+      await tester.enterText(find.byType(TextField).first, 'Yuki');
+      await tester.tap(find.text('Convocado'));
+      await tester.pump();
+      await tester.tap(find.text('Siguiente'));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.textContaining('Paso 2 de 3'), findsOneWidget);
+    });
+
+    testWidgets('a world with no free attribute point never blocks step 1 on it',
+        (tester) async {
+      await _pumpChargen(tester, _worldWith(hasFreeAttributePoint: false));
+
+      expect(find.text('Punto libre (+1 a un atributo)'), findsNothing);
+
+      await tester.enterText(find.byType(TextField).first, 'Yuki');
+      await tester.tap(find.text('Convocado'));
+      await tester.pump();
+      await tester.tap(find.text('Siguiente'));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.textContaining('Paso 2 de 3'), findsOneWidget);
+    });
+
+    testWidgets('a world with a free attribute point blocks step 1 until one is chosen',
+        (tester) async {
+      await _pumpChargen(tester, _worldWith(hasFreeAttributePoint: true));
+
+      await tester.enterText(find.byType(TextField).first, 'Yuki');
+      await tester.tap(find.text('Convocado'));
+      await tester.pump();
+      await tester.tap(find.text('Siguiente'));
+      await tester.pump();
+      expect(find.textContaining('Paso 1 de 3'), findsOneWidget,
+          reason: 'free point not chosen yet');
+
+      await tester.tap(find.text('ingenio'));
+      await tester.pump();
+      await tester.tap(find.text('Siguiente'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.textContaining('Paso 2 de 3'), findsOneWidget);
+    });
+
+    testWidgets('the back arrow returns to the previous step without losing choices',
+        (tester) async {
+      await _pumpChargen(tester, _worldWith());
+      await _completeStepOne(tester);
+      expect(find.textContaining('Paso 2 de 3'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Atrás'));
+      await tester.pump();
+
+      expect(find.textContaining('Paso 1 de 3'), findsOneWidget);
+      // The origin choice survived going back — "Siguiente" advances in one
+      // tap again instead of being blocked as if nothing had been filled.
+      await tester.tap(find.text('Siguiente'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.textContaining('Paso 2 de 3'), findsOneWidget);
+    });
+
+    testWidgets('step 2 blocks on the vow, then step 3 shows a live character preview',
+        (tester) async {
+      await _pumpChargen(tester, _worldWith());
+      await _completeStepOne(tester);
+
+      await tester.tap(find.text('Siguiente'));
+      await tester.pump();
+      expect(find.textContaining('Paso 2 de 3'), findsOneWidget,
+          reason: 'no vow chosen yet');
+
+      await _completeStepTwo(tester);
+      await tester.pump(const Duration(milliseconds: 300)); // let the step cross-fade finish
+
+      expect(find.textContaining('Paso 3 de 3'), findsOneWidget);
+      expect(find.text('Así entras al mundo'), findsOneWidget);
+      expect(find.text('Yuki'), findsOneWidget);
+      expect(find.textContaining('Voy a volver a casa'), findsOneWidget);
+    });
+  });
+
   group('ChargenScreen tone step (V2 Stage 6c)', () {
     testWidgets('is not shown at all for a world with no tones', (tester) async {
       await _pumpChargen(tester, _worldWith());
+      await _completeStepOne(tester);
 
       expect(find.text('Tono de la narración (opcional)'), findsNothing);
     });
@@ -94,6 +213,7 @@ void main() {
     testWidgets('shows every declared tone; tapping one reveals its preview',
         (tester) async {
       await _pumpChargen(tester, _worldWith(tones: _tones));
+      await _completeStepOne(tester);
 
       expect(find.text('Tono de la narración (opcional)'), findsOneWidget);
       expect(find.text('Épico'), findsOneWidget);
@@ -108,6 +228,7 @@ void main() {
 
     testWidgets('tapping the selected tone again deselects it', (tester) async {
       await _pumpChargen(tester, _worldWith(tones: _tones));
+      await _completeStepOne(tester);
 
       await tester.tap(find.text('Épico'));
       await tester.pump();
@@ -121,14 +242,8 @@ void main() {
     testWidgets('confirming with a tone chosen threads it onto the created character',
         (tester) async {
       final controller = await _pumpChargen(tester, _worldWith(tones: _tones));
-
-      await tester.enterText(find.byType(TextField).first, 'Yuki');
-      await tester.tap(find.text('Convocado')); // the only origin
-      await tester.pump();
-      await tester.tap(find.text('Ácido'));
-      await tester.pump();
-      await tester.tap(find.text('"Voy a volver a casa."')); // the only vow
-      await tester.pump();
+      await _completeStepOne(tester);
+      await _completeStepTwo(tester, toneLabel: 'Ácido');
 
       await tester.tap(find.text('Confirmar ficha'));
       await tester.pump();
@@ -139,12 +254,8 @@ void main() {
 
     testWidgets('confirming without picking a tone leaves it null', (tester) async {
       final controller = await _pumpChargen(tester, _worldWith(tones: _tones));
-
-      await tester.enterText(find.byType(TextField).first, 'Yuki');
-      await tester.tap(find.text('Convocado'));
-      await tester.pump();
-      await tester.tap(find.text('"Voy a volver a casa."'));
-      await tester.pump();
+      await _completeStepOne(tester);
+      await _completeStepTwo(tester);
 
       await tester.tap(find.text('Confirmar ficha'));
       await tester.pump();
