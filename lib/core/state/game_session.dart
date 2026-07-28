@@ -143,3 +143,35 @@ class SessionReadingStat {
   final String? vowStatus;
   final int vowTestedCount;
 }
+
+/// One row of `GameStateRepositoryPort.storyLibrary()` — the home dashboard's
+/// "Sigue leyendo" carousel and `MyStoriesScreen` (V2 design prototype
+/// §8a/§2b) both need every session the account owns, of every status,
+/// across all 3 story modules, sorted by recency — neither
+/// [GameSessionSummary] (no status/turn count) nor [SessionReadingStat] (no
+/// recency/character name) alone covers that, so this is its own purpose-built
+/// shape rather than overloading either.
+class SessionLibraryEntry {
+  const SessionLibraryEntry({
+    required this.sessionId,
+    required this.worldSlug,
+    required this.status,
+    required this.characterName,
+    required this.turnCount,
+    required this.updatedAt,
+    this.title,
+  });
+
+  final String sessionId;
+  final String worldSlug;
+
+  /// `game_sessions.status` — `active`/`completed`/`abandoned`.
+  final String status;
+  final String characterName;
+  final int turnCount;
+  final DateTime updatedAt;
+
+  /// The player-chosen title, or `null` for a module that never asks for one
+  /// (same convention as [GameSessionSummary.title]).
+  final String? title;
+}

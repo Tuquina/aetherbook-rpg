@@ -294,6 +294,17 @@ class GameController extends ChangeNotifier {
     return persistence.readingStats();
   }
 
+  /// One [SessionLibraryEntry] per session this account owns, across all 3
+  /// story modules, newest-updated first — the home dashboard's "Sigue
+  /// leyendo" carousel and `MyStoriesScreen` (V2 §8a/§2b) both read this.
+  /// Empty (never an error) without persistence configured, same
+  /// degradation as everything else in this class.
+  Future<List<SessionLibraryEntry>> storyLibrary() {
+    final persistence = _persistence;
+    if (persistence == null) return Future.value(const []);
+    return persistence.storyLibrary();
+  }
+
   /// Abandons the session currently loaded in memory (V2 Stage 5's
   /// "abandonar esta historia", reachable from inside `GameScreen` itself —
   /// unlike [abandonStory], which operates on a `GameSessionSummary` the

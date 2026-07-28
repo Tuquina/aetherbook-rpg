@@ -198,6 +198,9 @@ class _FakeGameStateRepository implements GameStateRepositoryPort {
   Future<List<SessionReadingStat>> readingStats() async => const [];
 
   @override
+  Future<List<SessionLibraryEntry>> storyLibrary() async => const [];
+
+  @override
   Future<String?> loadLatestMemoryDigest(String sessionId) async => null;
 
   @override

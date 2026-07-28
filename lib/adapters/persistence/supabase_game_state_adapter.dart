@@ -213,6 +213,12 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
   }
 
   @override
+  Future<List<SessionLibraryEntry>> storyLibrary() async {
+    final rows = await _client.rpc('story_library');
+    return [for (final row in rows as List) sessionLibraryEntryFromRow(row as Map<String, dynamic>)];
+  }
+
+  @override
   Future<String?> loadLatestMemoryDigest(String sessionId) async {
     final row = await _client
         .from('memory_digests')

@@ -352,4 +352,39 @@ void main() {
       expect(stat.vowTestedCount, 0);
     });
   });
+
+  group('sessionLibraryEntryFromRow', () {
+    test('maps a full story_library() row', () {
+      final entry = sessionLibraryEntryFromRow({
+        'session_id': 'session-8',
+        'world_slug': 'cyberpunk',
+        'status': 'active',
+        'title': 'Nadie firma dos veces',
+        'character_name': 'Kest',
+        'turn_count': 27,
+        'updated_at': '2026-07-24T10:00:00.000Z',
+      });
+      expect(entry.sessionId, 'session-8');
+      expect(entry.worldSlug, 'cyberpunk');
+      expect(entry.status, 'active');
+      expect(entry.title, 'Nadie firma dos veces');
+      expect(entry.characterName, 'Kest');
+      expect(entry.turnCount, 27);
+      expect(entry.updatedAt, DateTime.parse('2026-07-24T10:00:00.000Z'));
+    });
+
+    test('falls back to "???" when the character row is missing, title stays null', () {
+      final entry = sessionLibraryEntryFromRow({
+        'session_id': 'session-9',
+        'world_slug': 'isekai',
+        'status': 'active',
+        'title': null,
+        'character_name': null,
+        'turn_count': 0,
+        'updated_at': '2026-07-24T10:00:00.000Z',
+      });
+      expect(entry.characterName, '???');
+      expect(entry.title, isNull);
+    });
+  });
 }

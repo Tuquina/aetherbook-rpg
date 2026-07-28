@@ -42,6 +42,9 @@ class _FakeGameStateRepository implements GameStateRepositoryPort {
   Future<List<SessionReadingStat>> readingStats() async => stats;
 
   @override
+  Future<List<SessionLibraryEntry>> storyLibrary() async => const [];
+
+  @override
   Future<GameSession> createSession({
     required String worldSlug,
     String? campaignSlug,

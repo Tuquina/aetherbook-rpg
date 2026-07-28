@@ -107,4 +107,11 @@ abstract class GameStateRepositoryPort {
   /// the per-world turn breakdown, and each session's vow outcome. A single
   /// round trip instead of loading every session's full turn history.
   Future<List<SessionReadingStat>> readingStats();
+
+  /// One [SessionLibraryEntry] per session the account owns, of every
+  /// status, newest-updated first — the home dashboard's "Sigue leyendo"
+  /// carousel and `MyStoriesScreen`'s unified list (V2 design prototype
+  /// §8a/§2b) both read from this rather than a per-module query, since a
+  /// story can belong to any of the 3 modules.
+  Future<List<SessionLibraryEntry>> storyLibrary();
 }

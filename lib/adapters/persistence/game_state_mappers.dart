@@ -85,6 +85,21 @@ SessionReadingStat sessionReadingStatFromRow(Map<String, dynamic> row) {
   );
 }
 
+/// One row of the `story_library()` RPC (see its migration) into a
+/// [SessionLibraryEntry] — the home dashboard/`MyStoriesScreen`'s raw
+/// material.
+SessionLibraryEntry sessionLibraryEntryFromRow(Map<String, dynamic> row) {
+  return SessionLibraryEntry(
+    sessionId: row['session_id'] as String,
+    worldSlug: row['world_slug'] as String,
+    status: row['status'] as String,
+    title: row['title'] as String?,
+    characterName: row['character_name'] as String? ?? '???',
+    turnCount: (row['turn_count'] as num).toInt(),
+    updatedAt: DateTime.parse(row['updated_at'] as String),
+  );
+}
+
 /// The `game_sessions` columns that track graph position — read alongside
 /// the session row in `loadLatestSession`, written by `saveGraphPosition`.
 Map<String, Object?> graphPositionToRow({
