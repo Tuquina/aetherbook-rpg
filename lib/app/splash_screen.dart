@@ -126,18 +126,23 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       body: AetherBackground(
         child: SafeArea(
-          // A fixed-height tome + wordmark + button never fits every viewport
-          // this same code runs on (phone/tablet/web, CLAUDE.md §3) — a short
-          // window (landscape phone, a resized desktop browser) needs this to
-          // scroll instead of overflowing. `Spacer` can't live inside a
-          // `SingleChildScrollView` (unbounded main axis), so centering comes
-          // from `ConstrainedBox(minHeight)` + `Center` instead: content
-          // centers when it fits, scrolls when it doesn't — never clips.
+          // A fixed-height brand block + pitch/CTA block never fits every
+          // viewport this same code runs on (phone/tablet/web, CLAUDE.md §3)
+          // — a short window (landscape phone, a resized desktop browser)
+          // needs this to scroll instead of overflowing. `Spacer`/`Expanded`
+          // can't live inside a `SingleChildScrollView` (unbounded main
+          // axis) to distribute the gap between the two blocks, so the gap
+          // is sized as an explicit fraction of `viewport.maxHeight`
+          // (V2 design prototype §10a: the brand sits near the top, the
+          // pitch + "Comenzar" sit near the bottom, not one centered block)
+          // — `ConstrainedBox(minHeight)` + `Align(topCenter)` still lets a
+          // short viewport scroll instead of clipping.
           child: LayoutBuilder(
             builder: (context, viewport) => SingleChildScrollView(
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: viewport.maxHeight),
-                child: Center(
+                child: Align(
+                  alignment: Alignment.topCenter,
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 440),
                     child: Padding(
@@ -146,6 +151,7 @@ class _SplashScreenState extends State<SplashScreen>
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            SizedBox(height: viewport.maxHeight * 0.10),
                             AnimatedBuilder(
                               animation: _c,
                               builder: (context, _) =>
@@ -167,7 +173,7 @@ class _SplashScreenState extends State<SplashScreen>
                                   fontSize: 15,
                                   fontStyle: FontStyle.italic),
                             ),
-                            const SizedBox(height: AetherSpace.huge),
+                            SizedBox(height: viewport.maxHeight * 0.18),
                             const _ExplainerLines(),
                             const SizedBox(height: AetherSpace.xl),
                             _PrimaryButton(
@@ -387,16 +393,20 @@ class _PrimaryButtonState extends State<_PrimaryButton> {
           padding: const EdgeInsets.symmetric(vertical: AetherSpace.lg),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-                colors: [AetherColors.gold, AetherColors.goldBright]),
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [AetherColors.surfaceRaised, AetherColors.ink],
+            ),
+            border: Border.all(color: AetherColors.gold.withValues(alpha: 0.55)),
             borderRadius: AetherRadius.allMd,
             boxShadow: AetherShadow.glow(AetherColors.gold,
-                strength: _pressed ? 0.5 : 0.35),
+                strength: _pressed ? 0.45 : 0.3),
           ),
           child: widget.busy
               ? const SizedBox(
                   height: 20,
                   width: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: AetherColors.void_),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AetherColors.goldBright),
                 )
               : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -405,15 +415,15 @@ class _PrimaryButtonState extends State<_PrimaryButton> {
                       widget.label,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        color: AetherColors.void_,
-                        fontWeight: FontWeight.w800,
+                        color: AetherColors.goldBright,
+                        fontWeight: FontWeight.w700,
                         fontSize: 16,
-                        letterSpacing: 0.5,
+                        letterSpacing: 0.4,
                       ),
                     ),
                     const SizedBox(width: AetherSpace.sm),
                     const Icon(Icons.arrow_forward_rounded,
-                        color: AetherColors.void_, size: 19),
+                        color: AetherColors.goldBright, size: 19),
                   ],
                 ),
         ),

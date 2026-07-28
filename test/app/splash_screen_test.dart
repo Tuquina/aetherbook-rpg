@@ -13,6 +13,7 @@ import 'package:aetherbook/app/world_select_screen.dart';
 import 'package:aetherbook/core/settings/user_settings.dart';
 import 'package:aetherbook/core/state/character.dart';
 import 'package:aetherbook/core/world/world.dart';
+import 'package:aetherbook/ports/auth_port.dart';
 import 'package:aetherbook/ports/world_repository_port.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,23 +43,35 @@ GameController _newController({FakeSettingsAdapter? settingsPort}) => GameContro
       settingsPort: settingsPort,
     );
 
+/// The brand block now sits near the top and the pitch/"Comenzar" block near
+/// the bottom (V2 design prototype §10a), with a real gap between them —
+/// that gap alone can push "Comenzar" outside the default 800x600 test
+/// surface, so every test here uses a realistic phone-sized viewport instead.
+Future<void> _pumpSplash(
+  WidgetTester tester, {
+  required GameController controller,
+  AuthPort? auth,
+}) async {
+  tester.view.physicalSize = const Size(900, 2000);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+  await tester.pumpWidget(MaterialApp(
+    home: SplashScreen(controller: controller, auth: auth),
+  ));
+  await tester.pump();
+}
+
 void main() {
   testWidgets('shows no "seguir sin cuenta" affordance anywhere on the splash',
       (tester) async {
-    await tester.pumpWidget(MaterialApp(
-      home: SplashScreen(controller: _newController(), auth: FakeAuthAdapter()),
-    ));
-    await tester.pump();
+    await _pumpSplash(tester, controller: _newController(), auth: FakeAuthAdapter());
 
     expect(find.textContaining('sin cuenta'), findsNothing);
   });
 
   testWidgets('"Comenzar" routes to AccountScreen when there is no account yet',
       (tester) async {
-    await tester.pumpWidget(MaterialApp(
-      home: SplashScreen(controller: _newController(), auth: FakeAuthAdapter()),
-    ));
-    await tester.pump();
+    await _pumpSplash(tester, controller: _newController(), auth: FakeAuthAdapter());
 
     await tester.tap(find.text('Comenzar'));
     await tester.pump();
@@ -71,10 +84,7 @@ void main() {
   testWidgets('"Comenzar" goes straight to WorldSelectScreen when already authenticated',
       (tester) async {
     final auth = FakeAuthAdapter(anonymous: false, email: 'jugador@aetherbook.dev');
-    await tester.pumpWidget(MaterialApp(
-      home: SplashScreen(controller: _newController(), auth: auth),
-    ));
-    await tester.pump();
+    await _pumpSplash(tester, controller: _newController(), auth: auth);
 
     await tester.tap(find.text('Comenzar'));
     await tester.pump();
@@ -86,10 +96,7 @@ void main() {
 
   testWidgets('"Comenzar" plays in-memory (no gate) when auth is null — degraded mode',
       (tester) async {
-    await tester.pumpWidget(MaterialApp(
-      home: SplashScreen(controller: _newController(), auth: null),
-    ));
-    await tester.pump();
+    await _pumpSplash(tester, controller: _newController(), auth: null);
 
     await tester.tap(find.text('Comenzar'));
     await tester.pump();
@@ -101,10 +108,7 @@ void main() {
   testWidgets('completing sign-in on the forced AccountScreen continues to WorldSelectScreen',
       (tester) async {
     final auth = FakeAuthAdapter();
-    await tester.pumpWidget(MaterialApp(
-      home: SplashScreen(controller: _newController(), auth: auth),
-    ));
-    await tester.pump();
+    await _pumpSplash(tester, controller: _newController(), auth: auth);
 
     await tester.tap(find.text('Comenzar'));
     await tester.pump();
@@ -124,10 +128,8 @@ void main() {
         (tester) async {
       final auth = FakeAuthAdapter();
       final settingsPort = FakeSettingsAdapter();
-      await tester.pumpWidget(MaterialApp(
-        home: SplashScreen(controller: _newController(settingsPort: settingsPort), auth: auth),
-      ));
-      await tester.pump();
+      await _pumpSplash(tester,
+          controller: _newController(settingsPort: settingsPort), auth: auth);
 
       await tester.tap(find.text('Comenzar'));
       await tester.pump();
@@ -148,10 +150,8 @@ void main() {
       final auth = FakeAuthAdapter(anonymous: false, email: 'jugador@aetherbook.dev');
       final settingsPort =
           FakeSettingsAdapter(seeded: const UserSettings(hasSeenOnboarding: true));
-      await tester.pumpWidget(MaterialApp(
-        home: SplashScreen(controller: _newController(settingsPort: settingsPort), auth: auth),
-      ));
-      await tester.pump();
+      await _pumpSplash(tester,
+          controller: _newController(settingsPort: settingsPort), auth: auth);
 
       await tester.tap(find.text('Comenzar'));
       await tester.pump();
@@ -166,10 +166,8 @@ void main() {
         '(closed the app mid-onboarding on a previous launch)', (tester) async {
       final auth = FakeAuthAdapter(anonymous: false, email: 'jugador@aetherbook.dev');
       final settingsPort = FakeSettingsAdapter(); // hasSeenOnboarding: false by default
-      await tester.pumpWidget(MaterialApp(
-        home: SplashScreen(controller: _newController(settingsPort: settingsPort), auth: auth),
-      ));
-      await tester.pump();
+      await _pumpSplash(tester,
+          controller: _newController(settingsPort: settingsPort), auth: auth);
 
       await tester.tap(find.text('Comenzar'));
       await tester.pump();
@@ -180,15 +178,11 @@ void main() {
 
     testWidgets('finishing onboarding by choosing a card lands on WorldSelectScreen',
         (tester) async {
-      tester.view.physicalSize = const Size(900, 2000);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
       final auth = FakeAuthAdapter(anonymous: false, email: 'jugador@aetherbook.dev');
       final settingsPort = FakeSettingsAdapter();
-      await tester.pumpWidget(MaterialApp(
-        home: SplashScreen(controller: _newController(settingsPort: settingsPort), auth: auth),
-      ));
-      await tester.pump();
+      await _pumpSplash(tester,
+          controller: _newController(settingsPort: settingsPort), auth: auth);
+
       await tester.tap(find.text('Comenzar'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
@@ -212,15 +206,11 @@ void main() {
 
     testWidgets('skipping onboarding also marks it seen and lands on WorldSelectScreen',
         (tester) async {
-      tester.view.physicalSize = const Size(900, 2000);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
       final auth = FakeAuthAdapter(anonymous: false, email: 'jugador@aetherbook.dev');
       final settingsPort = FakeSettingsAdapter();
-      await tester.pumpWidget(MaterialApp(
-        home: SplashScreen(controller: _newController(settingsPort: settingsPort), auth: auth),
-      ));
-      await tester.pump();
+      await _pumpSplash(tester,
+          controller: _newController(settingsPort: settingsPort), auth: auth);
+
       await tester.tap(find.text('Comenzar'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
