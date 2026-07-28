@@ -243,6 +243,55 @@ void main() {
       expect(capturedBody!['chosenTone'], isNull);
     });
 
+    test('sends vowText and avoidedThemes when the request carries them (V2 §6a/§6b)',
+        () async {
+      Map<String, dynamic>? capturedBody;
+      final client = MockClient((request) async {
+        capturedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(_validResponseJson, 200);
+      });
+      final adapter = HttpNarratorAdapter(
+        endpoint: endpoint,
+        publishableKey: 'pub-key',
+        client: client,
+      );
+
+      await adapter.narrate(NarratorRequest(
+        world: _world,
+        character: _character,
+        playerAction: 'x',
+        resolution: null,
+        vowText: 'No dejo atrás a nadie que me haya dado su nombre.',
+        avoidedThemes: const ['Contenido sexual', 'Crueldad animal'],
+      ));
+
+      expect(capturedBody!['vowText'], 'No dejo atrás a nadie que me haya dado su nombre.');
+      expect(capturedBody!['avoidedThemes'], ['Contenido sexual', 'Crueldad animal']);
+    });
+
+    test('defaults vowText to null and avoidedThemes to an empty list', () async {
+      Map<String, dynamic>? capturedBody;
+      final client = MockClient((request) async {
+        capturedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(_validResponseJson, 200);
+      });
+      final adapter = HttpNarratorAdapter(
+        endpoint: endpoint,
+        publishableKey: 'pub-key',
+        client: client,
+      );
+
+      await adapter.narrate(NarratorRequest(
+        world: _world,
+        character: _character,
+        playerAction: 'x',
+        resolution: null,
+      ));
+
+      expect(capturedBody!['vowText'], isNull);
+      expect(capturedBody!['avoidedThemes'], isEmpty);
+    });
+
     test('throws NarratorHttpException on a non-200 response', () async {
       final client = MockClient((request) async {
         return http.Response('{"error":"boom"}', 502);

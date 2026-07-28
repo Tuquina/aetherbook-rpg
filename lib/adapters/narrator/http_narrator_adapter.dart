@@ -91,6 +91,8 @@ class HttpNarratorAdapter implements NarratorPort {
       'nodeGoal': request.nodeGoal,
       'isFreeform': request.isFreeform,
       'chosenTone': _chosenToneJson(request.world, request.character),
+      'vowText': request.vowText,
+      'avoidedThemes': request.avoidedThemes,
     };
   }
 

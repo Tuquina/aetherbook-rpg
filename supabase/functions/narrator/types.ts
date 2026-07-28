@@ -78,6 +78,14 @@ export interface NarratorRequest {
    * `null`/absent for a world with no tone step, or a character created
    * before this field existed. */
   chosenTone?: ChosenTone | null;
+  /** The chargen vow's text (V2 §6a Perfil), resolved by the Dart client
+   * from `World.vows`/`Character.vowId` — `null`/absent for a world with no
+   * vow step, or a character created before it existed. */
+  vowText?: string | null;
+  /** Content the player asked the narrator to avoid (V2 §6b Ajustes),
+   * already resolved to human-readable labels by the Dart client — empty/
+   * absent for the common case of a player who never touched this setting. */
+  avoidedThemes?: string[];
 }
 
 /** A state delta as the narrator proposes it (campaign-bible §18.5/§19.3):

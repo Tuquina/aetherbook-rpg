@@ -94,6 +94,45 @@ export function buildToneInstruction(chosenTone: ChosenTone | null | undefined):
   );
 }
 
+// Only injected when the character has a chargen vow/juramento at all — most
+// curated-graph campaigns and every world without structured chargen never
+// set one. Tells the narrator what it is and how (if at all) to signal that
+// the player's action tested it — the engine, not the narrator, decides
+// what "sostenido hasta el final" means (only set once, at story
+// resolution — see `apply_state_deltas.dart`'s `vowStatus` case).
+export function buildVowInstruction(vowText: string | null | undefined): string {
+  if (!vowText || vowText.trim().length === 0) return "";
+  return (
+    `JURAMENTO DEL PERSONAJE: "${vowText}". Este juramento importa para la ` +
+    `historia (V2 Perfil del jugador registra si se sostuvo o se rompió). ` +
+    `Si — y solo si — la acción del jugador lo enfrenta genuinamente a un ` +
+    `costo real relacionado con este juramento (una tentación, una salida ` +
+    `fácil que lo traicionaría, un sacrificio real para cumplirlo), agregá ` +
+    `un "proposed_state_deltas" con "type": "vow_status", "key": ` +
+    `"vow_status", y "value": "puesto_a_prueba" si lo sostuvo pese al ` +
+    `costo, o "value": "roto" si lo abandonó. No lo propongas en turnos ` +
+    `donde el juramento no está genuinamente en juego — la mayoría de los ` +
+    `turnos no lo estará.`
+  );
+}
+
+// Only injected when the player has marked at least one theme to avoid
+// (V2 §6b Ajustes) — most players never touch this, so it's absent by
+// default. Non-negotiable: unlike tone (which only shapes *how* something is
+// told), this shapes *what* the narrator is allowed to depict at all.
+export function buildAvoidedThemesInstruction(
+  avoidedThemes: string[] | null | undefined,
+): string {
+  if (!avoidedThemes || avoidedThemes.length === 0) return "";
+  return (
+    `TEMAS A EVITAR (regla no negociable, el jugador la eligió en sus ` +
+    `Ajustes): nunca representes ni desarrolles escenas centradas en: ` +
+    `${avoidedThemes.join(", ")}. Si la trama se acerca a uno de estos ` +
+    `temas, desvía la escena o resolvé el momento fuera de cámara — nunca ` +
+    `lo narres en detalle.`
+  );
+}
+
 export const OUTPUT_INSTRUCTION =
   `Devuelve SOLO un objeto JSON válido con esta forma exacta, sin markdown, ` +
   `sin backticks, sin preámbulo ni texto fuera del JSON:\n` +
@@ -102,7 +141,8 @@ export const OUTPUT_INSTRUCTION =
   `"intent"?: string, "expected_check"?: {"attribute": string, ` +
   `"difficulty_id"?: string}}], ` +
   `"proposed_state_deltas": [{"type": "flag"|"exp"|"resource"|"meter"|` +
-  `"relationship", "key": string, "value": boolean|number, ` +
+  `"relationship"|"vow_status", "key": string, ` +
+  `"value": boolean|number|string, ` +
   `"operation": "increment", "reason": string}], ` +
   `"image_prompt": string, "tone": string, "memory_facts": string[], ` +
   `"node_status": "active"|"ready_to_exit"}`;
@@ -112,6 +152,8 @@ export function buildSystemPrompt(request: NarratorRequest): string {
     request.world.systemPrompt,
     HUMAN_STYLE_INSTRUCTION,
     buildToneInstruction(request.chosenTone),
+    buildVowInstruction(request.vowText),
+    buildAvoidedThemesInstruction(request.avoidedThemes),
     request.isFreeform ? FREEFORM_CHOICES_INSTRUCTION : "",
     OUTPUT_INSTRUCTION,
   ]

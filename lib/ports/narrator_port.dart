@@ -19,6 +19,8 @@ class NarratorRequest {
     this.nodeForbiddenReveals = const [],
     this.nodeGoal,
     this.isFreeform = false,
+    this.vowText,
+    this.avoidedThemes = const [],
   });
 
   final World world;
@@ -58,6 +60,16 @@ class NarratorRequest {
   /// `suggested_choices` rather than relying on curated content to drive the
   /// story forward (CLAUDE.md Fase 2).
   final bool isFreeform;
+
+  /// The chargen vow's text (V2 §6a Perfil), resolved from `World.vows` via
+  /// `character.vowId` — `null` for a world with no vow step, or a character
+  /// created before it existed.
+  final String? vowText;
+
+  /// Content the player asked the narrator to avoid (V2 §6b Ajustes),
+  /// already resolved to human-readable labels — empty for the common case
+  /// of a player who never touched this setting.
+  final List<String> avoidedThemes;
 }
 
 /// The check a suggested choice would trigger if taken — shown to the UI so

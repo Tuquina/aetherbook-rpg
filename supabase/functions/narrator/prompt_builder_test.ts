@@ -1,8 +1,10 @@
 import { assertEquals, assertStringIncludes } from "jsr:@std/assert@1";
 import {
+  buildAvoidedThemesInstruction,
   buildSystemPrompt,
   buildToneInstruction,
   buildUserPrompt,
+  buildVowInstruction,
 } from "./prompt_builder.ts";
 import type { NarratorRequest } from "./types.ts";
 
@@ -185,6 +187,61 @@ Deno.test("system prompt includes the tone instruction when chosenTone is presen
   assertStringIncludes(prompt, "TONO ELEGIDO POR EL JUGADOR");
   assertStringIncludes(prompt, '"Ácido"');
   assertStringIncludes(prompt, "Seco, irónico");
+});
+
+Deno.test("buildVowInstruction returns empty for null/undefined/blank (no vow at chargen)", () => {
+  assertEquals(buildVowInstruction(null), "");
+  assertEquals(buildVowInstruction(undefined), "");
+  assertEquals(buildVowInstruction("   "), "");
+});
+
+Deno.test("buildVowInstruction names the vow and tells the narrator how to propose vow_status", () => {
+  const instruction = buildVowInstruction("No dejo atrás a nadie que me haya dado su nombre.");
+  assertStringIncludes(instruction, "No dejo atrás a nadie que me haya dado su nombre.");
+  assertStringIncludes(instruction, '"type": "vow_status"');
+  assertStringIncludes(instruction, "puesto_a_prueba");
+  assertStringIncludes(instruction, "roto");
+});
+
+Deno.test("system prompt omits any vow instruction when vowText is absent", () => {
+  const prompt = buildSystemPrompt(baseRequest);
+  assertEquals(prompt.includes("JURAMENTO DEL PERSONAJE"), false);
+});
+
+Deno.test("system prompt includes the vow instruction when vowText is present", () => {
+  const prompt = buildSystemPrompt({
+    ...baseRequest,
+    vowText: "No vuelvo a firmar nada con mi nombre real.",
+  });
+  assertStringIncludes(prompt, "JURAMENTO DEL PERSONAJE");
+  assertStringIncludes(prompt, "No vuelvo a firmar nada con mi nombre real.");
+});
+
+Deno.test("buildAvoidedThemesInstruction returns empty for an empty/absent list", () => {
+  assertEquals(buildAvoidedThemesInstruction(null), "");
+  assertEquals(buildAvoidedThemesInstruction(undefined), "");
+  assertEquals(buildAvoidedThemesInstruction([]), "");
+});
+
+Deno.test("buildAvoidedThemesInstruction lists every theme and forbids depicting them", () => {
+  const instruction = buildAvoidedThemesInstruction(["Contenido sexual", "Crueldad animal"]);
+  assertStringIncludes(instruction, "Contenido sexual");
+  assertStringIncludes(instruction, "Crueldad animal");
+  assertStringIncludes(instruction, "regla no negociable");
+});
+
+Deno.test("system prompt omits the avoided-themes instruction when none are set", () => {
+  const prompt = buildSystemPrompt(baseRequest);
+  assertEquals(prompt.includes("TEMAS A EVITAR"), false);
+});
+
+Deno.test("system prompt includes the avoided-themes instruction when set", () => {
+  const prompt = buildSystemPrompt({
+    ...baseRequest,
+    avoidedThemes: ["Terror corporal"],
+  });
+  assertStringIncludes(prompt, "TEMAS A EVITAR");
+  assertStringIncludes(prompt, "Terror corporal");
 });
 
 Deno.test("user prompt omits node-context sections when absent", () => {
