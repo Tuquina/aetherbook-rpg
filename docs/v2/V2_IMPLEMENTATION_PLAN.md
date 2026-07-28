@@ -865,25 +865,30 @@ Only proceed with a sub-stage once its blocking decision in
     everything). `StatusBar`/`FateRoll` are reused completely unchanged
     (no compact variant built) — an accepted, minor size/density difference
     from the mockup rather than doubling either widget's surface area.
-  - **Two pre-existing bugs found and fixed along the way** (both
-    surfaced only once a test exercised a genuinely realistic mobile
-    width instead of the historical 800px default): `fate_roll.dart`'s
+  - **Three pre-existing bugs found, all fixed** (surfaced only once a
+    test exercised a genuinely realistic mobile width instead of the
+    historical 800px default — none introduced by this stage, all
+    confirmed present on unmodified code first): `fate_roll.dart`'s
     `_OutcomeLabel` Row had no flex protection at all and overflowed
     horizontally for any critical/natural-roll outcome at normal mobile
     column widths (~550px) — fixed by wrapping the "vs dificultad N" text
-    in an `Expanded` with `overflow: ellipsis`. `test/vertical_slice_test.dart`
-    forcing a **narrow** viewport (600×1000, needed to dodge Stage 6h's new
-    tablet-breakpoint collision at the old 800×600 default) also exposed a
-    third, separate, **not fixed** issue: `_armRevealGate`'s single-frame
-    check of `maxScrollExtent` can race a turn whose content sits right at
-    the edge of fitting without scrolling, permanently stranding the
-    choices bar behind "Sigue leyendo" — confirmed present on unmodified
-    code too (not something this stage introduced). Worked around by giving
-    that one test a taller viewport (600×2000) instead of fixing the race;
-    flagging it here as a real, pre-existing UX bug worth its own
-    investigation, in the same spirit as the `_GenreGridCard` overflow
-    flagged in 6h.
-  - 704 Flutter tests passing (up from 699), `analyze` clean. No backend
+    in an `Expanded` with `overflow: ellipsis`. Also — initially just
+    flagged, then fixed on request — `_armRevealGate`'s single check of
+    `maxScrollExtent`, run exactly once right after a turn's narration
+    changed, could race a turn whose content lands right at the edge of
+    the viewport height: the scrollable might still be settling into its
+    final extent at that one check, read a stale nonzero value, decide not
+    to reveal, and then never get another chance (nothing to scroll means
+    `_onScroll`'s `pixels`-only listener never fires either) —
+    permanently stranding the choices bar behind "Sigue leyendo". Fixed by
+    wrapping the mobile column's narration view in a
+    `NotificationListener<ScrollMetricsNotification>` that re-runs
+    `_armRevealGate` on every metrics update, not just once — confirmed by
+    reverting `test/vertical_slice_test.dart`'s viewport back to its
+    original narrower/shorter size (600×1000, no longer needing the
+    600×2000 workaround) and by a new dedicated regression test,
+    `test/app/game_screen_reveal_gate_test.dart`.
+  - 705 Flutter tests passing (up from 699), `analyze` clean. No backend
     changes this stage — pure Flutter, no migration, no Edge Function
     redeploy needed.
   - **Not independently re-verified visually this session**: the browser

@@ -162,11 +162,29 @@ class _GameScreenState extends State<GameScreen> {
   /// Reveals the choices immediately when the current narration doesn't
   /// overflow the viewport — there's nothing to scroll through, so gating
   /// on a scroll gesture that can never happen would strand the player.
+  ///
+  /// Called from more than one place on purpose: a single check right after
+  /// the turn changes used to be enough in theory, but for a turn whose
+  /// content lands right at the edge of the viewport height, the scrollable
+  /// can still be settling into its final `maxScrollExtent` on that first
+  /// check — reading a stale, still-nonzero value, deciding not to reveal,
+  /// and then never getting another chance: with nothing to scroll,
+  /// `_onScroll` (which only fires on an actual `pixels` change) never runs
+  /// either, permanently stranding the choices behind the hint. The
+  /// `NotificationListener<ScrollMetricsNotification>` around the narration
+  /// view re-runs this on every metrics update — including ones with no
+  /// scroll gesture behind them — so it keeps checking until the extent
+  /// actually settles, instead of gambling on a single frame.
   void _armRevealGate() {
-    if (!_scroll.hasClients || !mounted) return;
+    if (_choicesRevealed || !_scroll.hasClients || !mounted) return;
     if (_scroll.position.maxScrollExtent <= 0) {
       setState(() => _choicesRevealed = true);
     }
+  }
+
+  bool _onScrollMetricsChanged(ScrollMetricsNotification notification) {
+    _armRevealGate();
+    return false;
   }
 
   void _onScroll() {
@@ -297,7 +315,10 @@ class _GameScreenState extends State<GameScreen> {
                                     collapse: _headerCollapse,
                                   ),
                                   Expanded(
-                                    child: _NarrationView(controller: c, scroll: _scroll),
+                                    child: NotificationListener<ScrollMetricsNotification>(
+                                      onNotification: _onScrollMetricsChanged,
+                                      child: _NarrationView(controller: c, scroll: _scroll),
+                                    ),
                                   ),
                                   if (c.isLoading || _choicesRevealed)
                                     _ChoicesBar(
