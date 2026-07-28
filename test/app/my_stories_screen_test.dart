@@ -99,7 +99,7 @@ class _FakeGameStateRepository implements GameStateRepositoryPort {
 }
 
 Future<void> _pumpMyStories(WidgetTester tester, List<SessionLibraryEntry> entries,
-    {Size size = const Size(390, 2000)}) async {
+    {Size size = const Size(390, 2000), double textScale = 1.0}) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
@@ -112,8 +112,15 @@ Future<void> _pumpMyStories(WidgetTester tester, List<SessionLibraryEntry> entri
     await controller.loadWorldInfo('isekai'),
     await controller.loadWorldInfo('xianxia'),
   ];
-  await tester.pumpWidget(MaterialApp(
-    home: MyStoriesScreen(controller: controller, catalogWorlds: worlds),
+  await tester.pumpWidget(MediaQuery(
+    data: MediaQueryData(
+      size: size,
+      textScaler: TextScaler.linear(textScale),
+      disableAnimations: true,
+    ),
+    child: MaterialApp(
+      home: MyStoriesScreen(controller: controller, catalogWorlds: worlds),
+    ),
   ));
   await tester.pump();
   await tester.pump();
@@ -293,5 +300,29 @@ void main() {
       expect(find.text('En curso · 1'), findsOneWidget);
       expect(find.text('Sin empezar · 1'), findsOneWidget);
     });
+  });
+
+  group('text-scale accessibility (V2 Stage 8)', () {
+    final entries = [
+      SessionLibraryEntry(
+        sessionId: 's1',
+        worldSlug: 'isekai',
+        status: 'active',
+        characterName: 'Fernando',
+        turnCount: 15,
+        updatedAt: DateTime.now().subtract(const Duration(days: 2)),
+      ),
+    ];
+
+    for (final size in [const Size(390, 2000), const Size(900, 2000)]) {
+      for (final scale in [1.3, 1.5, 2.0]) {
+        testWidgets(
+            'the library reflows without overflowing at $size, textScale $scale',
+            (tester) async {
+          await _pumpMyStories(tester, entries, size: size, textScale: scale);
+          expect(tester.takeException(), isNull);
+        });
+      }
+    }
   });
 }

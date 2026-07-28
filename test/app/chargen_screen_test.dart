@@ -84,6 +84,33 @@ Future<GameController> _pumpChargen(WidgetTester tester, World world) async {
   return controller;
 }
 
+/// Same as [_pumpChargen] but at a given text-scale and physical width (V2
+/// Stage 8) -- `disableAnimations: true` stops `AetherBackground`'s
+/// never-ending particle drift so a fixed pump count settles cleanly.
+Future<void> _pumpChargenAtScale(WidgetTester tester, World world,
+    {required double width, required double textScale}) async {
+  tester.view.physicalSize = Size(width, 1400);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+  final controller = GameController(
+    worldRepository: _FakeWorldRepository(world),
+    narrator: const FakeNarratorAdapter(latency: Duration.zero),
+    dice: const FixedDice(10),
+  );
+  await tester.pumpWidget(MediaQuery(
+    data: MediaQueryData(
+      size: Size(width, 1400),
+      textScaler: TextScaler.linear(textScale),
+      disableAnimations: true,
+    ),
+    child: MaterialApp(
+      home: ChargenScreen(controller: controller, worldSlug: world.slug, world: world),
+    ),
+  ));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+}
+
 /// Below `AetherBreakpoints.tablet` — no `_SidePanel`, so it never
 /// duplicates the same `Icons.radio_button_checked`/step-checklist icons the
 /// origin/vow cards themselves use, which would otherwise make a bare
@@ -324,6 +351,19 @@ void main() {
       // duplicated inside step 3's own content.
       expect(find.text('Así entras al mundo'), findsOneWidget);
     });
+  });
+
+  group('ChargenScreen text-scale accessibility (V2 Stage 8)', () {
+    for (final width in [400.0, 1000.0]) {
+      for (final scale in [1.3, 1.5, 2.0]) {
+        testWidgets(
+            'reflows without overflowing at width $width, textScale $scale',
+            (tester) async {
+          await _pumpChargenAtScale(tester, _worldWith(), width: width, textScale: scale);
+          expect(tester.takeException(), isNull);
+        });
+      }
+    }
   });
 
   group('ChargenScreen per-world theming (V2 §4a-4d)', () {

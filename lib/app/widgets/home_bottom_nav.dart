@@ -21,23 +21,40 @@ class HomeBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 76,
-      padding: const EdgeInsets.only(bottom: 8),
-      decoration: const BoxDecoration(
-        color: Color(0xE00E0C0B),
-        border: Border(top: BorderSide(color: AetherColors.hairline)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          for (final destination in _destinations)
-            _BottomNavItem(
-              destination: destination,
-              selected: destination == current,
-              onTap: () => onSelect(destination),
-            ),
-        ],
+    // This bar has a fixed height (below) with no room to grow, the same
+    // constraint every bottom-nav pattern runs into — Flutter's own
+    // `BottomNavigationBar` caps how far its labels scale for exactly this
+    // reason (V2 Stage 8). 1.3x still reads clearly larger for someone who
+    // asked for bigger text; anything past that would need a taller bar
+    // instead of a text clamp, at which point it's a difference from the
+    // rest of the app that grows without bound elsewhere.
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.3,
+      child: Container(
+        height: 76,
+        padding: const EdgeInsets.only(bottom: 8),
+        decoration: const BoxDecoration(
+          color: Color(0xE00E0C0B),
+          border: Border(top: BorderSide(color: AetherColors.hairline)),
+        ),
+        child: Row(
+          children: [
+            for (final destination in _destinations)
+              // Expanded, not spaceAround: at a large OS text-scale setting
+              // "Mis historias" (the longest label) no longer fits its
+              // natural, unconstrained width four times over on a tablet
+              // viewport (V2 Stage 8) -- an equal-width column per
+              // destination gives each label somewhere to shrink/ellipsize
+              // into instead of overflowing the Row.
+              Expanded(
+                child: _BottomNavItem(
+                  destination: destination,
+                  selected: destination == current,
+                  onTap: () => onSelect(destination),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -65,6 +82,9 @@ class _BottomNavItem extends StatelessWidget {
             const SizedBox(height: 5),
             Text(
               destination.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 10.5,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w500,

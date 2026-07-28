@@ -608,7 +608,17 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
             if (carousel.isNotEmpty) ...[
               Row(
                 children: [
-                  Text('Sigue leyendo', style: AetherType.title),
+                  // Expanded + ellipsis: at a large OS text-scale setting,
+                  // "Sigue leyendo" plus the "Ver todos" button no longer
+                  // both fit this Row's natural width on a tablet's
+                  // narrower content column (V2 Stage 8) -- the title gives
+                  // way, the action button never does.
+                  Expanded(
+                    child: Text('Sigue leyendo',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AetherType.title),
+                  ),
                   const SizedBox(width: AetherSpace.sm),
                   TextButton(
                     onPressed: () => _openMyStories(worlds),
@@ -1127,12 +1137,25 @@ class _ModuleCardState extends State<_ModuleCard> {
                                 children: [
                                   Expanded(
                                     child: Text(module.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                         style: AetherType.title
                                             .copyWith(fontSize: 17)),
                                   ),
+                                  // Flexible + FittedBox(scaleDown): at a
+                                  // large OS text-scale setting, the pill's
+                                  // own "N historias" label can be wider than
+                                  // this fixed-aspect-ratio card has room for
+                                  // (V2 Stage 8) -- shrinks instead of
+                                  // overflowing the Row horizontally.
                                   if (enabled)
-                                    _CountPill(
-                                        count: widget.count, color: style.accent)
+                                    Flexible(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: _CountPill(
+                                            count: widget.count, color: style.accent),
+                                      ),
+                                    )
                                   else
                                     const Icon(Icons.lock_outline_rounded,
                                         size: 16,
@@ -1140,7 +1163,10 @@ class _ModuleCardState extends State<_ModuleCard> {
                                 ],
                               ),
                               const SizedBox(height: 4),
-                              Text(module.teaser, style: AetherType.caption),
+                              Text(module.teaser,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AetherType.caption),
                             ],
                           ),
                         ),

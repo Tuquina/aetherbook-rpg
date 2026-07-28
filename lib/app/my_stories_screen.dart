@@ -23,7 +23,11 @@ enum _Filter { todas, enCurso, sinEmpezar }
 /// cross-module view of what already exists (or could, for a world with no
 /// session yet).
 class MyStoriesScreen extends StatefulWidget {
-  const MyStoriesScreen({super.key, required this.controller, required this.catalogWorlds});
+  const MyStoriesScreen({
+    super.key,
+    required this.controller,
+    required this.catalogWorlds,
+  });
 
   final GameController controller;
 
@@ -34,23 +38,25 @@ class MyStoriesScreen extends StatefulWidget {
   static Route<void> route({
     required GameController controller,
     required List<World> catalogWorlds,
-  }) =>
-      MaterialPageRoute(
-        builder: (_) => MyStoriesScreen(controller: controller, catalogWorlds: catalogWorlds),
-      );
+  }) => MaterialPageRoute(
+    builder: (_) =>
+        MyStoriesScreen(controller: controller, catalogWorlds: catalogWorlds),
+  );
 
   @override
   State<MyStoriesScreen> createState() => _MyStoriesScreenState();
 }
 
 class _MyStoriesScreenState extends State<MyStoriesScreen> {
-  late final Future<List<SessionLibraryEntry>> _library = widget.controller.storyLibrary();
+  late final Future<List<SessionLibraryEntry>> _library = widget.controller
+      .storyLibrary();
   _Filter _filter = _Filter.todas;
 
   List<LibraryRow> _filtered(List<LibraryRow> rows) {
     return switch (_filter) {
       _Filter.todas => rows,
-      _Filter.enCurso => rows.where((r) => r.entry?.status == 'active').toList(),
+      _Filter.enCurso =>
+        rows.where((r) => r.entry?.status == 'active').toList(),
       _Filter.sinEmpezar => rows.where((r) => r.entry == null).toList(),
     };
   }
@@ -60,8 +66,12 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
     if (entry == null) {
       await StoryNavigation.open(context, widget.controller, row.world);
     } else {
-      await StoryNavigation.resume(context, widget.controller,
-          worldSlug: entry.worldSlug, sessionId: entry.sessionId);
+      await StoryNavigation.resume(
+        context,
+        widget.controller,
+        worldSlug: entry.worldSlug,
+        sessionId: entry.sessionId,
+      );
     }
   }
 
@@ -74,7 +84,9 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
             future: _library,
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator(color: AetherColors.gold));
+                return const Center(
+                  child: CircularProgressIndicator(color: AetherColors.gold),
+                );
               }
               final allRows = buildLibraryRows(
                 catalogWorlds: widget.catalogWorlds,
@@ -95,8 +107,10 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
                               children: [
                                 IconButton(
                                   onPressed: () => Navigator.of(context).pop(),
-                                  icon: const Icon(Icons.arrow_back_rounded,
-                                      color: AetherColors.goldSoft),
+                                  icon: const Icon(
+                                    Icons.arrow_back_rounded,
+                                    color: AetherColors.goldSoft,
+                                  ),
                                 ),
                                 const SizedBox(width: AetherSpace.sm),
                                 Expanded(
@@ -108,11 +122,18 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
                                     crossAxisAlignment: WrapCrossAlignment.end,
                                     spacing: AetherSpace.sm,
                                     children: [
-                                      Text('Mis historias',
-                                          style: AetherType.display.copyWith(fontSize: 22)),
-                                      Text('${allRows.length} tomos',
-                                          style: AetherType.caption
-                                              .copyWith(color: AetherColors.parchmentDim)),
+                                      Text(
+                                        'Mis historias',
+                                        style: AetherType.display.copyWith(
+                                          fontSize: 22,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${allRows.length} tomos',
+                                        style: AetherType.caption.copyWith(
+                                          color: AetherColors.parchmentDim,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -126,9 +147,12 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
                                   for (final filter in _Filter.values) ...[
                                     _FilterChip(
                                       label: _filterLabel(filter),
-                                      count: wide ? _countFor(filter, allRows) : null,
+                                      count: wide
+                                          ? _countFor(filter, allRows)
+                                          : null,
                                       selected: filter == _filter,
-                                      onTap: () => setState(() => _filter = filter),
+                                      onTap: () =>
+                                          setState(() => _filter = filter),
                                     ),
                                     const SizedBox(width: AetherSpace.sm),
                                   ],
@@ -137,45 +161,49 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
                             ),
                             const SizedBox(height: AetherSpace.lg),
                             Expanded(
-                              child: Builder(builder: (context) {
-                                final rows = _filtered(allRows);
-                                if (rows.isEmpty) {
-                                  return Center(
-                                    child: Text(
-                                      _filter == _Filter.sinEmpezar
-                                          ? 'Ya empezaste todos los mundos disponibles.'
-                                          : 'Todavía no hay historias acá.',
-                                      style:
-                                          AetherType.body.copyWith(color: AetherColors.parchmentDim),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  );
-                                }
-                                if (wide) {
-                                  return GridView.builder(
-                                    gridDelegate:
-                                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                                      maxCrossAxisExtent: 340,
-                                      mainAxisExtent: 108,
-                                      crossAxisSpacing: AetherSpace.sm,
-                                      mainAxisSpacing: AetherSpace.sm,
-                                    ),
+                              child: Builder(
+                                builder: (context) {
+                                  final rows = _filtered(allRows);
+                                  if (rows.isEmpty) {
+                                    return Center(
+                                      child: Text(
+                                        _filter == _Filter.sinEmpezar
+                                            ? 'Ya empezaste todos los mundos disponibles.'
+                                            : 'Todavía no hay historias acá.',
+                                        style: AetherType.body.copyWith(
+                                          color: AetherColors.parchmentDim,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    );
+                                  }
+                                  if (wide) {
+                                    return GridView.builder(
+                                      gridDelegate:
+                                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                                            maxCrossAxisExtent: 340,
+                                            mainAxisExtent: 108,
+                                            crossAxisSpacing: AetherSpace.sm,
+                                            mainAxisSpacing: AetherSpace.sm,
+                                          ),
+                                      itemCount: rows.length,
+                                      itemBuilder: (context, i) => _LibraryCard(
+                                        row: rows[i],
+                                        onTap: () => _openRow(rows[i]),
+                                      ),
+                                    );
+                                  }
+                                  return ListView.separated(
                                     itemCount: rows.length,
+                                    separatorBuilder: (_, _) =>
+                                        const SizedBox(height: AetherSpace.sm),
                                     itemBuilder: (context, i) => _LibraryCard(
                                       row: rows[i],
                                       onTap: () => _openRow(rows[i]),
                                     ),
                                   );
-                                }
-                                return ListView.separated(
-                                  itemCount: rows.length,
-                                  separatorBuilder: (_, _) => const SizedBox(height: AetherSpace.sm),
-                                  itemBuilder: (context, i) => _LibraryCard(
-                                    row: rows[i],
-                                    onTap: () => _openRow(rows[i]),
-                                  ),
-                                );
-                              }),
+                                },
+                              ),
                             ),
                           ],
                         ),
@@ -192,16 +220,16 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
   }
 
   String _filterLabel(_Filter filter) => switch (filter) {
-        _Filter.todas => 'Todas',
-        _Filter.enCurso => 'En curso',
-        _Filter.sinEmpezar => 'Sin empezar',
-      };
+    _Filter.todas => 'Todas',
+    _Filter.enCurso => 'En curso',
+    _Filter.sinEmpezar => 'Sin empezar',
+  };
 
   int _countFor(_Filter filter, List<LibraryRow> allRows) => switch (filter) {
-        _Filter.todas => allRows.length,
-        _Filter.enCurso => allRows.where((r) => r.entry?.status == 'active').length,
-        _Filter.sinEmpezar => allRows.where((r) => r.entry == null).length,
-      };
+    _Filter.todas => allRows.length,
+    _Filter.enCurso => allRows.where((r) => r.entry?.status == 'active').length,
+    _Filter.sinEmpezar => allRows.where((r) => r.entry == null).length,
+  };
 }
 
 class _FilterChip extends StatelessWidget {
@@ -227,11 +255,16 @@ class _FilterChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AetherSpace.md, vertical: AetherSpace.sm),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AetherSpace.md,
+          vertical: AetherSpace.sm,
+        ),
         decoration: BoxDecoration(
           color: selected ? AetherColors.gold.withValues(alpha: 0.16) : null,
           border: Border.all(
-            color: selected ? AetherColors.gold.withValues(alpha: 0.5) : AetherColors.hairline,
+            color: selected
+                ? AetherColors.gold.withValues(alpha: 0.5)
+                : AetherColors.hairline,
           ),
           borderRadius: AetherRadius.allPill,
         ),
@@ -239,7 +272,9 @@ class _FilterChip extends StatelessWidget {
           text,
           style: AetherType.label.copyWith(
             fontSize: 12,
-            color: selected ? AetherColors.goldBright : AetherColors.parchmentFaint,
+            color: selected
+                ? AetherColors.goldBright
+                : AetherColors.parchmentFaint,
           ),
         ),
       ),
@@ -256,7 +291,9 @@ class _LibraryCard extends StatelessWidget {
   String get _subtitle {
     final entry = row.entry;
     if (entry == null) return 'Sin empezar';
-    if (entry.status == 'completed') return '${entry.characterName} · terminada';
+    if (entry.status == 'completed') {
+      return '${entry.characterName} · terminada';
+    }
     return '${entry.characterName} · turno ${entry.turnCount} · '
         '${relativeTimeLabel(entry.updatedAt)}';
   }
@@ -273,101 +310,139 @@ class _LibraryCard extends StatelessWidget {
     final accent = WorldTheme.forWorld(row.world).accent;
     final unstarted = row.entry == null;
     final progress = row.progress;
-    return Pressable(
-      onTap: onTap,
-      // A single `Border` can't mix a bright left accent stripe with a
-      // dimmer uniform border elsewhere *and* a borderRadius at the same
-      // time (Flutter requires uniform border colors whenever a
-      // borderRadius is set) — so the stripe is a separate `Container`
-      // inside a `ClipRRect`, not part of the outer decoration's border.
-      child: (pressed) => ClipRRect(
-        borderRadius: AetherRadius.allMd,
-        child: AnimatedContainer(
-          duration: AetherMotion.fast,
-          decoration: BoxDecoration(
-            color: pressed ? AetherColors.surfaceRaised : AetherColors.surface,
-            border: Border.all(
-              color: unstarted ? AetherColors.hairline : accent.withValues(alpha: 0.3),
-            ),
-          ),
-          child: IntrinsicHeight(
-            child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(width: 3, color: accent),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AetherSpace.sm),
-                // `Center`, not a bare `LibraryThumbnail`: the row's own
-                // `stretch` would otherwise force-fit the fixed-size square
-                // thumbnail to the full (variable) card height instead of
-                // just centering it within that space.
-                child: Center(
-                  child: LibraryThumbnail(
-                      imageUrl: row.entry?.imageUrl, accent: accent, size: 40),
-                ),
+    // This card packs a world-tag pill, title, subtitle and a progress bar
+    // into one fixed-height cell (the tablet/desktop GridView's own
+    // childAspectRatio) -- every individual Text already ellipsizes its own
+    // line, but the *sum* of their heights still grows with the OS
+    // text-scale setting while the cell itself can't (V2 Stage 8), the same
+    // fixed-height-vs-growing-text tension `HomeBottomNav` hits. Clamped
+    // here rather than redesigning the grid to be content-sized.
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.2,
+      child: Pressable(
+        onTap: onTap,
+        // A single `Border` can't mix a bright left accent stripe with a
+        // dimmer uniform border elsewhere *and* a borderRadius at the same
+        // time (Flutter requires uniform border colors whenever a
+        // borderRadius is set) — so the stripe is a separate `Container`
+        // inside a `ClipRRect`, not part of the outer decoration's border.
+        child: (pressed) => ClipRRect(
+          borderRadius: AetherRadius.allMd,
+          child: AnimatedContainer(
+            duration: AetherMotion.fast,
+            decoration: BoxDecoration(
+              color: pressed
+                  ? AetherColors.surfaceRaised
+                  : AetherColors.surface,
+              border: Border.all(
+                color: unstarted
+                    ? AetherColors.hairline
+                    : accent.withValues(alpha: 0.3),
               ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(AetherSpace.md),
-                  child: Opacity(
-                    opacity: unstarted ? 0.75 : 1,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: accent.withValues(alpha: 0.14),
-                                  borderRadius: AetherRadius.allSm,
-                                ),
-                                child: Text(row.world.name.toUpperCase(),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
+            ),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(width: 3, color: accent),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AetherSpace.sm,
+                    ),
+                    // `Center`, not a bare `LibraryThumbnail`: the row's own
+                    // `stretch` would otherwise force-fit the fixed-size square
+                    // thumbnail to the full (variable) card height instead of
+                    // just centering it within that space.
+                    child: Center(
+                      child: LibraryThumbnail(
+                        imageUrl: row.entry?.imageUrl,
+                        accent: accent,
+                        size: 40,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AetherSpace.md),
+                      child: Opacity(
+                        opacity: unstarted ? 0.75 : 1,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 7,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: accent.withValues(alpha: 0.14),
+                                      borderRadius: AetherRadius.allSm,
+                                    ),
+                                    child: Text(
+                                      row.world.name.toUpperCase(),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
                                         fontSize: 8.5,
                                         fontWeight: FontWeight.w700,
                                         letterSpacing: 1,
-                                        color: accent)),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(_title,
-                                  style: AetherType.title.copyWith(fontSize: 16),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis),
-                              const SizedBox(height: 2),
-                              Text(_subtitle,
-                                  style: AetherType.caption,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis),
-                              if (progress != null) ...[
-                                const SizedBox(height: 5),
-                                ClipRRect(
-                                  borderRadius: AetherRadius.allPill,
-                                  child: SizedBox(
-                                    height: 3,
-                                    child: Stack(children: [
-                                      Container(color: AetherColors.void_),
-                                      FractionallySizedBox(
-                                        widthFactor: progress,
-                                        child: Container(color: accent),
+                                        color: accent,
                                       ),
-                                    ]),
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ],
-                          ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    _title,
+                                    style: AetherType.title.copyWith(
+                                      fontSize: 16,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _subtitle,
+                                    style: AetherType.caption,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (progress != null) ...[
+                                    const SizedBox(height: 5),
+                                    ClipRRect(
+                                      borderRadius: AetherRadius.allPill,
+                                      child: SizedBox(
+                                        height: 3,
+                                        child: Stack(
+                                          children: [
+                                            Container(
+                                              color: AetherColors.void_,
+                                            ),
+                                            FractionallySizedBox(
+                                              widthFactor: progress,
+                                              child: Container(color: accent),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              color: accent.withValues(alpha: 0.7),
+                            ),
+                          ],
                         ),
-                        Icon(Icons.chevron_right_rounded, color: accent.withValues(alpha: 0.7)),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
             ),
           ),
         ),

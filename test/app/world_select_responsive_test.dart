@@ -36,14 +36,25 @@ GameController _newController() => GameController(
       narrator: const FakeNarratorAdapter(latency: Duration.zero),
     );
 
-Future<void> _pumpAt(WidgetTester tester, Size size) async {
+Future<void> _pumpAt(WidgetTester tester, Size size, {double textScale = 1.0}) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
-  await tester.pumpWidget(MaterialApp(
-    home: WorldSelectScreen(controller: _newController()),
+  await tester.pumpWidget(MediaQuery(
+    // `disableAnimations: true` stops `AetherBackground`'s never-ending
+    // particle drift so a fixed pump count is enough to settle — same
+    // gotcha `create_story_screen_test.dart` hit.
+    data: MediaQueryData(
+      size: size,
+      textScaler: TextScaler.linear(textScale),
+      disableAnimations: true,
+    ),
+    child: MaterialApp(
+      home: WorldSelectScreen(controller: _newController()),
+    ),
   ));
   await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
 }
 
 void main() {
@@ -96,5 +107,23 @@ void main() {
 
       expect(find.text('Todavía no está disponible.'), findsOneWidget);
     });
+  });
+
+  group('text-scale accessibility (V2 Stage 8)', () {
+    for (final scale in [1.3, 1.5, 2.0]) {
+      testWidgets(
+          'the module grid (childAspectRatio-fixed cells) reflows without '
+          'overflowing at textScale $scale, tablet width', (tester) async {
+        await _pumpAt(tester, const Size(800, 1100), textScale: scale);
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets(
+          'the module grid reflows without overflowing at textScale $scale, '
+          'desktop width', (tester) async {
+        await _pumpAt(tester, const Size(1280, 900), textScale: scale);
+        expect(tester.takeException(), isNull);
+      });
+    }
   });
 }

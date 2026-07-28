@@ -342,12 +342,21 @@ class _SidePanel extends StatelessWidget {
                     color: i <= step ? AetherColors.gold : AetherColors.parchmentFaint,
                   ),
                   const SizedBox(width: AetherSpace.sm),
-                  Text(
-                    _stepTitles[i],
-                    style: AetherType.label.copyWith(
-                      color: i == step
-                          ? AetherColors.goldBright
-                          : (i < step ? AetherColors.parchment : AetherColors.parchmentFaint),
+                  // Expanded + ellipsis: at a large OS text-scale setting,
+                  // a step title's single-line intrinsic width can exceed
+                  // this side panel's own fixed column width (V2 Stage 8) --
+                  // without a flexible wrapper, a bare `Text` ignores that
+                  // limit instead of wrapping/shrinking into it.
+                  Expanded(
+                    child: Text(
+                      _stepTitles[i],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AetherType.label.copyWith(
+                        color: i == step
+                            ? AetherColors.goldBright
+                            : (i < step ? AetherColors.parchment : AetherColors.parchmentFaint),
+                      ),
                     ),
                   ),
                 ],
