@@ -1234,15 +1234,111 @@ correction to the original scoping and one real bug found along the way.
 
 ## Stage 8 — Accessibility, responsiveness, performance, release hardening
 
-**Goal:** dynamic text scaling (Spectral narration at 62ch max-width must
-reflow, not clip), reduced-motion consistency (the prototype's own
-`@media (prefers-reduced-motion:reduce)` rule and the existing
-`_TomePainter`/`AetherBackground` motion-respecting behavior should match),
-contrast verification on the 5 new per-world palettes (Cyberpunk's cyan-on-near-black
-in particular needs a real contrast check, not just visual approval), full
-suite + manual preview pass across mobile/tablet/web breakpoints.
+**Status:** ✅ **Done (2026-07-28)**. Per your explicit instruction, the
+manual mobile/tablet/web preview pass this stage originally scoped was
+dropped entirely — everything below is verified by code/tests only, not a
+visual walkthrough.
 
-**Risk:** low-medium, mostly verification work.
+- **Dynamic text scaling — found and fixed 5 real overflow bugs.**
+  Narration itself (the actual "Spectral at 62ch" reading column this goal
+  named) turned out to already be safe by construction: it lives in a
+  `SingleChildScrollView` with no `maxLines`/fixed-height ancestor, so a
+  larger OS text-scale setting just means more scrolling, never clipping —
+  confirmed, not assumed, by reading `_ReadingFrame`/`_NarrationView`
+  directly. The real breakage was everywhere this app uses a fixed-
+  aspect-ratio `GridView` or a fixed-height bar for a nav/card pattern —
+  `GridView` always hands its children *tight* constraints, so a cell's
+  height can't grow to fit text that grows with it. Found by writing actual
+  `MediaQuery(textScaler: TextScaler.linear(1.3/1.5/2.0))` widget-test
+  probes against every screen with such a grid, not by guessing which ones
+  might break:
+  - `world_select_screen.dart`'s `_ModuleCard` (childAspectRatio 1.6): the
+    title/teaser `Text`s had no `maxLines`/`overflow` at all, and the
+    "N historias" count pill didn't shrink — fixed with `maxLines`+
+    `ellipsis` on both texts and a `Flexible`+`FittedBox(scaleDown)` around
+    the pill. Same file's "Sigue leyendo" section header (title + "Ver
+    todos" button in one `Row`) had the identical bare-`Text` gap, fixed the
+    same way.
+  - `widgets/home_bottom_nav.dart`: none of the 4 destination labels were
+    `Expanded`/`Flexible` — "Mis historias" (the longest) alone exceeded a
+    tablet-width bar's total space at scale. A fixed-height bottom nav has
+    nowhere to grow, the same wall Flutter's own `BottomNavigationBar` hits
+    for the same reason, so it's now wrapped in
+    `MediaQuery.withClampedTextScaling(maxScaleFactor: 1.3)`, plus
+    `Expanded` per item and `maxLines: 1`/ellipsis on each label.
+  - `chargen_screen.dart`'s wide-layout `_SidePanel` step checklist: each
+    step title was a bare `Text` next to a fixed-size icon in a `Row` with
+    no flexible child at all — at scale 2.0 this overflowed by **160px** on
+    a 1000px-wide chargen. Fixed with `Expanded`+`maxLines`+ellipsis, same
+    shape as the other fixes above.
+  - `my_stories_screen.dart`'s `_LibraryCard` (used by both the mobile
+    `ListView` and the tablet/desktop `GridView`): every individual `Text`
+    already had `maxLines`/ellipsis, so the bug here wasn't horizontal — it
+    was the *sum* of several already-guarded lines' heights still growing
+    past the grid cell's fixed height. Same `withClampedTextScaling` fix as
+    the bottom nav (down to `1.2`, the tightest of any fix here, since this
+    card packs the most vertically: a tag pill, title, subtitle, and an
+    optional progress bar into one row).
+  - Tests: new `test/app/create_story_screen_test.dart` (this screen had
+    **zero** test coverage before this stage — 4 cases, including the
+    genre grid at 3 text scales, which turned out to already be fine, a
+    real negative result worth having on record given its aspect-ratio grid
+    was flagged with an unrelated overflow bug back in Stage 6h). New
+    `text-scale accessibility` groups in `world_select_responsive_test.dart`
+    (6 cases), `chargen_screen_test.dart` (6 cases), `my_stories_screen_test
+    .dart` (6 cases) — each at 1.3/1.5/2.0, at both a narrow and a wide
+    viewport where relevant.
+- **Reduced-motion consistency — found and fixed 2 real gaps.**
+  `AetherBackground`/`SplashScreen` already checked
+  `MediaQuery.of(context).disableAnimations` correctly. `DestinyWriting`
+  (the "el destino se escribe…" pulsing-dots loading indicator, shown on
+  every AI-narrated turn) and `_SceneImageShimmer` (the scene-image loading
+  pulse) never did — both now stop their `AnimationController` and render a
+  fixed, non-animated state (a steady mid-glow for the dots, a fixed
+  mid-tone fill for the shimmer) when the OS setting is on. Deliberately
+  **not** touched: the one-shot `FateRoll` reveal animation and every
+  implicit `AnimatedContainer`/`AnimatedSwitcher` UI-feedback transition
+  found across the app (button press states, panel show/hide) — reduced-
+  motion conventions (including Flutter's and Material's own) target
+  continuous/ambient/looping motion, not short one-shot content
+  transitions, and this app's `@media (prefers-reduced-motion:reduce)`
+  reference point in the mockup doesn't call for suppressing those either.
+  Tests: new `reduced motion` group in `atmosphere_test.dart` (2 cases) —
+  `AetherBackground(particles: true)` and `DestinyWriting` both now let
+  `pumpAndSettle()` actually settle under `disableAnimations: true`, which
+  would have hung indefinitely before the fix (a "the test times out"
+  failure mode was itself the proof the bug was real, not simulated).
+- **Contrast verification on the 5 per-world palettes — computed real WCAG
+  numbers, not visual approval.** New `test/app/design/contrast_test.dart`:
+  a from-scratch WCAG 2.1 relative-luminance/contrast-ratio implementation
+  (no third-party dependency), applying the *correct* threshold per actual
+  use rather than one blanket number — confirmed by reading every call site
+  first: `theme.accent`/`theme.secondary` are never small body text in this
+  app (only icons, borders, and — via `WorldTheme.titleStyle` — large
+  display titles), so WCAG's non-text 3:1 minimum (SC 1.4.11) applies;
+  `AetherColors.parchment`/`parchmentDim` are the real narration-reading
+  text color, rendered directly over a world's own themed backdrop on
+  mobile (`_ReadingFrame` only wraps the reading column in an opaque panel
+  at wide/split-view widths), so the real 4.5:1 AA text minimum applies
+  there. **The plan's own suspicion about Cyberpunk turned out to be
+  backwards**: its cyan accent (`#55E0F0`) on its own near-black base
+  (`#0C1016`) computes to **12.08:1** — comfortably past even AAA (7:1),
+  not a risk at all. Every other world/pair also clears its correct
+  threshold with real margin (parchment-on-base ranges 13.71–15.08:1 across
+  all 5 worlds, essentially unchanged from the original palette's own
+  14.76–15.43:1 baseline; every accent/secondary pair against `base` or
+  `AetherColors.surfaceRaised` clears 3.90:1 at the tightest, well past the
+  3:1 floor). 13 test cases total, all passing on the first run — this
+  stage found zero actual contrast bugs, only confirmed the design
+  decisions already made were sound.
+- 836 Flutter tests passing (up from 799 at the start of this stage),
+  `analyze` clean throughout. No backend/Edge-Function changes.
+- **Deliberately not done, per your explicit instruction**: the manual
+  mobile/tablet/web preview pass. Every fix above is verified by a widget
+  test that reproduces the exact failure first (confirmed to fail before
+  the fix, pass after), which is a stronger guarantee for a fixed-geometry
+  overflow bug than a screenshot would have been anyway — but no one has
+  looked at the actual rendered pixels this session.
 
 ---
 
@@ -1309,4 +1405,4 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 | 6l — Home dashboard: hero real (imagen/cita/2 botones) + miniaturas parejas | ✅ Done and deployed (2026-07-28) — `story_library_last_turn` migration applied; visual sign-off still recommended, see 6l notes | — |
 | 6m — ChargenScreen theming fix + `CharacterSheetSheet` real gaps (retrato, etiqueta, juramento, subtítulo) | ✅ Done and deployed (2026-07-28) — `characters_avatar_url` migration applied, `get_advisors` clean; driven by your own visual audit, no outstanding sign-off caveat for the flagged gaps | — |
 | 7 — Ending/account/offline/resilience polish | ✅ Done (2026-07-28) — no Edge Function deploy needed (wire contract was already correct, just untested); found and fixed a real image/avatar persistence-failure bug along the way | — |
-| 8 — Accessibility/responsiveness/performance/release | Not started | Stages 1-7 |
+| 8 — Accessibility/responsiveness/performance/release | ✅ Done (2026-07-28) — 5 real text-scale overflow bugs + 2 reduced-motion gaps found and fixed; contrast verified sound (no bugs found); manual preview pass explicitly dropped per your instruction | — |
