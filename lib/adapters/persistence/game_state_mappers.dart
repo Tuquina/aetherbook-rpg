@@ -97,6 +97,7 @@ SessionLibraryEntry sessionLibraryEntryFromRow(Map<String, dynamic> row) {
     characterName: row['character_name'] as String? ?? '???',
     turnCount: (row['turn_count'] as num).toInt(),
     updatedAt: DateTime.parse(row['updated_at'] as String),
+    currentNodeId: row['current_node_id'] as String?,
   );
 }
 

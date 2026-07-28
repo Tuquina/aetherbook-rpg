@@ -93,8 +93,9 @@ class _FakeGameStateRepository implements GameStateRepositoryPort {
   Future<List<SessionReadingStat>> readingStats() async => const [];
 }
 
-Future<void> _pumpMyStories(WidgetTester tester, List<SessionLibraryEntry> entries) async {
-  tester.view.physicalSize = const Size(900, 2000);
+Future<void> _pumpMyStories(WidgetTester tester, List<SessionLibraryEntry> entries,
+    {Size size = const Size(390, 2000)}) async {
+  tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
   final controller = GameController(
@@ -204,6 +205,88 @@ void main() {
       ]);
 
       expect(find.text('Fernando · terminada'), findsOneWidget);
+    });
+
+    testWidgets('shows the total tomo count in the header', (tester) async {
+      await _pumpMyStories(tester, [
+        SessionLibraryEntry(
+          sessionId: 's1',
+          worldSlug: 'isekai',
+          status: 'active',
+          characterName: 'Fernando',
+          turnCount: 4,
+          updatedAt: DateTime.now(),
+        ),
+      ]);
+
+      // isekai (started) + xianxia (sin empezar) = 2 rows total.
+      expect(find.text('2 tomos'), findsOneWidget);
+    });
+
+    testWidgets('an active session shows a general-advancement progress bar', (tester) async {
+      await _pumpMyStories(tester, [
+        SessionLibraryEntry(
+          sessionId: 's1',
+          worldSlug: 'isekai',
+          status: 'active',
+          characterName: 'Fernando',
+          turnCount: 15,
+          updatedAt: DateTime.now(),
+        ),
+      ]);
+
+      final fsb = tester.widget<FractionallySizedBox>(find.byType(FractionallySizedBox));
+      expect(fsb.widthFactor, closeTo(15 / 30, 0.001));
+    });
+
+    testWidgets('an unstarted world shows no progress bar', (tester) async {
+      await _pumpMyStories(tester, []);
+      expect(find.byType(FractionallySizedBox), findsNothing);
+    });
+  });
+
+  group('MyStoriesScreen responsive layout (V2 §2b/§4d, Stage V)', () {
+    testWidgets('below tablet width: a plain ListView, chip labels carry no count',
+        (tester) async {
+      await _pumpMyStories(tester, [
+        SessionLibraryEntry(
+          sessionId: 's1',
+          worldSlug: 'isekai',
+          status: 'active',
+          characterName: 'Fernando',
+          turnCount: 4,
+          updatedAt: DateTime.now(),
+        ),
+      ]);
+
+      expect(find.byType(ListView), findsOneWidget);
+      expect(find.byType(GridView), findsNothing);
+      expect(find.text('Todas'), findsOneWidget); // no "Todas · N"
+    });
+
+    testWidgets('at/above tablet width: a GridView, chips carry their own count',
+        (tester) async {
+      await _pumpMyStories(
+        tester,
+        [
+          SessionLibraryEntry(
+            sessionId: 's1',
+            worldSlug: 'isekai',
+            status: 'active',
+            characterName: 'Fernando',
+            turnCount: 4,
+            updatedAt: DateTime.now(),
+          ),
+        ],
+        size: const Size(900, 2000),
+      );
+
+      expect(find.byType(GridView), findsOneWidget);
+      expect(find.byType(ListView), findsNothing);
+      // isekai (active) + xianxia (sin empezar) = 2 total, 1 active, 1 unstarted.
+      expect(find.text('Todas · 2'), findsOneWidget);
+      expect(find.text('En curso · 1'), findsOneWidget);
+      expect(find.text('Sin empezar · 1'), findsOneWidget);
     });
   });
 }

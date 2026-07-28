@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/state/game_session.dart';
 import '../core/world/world.dart';
+import 'design/breakpoints.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'design/world_theme.dart';
@@ -68,95 +69,160 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
     return Scaffold(
       body: AetherBackground(
         child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 640),
-              child: Padding(
-                padding: const EdgeInsets.all(AetherSpace.xl),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.arrow_back_rounded, color: AetherColors.goldSoft),
-                        ),
-                        const SizedBox(width: AetherSpace.sm),
-                        Text('Mis historias', style: AetherType.display.copyWith(fontSize: 22)),
-                      ],
-                    ),
-                    const SizedBox(height: AetherSpace.lg),
-                    Row(
-                      children: [
-                        for (final filter in _Filter.values) ...[
-                          _FilterChip(
-                            label: switch (filter) {
-                              _Filter.todas => 'Todas',
-                              _Filter.enCurso => 'En curso',
-                              _Filter.sinEmpezar => 'Sin empezar',
-                            },
-                            selected: filter == _filter,
-                            onTap: () => setState(() => _filter = filter),
-                          ),
-                          const SizedBox(width: AetherSpace.sm),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: AetherSpace.lg),
-                    Expanded(
-                      child: FutureBuilder<List<SessionLibraryEntry>>(
-                        future: _library,
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return const Center(child: CircularProgressIndicator(color: AetherColors.gold));
-                          }
-                          final rows = _filtered(buildLibraryRows(
-                            catalogWorlds: widget.catalogWorlds,
-                            entries: snapshot.data!,
-                          ));
-                          if (rows.isEmpty) {
-                            return Center(
-                              child: Text(
-                                _filter == _Filter.sinEmpezar
-                                    ? 'Ya empezaste todos los mundos disponibles.'
-                                    : 'Todavía no hay historias acá.',
-                                style: AetherType.body.copyWith(color: AetherColors.parchmentDim),
-                                textAlign: TextAlign.center,
-                              ),
-                            );
-                          }
-                          return ListView.separated(
-                            itemCount: rows.length,
-                            separatorBuilder: (_, _) => const SizedBox(height: AetherSpace.sm),
-                            itemBuilder: (context, i) => _LibraryCard(
-                              row: rows[i],
-                              onTap: () => _openRow(rows[i]),
+          child: FutureBuilder<List<SessionLibraryEntry>>(
+            future: _library,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator(color: AetherColors.gold));
+              }
+              final allRows = buildLibraryRows(
+                catalogWorlds: widget.catalogWorlds,
+                entries: snapshot.data!,
+              );
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final wide = constraints.maxWidth >= AetherBreakpoints.tablet;
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: wide ? 900 : 640),
+                      child: Padding(
+                        padding: const EdgeInsets.all(AetherSpace.xl),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                IconButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  icon: const Icon(Icons.arrow_back_rounded,
+                                      color: AetherColors.goldSoft),
+                                ),
+                                const SizedBox(width: AetherSpace.sm),
+                                Expanded(
+                                  // `Wrap`, not `Row`: on a narrow phone
+                                  // "Mis historias" alone can already claim
+                                  // the full width, so the tomo count drops
+                                  // to its own line instead of overflowing.
+                                  child: Wrap(
+                                    crossAxisAlignment: WrapCrossAlignment.end,
+                                    spacing: AetherSpace.sm,
+                                    children: [
+                                      Text('Mis historias',
+                                          style: AetherType.display.copyWith(fontSize: 22)),
+                                      Text('${allRows.length} tomos',
+                                          style: AetherType.caption
+                                              .copyWith(color: AetherColors.parchmentDim)),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          );
-                        },
+                            const SizedBox(height: AetherSpace.lg),
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  for (final filter in _Filter.values) ...[
+                                    _FilterChip(
+                                      label: _filterLabel(filter),
+                                      count: wide ? _countFor(filter, allRows) : null,
+                                      selected: filter == _filter,
+                                      onTap: () => setState(() => _filter = filter),
+                                    ),
+                                    const SizedBox(width: AetherSpace.sm),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: AetherSpace.lg),
+                            Expanded(
+                              child: Builder(builder: (context) {
+                                final rows = _filtered(allRows);
+                                if (rows.isEmpty) {
+                                  return Center(
+                                    child: Text(
+                                      _filter == _Filter.sinEmpezar
+                                          ? 'Ya empezaste todos los mundos disponibles.'
+                                          : 'Todavía no hay historias acá.',
+                                      style:
+                                          AetherType.body.copyWith(color: AetherColors.parchmentDim),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  );
+                                }
+                                if (wide) {
+                                  return GridView.builder(
+                                    gridDelegate:
+                                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                                      maxCrossAxisExtent: 340,
+                                      mainAxisExtent: 108,
+                                      crossAxisSpacing: AetherSpace.sm,
+                                      mainAxisSpacing: AetherSpace.sm,
+                                    ),
+                                    itemCount: rows.length,
+                                    itemBuilder: (context, i) => _LibraryCard(
+                                      row: rows[i],
+                                      onTap: () => _openRow(rows[i]),
+                                    ),
+                                  );
+                                }
+                                return ListView.separated(
+                                  itemCount: rows.length,
+                                  separatorBuilder: (_, _) => const SizedBox(height: AetherSpace.sm),
+                                  itemBuilder: (context, i) => _LibraryCard(
+                                    row: rows[i],
+                                    onTap: () => _openRow(rows[i]),
+                                  ),
+                                );
+                              }),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
+                  );
+                },
+              );
+            },
           ),
         ),
       ),
     );
   }
+
+  String _filterLabel(_Filter filter) => switch (filter) {
+        _Filter.todas => 'Todas',
+        _Filter.enCurso => 'En curso',
+        _Filter.sinEmpezar => 'Sin empezar',
+      };
+
+  int _countFor(_Filter filter, List<LibraryRow> allRows) => switch (filter) {
+        _Filter.todas => allRows.length,
+        _Filter.enCurso => allRows.where((r) => r.entry?.status == 'active').length,
+        _Filter.sinEmpezar => allRows.where((r) => r.entry == null).length,
+      };
 }
 
 class _FilterChip extends StatelessWidget {
-  const _FilterChip({required this.label, required this.selected, required this.onTap});
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.count,
+  });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
 
+  /// The category's row count — shown as "Todas · 6" only at/above
+  /// [AetherBreakpoints.tablet] (V2 §4d: mobile chips stay label-only, the
+  /// mockup never shows counts there); `null` renders the label alone.
+  final int? count;
+
   @override
   Widget build(BuildContext context) {
+    final text = count == null ? label : '$label · $count';
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -169,7 +235,7 @@ class _FilterChip extends StatelessWidget {
           borderRadius: AetherRadius.allPill,
         ),
         child: Text(
-          label,
+          text,
           style: AetherType.label.copyWith(
             fontSize: 12,
             color: selected ? AetherColors.goldBright : AetherColors.parchmentFaint,
@@ -212,6 +278,7 @@ class _LibraryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent = WorldTheme.forWorld(row.world).accent;
     final unstarted = row.entry == null;
+    final progress = row.progress;
     return Pressable(
       onTap: onTap,
       // A single `Border` can't mix a bright left accent stripe with a
@@ -259,9 +326,31 @@ class _LibraryCard extends StatelessWidget {
                                         color: accent)),
                               ),
                               const SizedBox(height: 6),
-                              Text(_title, style: AetherType.title.copyWith(fontSize: 16)),
+                              Text(_title,
+                                  style: AetherType.title.copyWith(fontSize: 16),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis),
                               const SizedBox(height: 2),
-                              Text(_subtitle, style: AetherType.caption),
+                              Text(_subtitle,
+                                  style: AetherType.caption,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis),
+                              if (progress != null) ...[
+                                const SizedBox(height: 5),
+                                ClipRRect(
+                                  borderRadius: AetherRadius.allPill,
+                                  child: SizedBox(
+                                    height: 3,
+                                    child: Stack(children: [
+                                      Container(color: AetherColors.void_),
+                                      FractionallySizedBox(
+                                        widthFactor: progress,
+                                        child: Container(color: accent),
+                                      ),
+                                    ]),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),

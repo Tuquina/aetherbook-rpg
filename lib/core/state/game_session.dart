@@ -160,6 +160,7 @@ class SessionLibraryEntry {
     required this.turnCount,
     required this.updatedAt,
     this.title,
+    this.currentNodeId,
   });
 
   final String sessionId;
@@ -174,4 +175,12 @@ class SessionLibraryEntry {
   /// The player-chosen title, or `null` for a module that never asks for one
   /// (same convention as [GameSessionSummary.title]).
   final String? title;
+
+  /// `game_sessions.current_node_id` — `null` for a freeform session (no
+  /// graph) or one that hasn't moved past its start node's default. Lets
+  /// `LibraryRow.progress` (V2 §2b/§4d, Stage V) derive a real chapter number
+  /// for a curated, AI-free world's active session, via its own `c<N>_...`
+  /// node-id convention — no new authoring, no new column purpose beyond
+  /// what `saveGraphPosition` already writes.
+  final String? currentNodeId;
 }

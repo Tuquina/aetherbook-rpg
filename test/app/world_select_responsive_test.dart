@@ -82,7 +82,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('Mis historias'), findsWidgets); // sidebar nav + screen title
-      expect(find.text('Todas'), findsOneWidget); // MyStoriesScreen's filter tab
+      // MyStoriesScreen's filter tab — at this (desktop) width its chips
+      // carry a count too (V2 §4d, Stage V), so the label alone isn't "Todas".
+      expect(find.textContaining('Todas'), findsOneWidget);
     });
 
     testWidgets('desktop sidebar "Explorar" shows a coming-soon snackbar, not a crash',

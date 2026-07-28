@@ -363,6 +363,7 @@ void main() {
         'character_name': 'Kest',
         'turn_count': 27,
         'updated_at': '2026-07-24T10:00:00.000Z',
+        'current_node_id': 'c4_n02_bifurcacion',
       });
       expect(entry.sessionId, 'session-8');
       expect(entry.worldSlug, 'cyberpunk');
@@ -371,9 +372,10 @@ void main() {
       expect(entry.characterName, 'Kest');
       expect(entry.turnCount, 27);
       expect(entry.updatedAt, DateTime.parse('2026-07-24T10:00:00.000Z'));
+      expect(entry.currentNodeId, 'c4_n02_bifurcacion');
     });
 
-    test('falls back to "???" when the character row is missing, title stays null', () {
+    test('falls back to "???" when the character row is missing, title/node stay null', () {
       final entry = sessionLibraryEntryFromRow({
         'session_id': 'session-9',
         'world_slug': 'isekai',
@@ -382,9 +384,11 @@ void main() {
         'character_name': null,
         'turn_count': 0,
         'updated_at': '2026-07-24T10:00:00.000Z',
+        'current_node_id': null,
       });
       expect(entry.characterName, '???');
       expect(entry.title, isNull);
+      expect(entry.currentNodeId, isNull);
     });
   });
 }
