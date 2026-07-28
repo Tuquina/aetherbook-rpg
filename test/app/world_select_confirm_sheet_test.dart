@@ -168,6 +168,13 @@ void main() {
   testWidgets(
       'abandoning a saved story shows a ConfirmSheet (not an AlertDialog) '
       'and only calls abandonSession after confirming', (tester) async {
+    // The home dashboard now has 3 responsive layouts (V2 §8a/§8b/§2a) —
+    // force the mobile one, since that's what this test actually exercises,
+    // rather than incidentally landing in tablet mode at the default
+    // 800x600 test surface.
+    tester.view.physicalSize = const Size(600, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
     final persistence = _FakeGameStateRepository()
       ..summariesToReturn = [
         GameSessionSummary(
@@ -215,6 +222,9 @@ void main() {
   testWidgets(
       'restarting a curated story shows a ConfirmSheet and only restarts '
       'after confirming', (tester) async {
+    tester.view.physicalSize = const Size(600, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
     final controller = GameController(
       worldRepository: _MixedWorldRepository(),
       narrator: const FakeNarratorAdapter(latency: Duration.zero),

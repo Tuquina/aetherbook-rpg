@@ -6,24 +6,12 @@ import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'design/world_theme.dart';
 import 'game_controller.dart';
+import 'library_rows.dart';
 import 'story_module_screen.dart' show Pressable;
 import 'story_navigation.dart';
 import 'widgets/atmosphere.dart';
 
 enum _Filter { todas, enCurso, sinEmpezar }
-
-/// One row in the unified library: either a real session (any status but
-/// `abandoned`, which never shows here) or a catalog world the account has
-/// never started — used interchangeably so "Todas" can list both without
-/// two separate widgets.
-class _LibraryRow {
-  const _LibraryRow({required this.world, this.entry});
-
-  final World world;
-
-  /// `null` means "sin empezar" — no session exists for [world] yet.
-  final SessionLibraryEntry? entry;
-}
 
 /// The unified "Mis historias" list (V2 design prototype §2b/§8a) — every
 /// story the account has across all 3 modules, one flat list instead of
@@ -57,26 +45,7 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
   late final Future<List<SessionLibraryEntry>> _library = widget.controller.storyLibrary();
   _Filter _filter = _Filter.todas;
 
-  List<_LibraryRow> _rows(List<SessionLibraryEntry> entries) {
-    final byWorld = <String, World>{for (final w in widget.catalogWorlds) w.slug: w};
-    final startedSlugs = <String>{};
-    final rows = <_LibraryRow>[];
-    for (final entry in entries) {
-      if (entry.status == 'abandoned') continue;
-      final world = byWorld[entry.worldSlug];
-      if (world == null) continue; // stale/removed world content, skip rather than crash
-      startedSlugs.add(entry.worldSlug);
-      rows.add(_LibraryRow(world: world, entry: entry));
-    }
-    for (final world in widget.catalogWorlds) {
-      if (!startedSlugs.contains(world.slug)) {
-        rows.add(_LibraryRow(world: world));
-      }
-    }
-    return rows;
-  }
-
-  List<_LibraryRow> _filtered(List<_LibraryRow> rows) {
+  List<LibraryRow> _filtered(List<LibraryRow> rows) {
     return switch (_filter) {
       _Filter.todas => rows,
       _Filter.enCurso => rows.where((r) => r.entry?.status == 'active').toList(),
@@ -84,7 +53,7 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
     };
   }
 
-  Future<void> _openRow(_LibraryRow row) async {
+  Future<void> _openRow(LibraryRow row) async {
     final entry = row.entry;
     if (entry == null) {
       await StoryNavigation.open(context, widget.controller, row.world);
@@ -142,7 +111,10 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
                           if (!snapshot.hasData) {
                             return const Center(child: CircularProgressIndicator(color: AetherColors.gold));
                           }
-                          final rows = _filtered(_rows(snapshot.data!));
+                          final rows = _filtered(buildLibraryRows(
+                            catalogWorlds: widget.catalogWorlds,
+                            entries: snapshot.data!,
+                          ));
                           if (rows.isEmpty) {
                             return Center(
                               child: Text(
@@ -211,7 +183,7 @@ class _FilterChip extends StatelessWidget {
 class _LibraryCard extends StatelessWidget {
   const _LibraryCard({required this.row, required this.onTap});
 
-  final _LibraryRow row;
+  final LibraryRow row;
   final VoidCallback onTap;
 
   String get _subtitle {

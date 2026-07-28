@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
 
-import '../core/state/character.dart';
 import '../core/state/game_session.dart';
 import '../core/world/world.dart';
 import 'codex_screen.dart';
 import 'create_story_screen.dart';
+import 'design/breakpoints.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'design/world_theme.dart';
 import 'game_controller.dart';
+import 'library_rows.dart';
+import 'my_stories_screen.dart';
 import 'profile_screen.dart';
+import 'settings_screen.dart';
 import 'story_module_screen.dart';
 import 'story_navigation.dart';
 import 'widgets/atmosphere.dart';
 import 'widgets/confirm_sheet.dart';
+import 'widgets/home_bottom_nav.dart';
+import 'widgets/home_sidebar.dart';
 
 /// The stories offered in the menu (GDD §9). Adding a new campaign means
 /// adding its slug here once its content JSON exists in `assets/worlds/` —
@@ -110,14 +115,16 @@ StoryModule _moduleFor(World world) {
   return world.aiRuntimeRequired ? StoryModule.preArmada : StoryModule.complete;
 }
 
-/// Lets the player pick which *type* of story to enter (CLAUDE.md §1:
-/// freeform, curada or híbrida modes over the same engine): three module
-/// cards, plus a way into the rules (Codex). Picking a module opens
-/// [StoryModuleScreen], where the actual campaigns for that type live.
-/// Reached from [SplashScreen]'s "Comenzar", and from the back arrow inside
-/// a story ([StatusBar.onBack]) — the same [GameController] instance is
-/// reused either way, so picking the story already in progress just resumes
-/// it.
+/// The home dashboard (V2 design prototype §8a/§8b/§2a) — reached from
+/// [SplashScreen]'s "Comenzar" and from the back arrow inside a story
+/// ([StatusBar.onBack]). One screen, three chrome modes decided by width
+/// ([AetherBreakpoints]): mobile keeps its original single-column shape
+/// (hero + "cómo se juega" + module grid); tablet adds [HomeBottomNav] and a
+/// "Sigue leyendo" row; desktop adds [HomeSidebar] instead. The hero and
+/// "Sigue leyendo" are both driven by [GameController.storyLibrary] — a real
+/// account-wide query, not just whatever session happens to be in memory —
+/// so "what did I leave open" survives a fresh launch, not only mid-session
+/// back-navigation.
 class WorldSelectScreen extends StatefulWidget {
   const WorldSelectScreen({super.key, required this.controller, this.autoOpenModule});
 
@@ -138,6 +145,7 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
   late final Future<List<World>> _worlds = Future.wait(
     _availableWorldSlugs.map(widget.controller.loadWorldInfo),
   );
+  late final Future<List<SessionLibraryEntry>> _library = widget.controller.storyLibrary();
 
   @override
   void initState() {
@@ -262,142 +270,384 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
     ));
   }
 
-  /// The story left open in memory, if any — the same one the back arrow
-  /// already resumes (`_select`'s already-active-session branch). Read once,
-  /// synchronously: nothing async changes it while this screen is on top, so
-  /// there's no need to listen to [GameController] here just to show it.
-  World? get _continuing =>
-      widget.controller.isReady ? widget.controller.world : null;
+  void _openSettings() {
+    final auth = widget.controller.auth;
+    final settingsPort = widget.controller.settingsPort;
+    if (auth == null || settingsPort == null) return;
+    Navigator.of(context).push(SettingsScreen.route(
+      controller: widget.controller,
+      settingsPort: settingsPort,
+      authPort: auth,
+    ));
+  }
+
+  void _openMyStories(List<World> worlds) {
+    Navigator.of(context)
+        .push(MyStoriesScreen.route(controller: widget.controller, catalogWorlds: worlds));
+  }
+
+  void _showComingSoon() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AetherColors.surfaceRaised,
+        content: Text('Todavía no está disponible.', style: TextStyle(color: AetherColors.parchment)),
+      ),
+    );
+  }
+
+  /// What each [HomeNavDestination] does from the home dashboard —
+  /// "Explorar" is the one gap flagged rather than invented: no "discover
+  /// other players' stories" feature exists yet.
+  void _onNavSelect(HomeNavDestination destination, List<World> worlds) {
+    switch (destination) {
+      case HomeNavDestination.inicio:
+        break;
+      case HomeNavDestination.misHistorias:
+        _openMyStories(worlds);
+      case HomeNavDestination.explorar:
+        _showComingSoon();
+      case HomeNavDestination.codice:
+        _openCodex();
+      case HomeNavDestination.ajustes:
+        _openSettings();
+    }
+  }
+
+  Future<void> _openRow(LibraryRow row) async {
+    final entry = row.entry;
+    if (entry == null) {
+      await StoryNavigation.open(context, widget.controller, row.world);
+    } else {
+      await StoryNavigation.resume(context, widget.controller,
+          worldSlug: entry.worldSlug, sessionId: entry.sessionId);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final continuing = _continuing;
     return Scaffold(
       body: AetherBackground(
         child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: Padding(
-                padding: const EdgeInsets.all(AetherSpace.xl),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Elige tu historia', style: AetherType.display),
-                              const SizedBox(height: AetherSpace.xs),
-                              Text('Cada mundo se escribe distinto.',
-                                  style: AetherType.body
-                                      .copyWith(color: AetherColors.parchmentDim, fontSize: 15)),
-                            ],
-                          ),
-                        ),
-                        // Only reachable with a real account behind it — the
-                        // degraded in-memory mode (auth/settingsPort both
-                        // null) has nothing to show in Perfil/Ajustes.
-                        if (widget.controller.auth != null &&
-                            widget.controller.settingsPort != null)
-                          IconButton(
-                            onPressed: _openProfile,
-                            icon: const Icon(Icons.person_outline_rounded,
-                                color: AetherColors.parchmentDim),
-                          ),
-                      ],
+          child: FutureBuilder<List<World>>(
+            future: _worlds,
+            builder: (context, worldsSnapshot) {
+              if (worldsSnapshot.hasError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AetherSpace.xl),
+                    child: Text(
+                      'No se pudieron cargar las historias: ${worldsSnapshot.error}',
+                      style: AetherType.body.copyWith(color: AetherColors.failure),
+                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: AetherSpace.lg),
-                    // "Retomar es la acción principal, no un botón más" (V2
-                    // design prototype §2a) — when a story is already open in
-                    // memory, it gets top billing above the module picker
-                    // instead of waiting to be found again inside its module.
-                    if (continuing != null) ...[
-                      _ContinueHero(
-                        world: continuing,
-                        character: widget.controller.character!,
-                        onTap: () => _goToGame(continuing.slug),
-                      ),
-                      const SizedBox(height: AetherSpace.lg),
-                    ],
-                    _HowToPlayButton(onTap: _openCodex),
-                    const SizedBox(height: AetherSpace.xl),
-                    Expanded(
-                      child: FutureBuilder<List<World>>(
-                        future: _worlds,
-                        builder: (context, snapshot) {
-                          if (snapshot.hasError) {
-                            return Center(
-                              child: Text(
-                                'No se pudieron cargar las historias: ${snapshot.error}',
-                                style: AetherType.body
-                                    .copyWith(color: AetherColors.failure),
-                                textAlign: TextAlign.center,
-                              ),
-                            );
-                          }
-                          final worlds = snapshot.data;
-                          if (worlds == null) {
-                            return const Center(child: DestinyWriting());
-                          }
-                          final byModule = <StoryModule, List<World>>{
-                            for (final m in StoryModule.values) m: [],
-                          };
-                          for (final world in worlds) {
-                            byModule[_moduleFor(world)]!.add(world);
-                          }
-                          return ListView(
-                            children: [
-                              for (final module in StoryModule.values)
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(bottom: AetherSpace.md),
-                                  child: _ModuleCard(
-                                    module: module,
-                                    count: byModule[module]!.length,
-                                    onTap: () =>
-                                        _openModule(module, byModule[module]!),
-                                  ),
-                                ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                  ),
+                );
+              }
+              final worlds = worldsSnapshot.data;
+              if (worlds == null) return const Center(child: DestinyWriting());
+
+              final byModule = <StoryModule, List<World>>{
+                for (final m in StoryModule.values) m: [],
+              };
+              for (final world in worlds) {
+                byModule[_moduleFor(world)]!.add(world);
+              }
+
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  if (constraints.maxWidth >= AetherBreakpoints.desktop) {
+                    return _buildDesktop(context, worlds, byModule);
+                  }
+                  if (constraints.maxWidth >= AetherBreakpoints.tablet) {
+                    return _buildTablet(context, worlds, byModule);
+                  }
+                  return _buildMobile(context, worlds, byModule);
+                },
+              );
+            },
           ),
         ),
       ),
     );
   }
+
+  Widget _buildMobile(
+    BuildContext context,
+    List<World> worlds,
+    Map<StoryModule, List<World>> byModule,
+  ) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Padding(
+          padding: const EdgeInsets.all(AetherSpace.xl),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Elige tu historia', style: AetherType.display),
+                        const SizedBox(height: AetherSpace.xs),
+                        Text('Cada mundo se escribe distinto.',
+                            style: AetherType.body
+                                .copyWith(color: AetherColors.parchmentDim, fontSize: 15)),
+                      ],
+                    ),
+                  ),
+                  // Only reachable with a real account behind it — the
+                  // degraded in-memory mode (auth/settingsPort both null)
+                  // has nothing to show in Perfil/Ajustes.
+                  if (widget.controller.auth != null && widget.controller.settingsPort != null)
+                    IconButton(
+                      onPressed: _openProfile,
+                      icon: const Icon(Icons.person_outline_rounded, color: AetherColors.parchmentDim),
+                    ),
+                ],
+              ),
+              const SizedBox(height: AetherSpace.lg),
+              FutureBuilder<List<SessionLibraryEntry>>(
+                future: _library,
+                builder: (context, librarySnapshot) {
+                  final rows = buildLibraryRows(
+                    catalogWorlds: worlds,
+                    entries: librarySnapshot.data ?? const [],
+                  );
+                  final active = rows.where((r) => r.entry?.status == 'active').toList();
+                  if (active.isEmpty) return const SizedBox.shrink();
+                  final hero = active.first;
+                  final rest = active.skip(1).take(2).toList();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _ContinueHero(row: hero, onTap: () => _openRow(hero)),
+                      if (rest.isNotEmpty) ...[
+                        const SizedBox(height: AetherSpace.md),
+                        for (final row in rest)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: AetherSpace.sm),
+                            child: _LibraryListTile(row: row, onTap: () => _openRow(row)),
+                          ),
+                      ],
+                      const SizedBox(height: AetherSpace.lg),
+                    ],
+                  );
+                },
+              ),
+              _HowToPlayButton(onTap: _openCodex),
+              const SizedBox(height: AetherSpace.xl),
+              Expanded(
+                child: ListView(
+                  children: [
+                    for (final module in StoryModule.values)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AetherSpace.md),
+                        child: _ModuleCard(
+                          module: module,
+                          count: byModule[module]!.length,
+                          onTap: () => _openModule(module, byModule[module]!),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTablet(
+    BuildContext context,
+    List<World> worlds,
+    Map<StoryModule, List<World>> byModule,
+  ) {
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AetherSpace.xl),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text('Aetherbook',
+                          style: AetherType.display.copyWith(fontSize: 20, color: AetherColors.goldBright)),
+                      const Spacer(),
+                      if (widget.controller.auth != null && widget.controller.settingsPort != null)
+                        IconButton(
+                          onPressed: _openProfile,
+                          icon: const Icon(Icons.person_outline_rounded, color: AetherColors.parchmentDim),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: AetherSpace.lg),
+                  _homeBody(worlds, byModule, crossAxisCount: 2),
+                ],
+              ),
+            ),
+          ),
+        ),
+        HomeBottomNav(
+          current: HomeNavDestination.inicio,
+          onSelect: (d) => _onNavSelect(d, worlds),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktop(
+    BuildContext context,
+    List<World> worlds,
+    Map<StoryModule, List<World>> byModule,
+  ) {
+    final auth = widget.controller.auth;
+    final email = auth?.email;
+    return Row(
+      children: [
+        FutureBuilder<List<SessionLibraryEntry>>(
+          future: _library,
+          builder: (context, librarySnapshot) {
+            final entries = librarySnapshot.data ?? const [];
+            final counts = <String, int>{};
+            for (final e in entries) {
+              if (e.status == 'abandoned') continue;
+              counts.update(e.worldSlug, (v) => v + 1, ifAbsent: () => 1);
+            }
+            return HomeSidebar(
+              current: HomeNavDestination.inicio,
+              onSelect: (d) => _onNavSelect(d, worlds),
+              worlds: [
+                for (final w in worlds)
+                  HomeWorldEntry(
+                    name: w.name,
+                    accent: WorldTheme.forWorld(w).accent,
+                    count: counts[w.slug] ?? 0,
+                  ),
+              ],
+              accountInitial: email != null && email.isNotEmpty ? email[0].toUpperCase() : '?',
+              accountName: email ?? 'Jugador',
+              accountSubtitle: '${entries.where((e) => e.status != 'abandoned').length} tomos',
+            );
+          },
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AetherSpace.xxl),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 880),
+              child: _homeBody(worlds, byModule, crossAxisCount: 3),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Shared body for tablet/desktop: hero, "Sigue leyendo", "Si quieres
+  /// empezar algo" — only the surrounding chrome (bottom nav vs sidebar)
+  /// differs between the two.
+  Widget _homeBody(
+    List<World> worlds,
+    Map<StoryModule, List<World>> byModule, {
+    required int crossAxisCount,
+  }) {
+    return FutureBuilder<List<SessionLibraryEntry>>(
+      future: _library,
+      builder: (context, librarySnapshot) {
+        final rows = buildLibraryRows(
+          catalogWorlds: worlds,
+          entries: librarySnapshot.data ?? const [],
+        );
+        final active = rows.where((r) => r.entry?.status == 'active').toList();
+        final hero = active.isNotEmpty ? active.first : null;
+        final unstarted = rows.where((r) => r.entry == null).toList();
+        final carousel = [...active.skip(1), ...unstarted].take(3).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (hero != null) ...[
+              _ContinueHero(row: hero, onTap: () => _openRow(hero)),
+              const SizedBox(height: AetherSpace.xl),
+            ],
+            if (carousel.isNotEmpty) ...[
+              Row(
+                children: [
+                  Text('Sigue leyendo', style: AetherType.title),
+                  const SizedBox(width: AetherSpace.sm),
+                  TextButton(
+                    onPressed: () => _openMyStories(worlds),
+                    child: const Text('Ver todos', style: TextStyle(color: AetherColors.goldBright)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AetherSpace.sm),
+              GridView.count(
+                crossAxisCount: crossAxisCount,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: AetherSpace.sm,
+                crossAxisSpacing: AetherSpace.sm,
+                childAspectRatio: 2.6,
+                children: [
+                  for (final row in carousel)
+                    _LibraryListTile(row: row, onTap: () => _openRow(row)),
+                ],
+              ),
+              const SizedBox(height: AetherSpace.xl),
+            ],
+            Text('Si quieres empezar algo', style: AetherType.title),
+            const SizedBox(height: AetherSpace.sm),
+            GridView.count(
+              crossAxisCount: crossAxisCount,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: AetherSpace.sm,
+              crossAxisSpacing: AetherSpace.sm,
+              childAspectRatio: 1.6,
+              children: [
+                for (final module in StoryModule.values)
+                  _ModuleCard(
+                    module: module,
+                    count: byModule[module]!.length,
+                    onTap: () => _openModule(module, byModule[module]!),
+                  ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
-/// "Dejaste el tomo abierto" (V2 design prototype §2a) — the story left open
-/// in memory, given top billing above the module picker instead of making
-/// the player re-find it inside its own module. Carries the world's own
-/// per-world accent (Stage 6b) rather than a module accent, since at this
-/// point it's one specific story, not a category of them.
+/// "Dejaste el tomo abierto" (V2 design prototype §2a/§8a) — the account's
+/// most recently played active session, from [GameController.storyLibrary]
+/// rather than whatever happens to be in memory, so it survives a fresh
+/// launch. Carries the world's own per-world accent (Stage 6b) rather than
+/// a module accent, since at this point it's one specific story, not a
+/// category of them.
 class _ContinueHero extends StatelessWidget {
-  const _ContinueHero({
-    required this.world,
-    required this.character,
-    required this.onTap,
-  });
+  const _ContinueHero({required this.row, required this.onTap});
 
-  final World world;
-  final Character character;
+  final LibraryRow row;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final world = row.world;
+    final entry = row.entry;
     final theme = WorldTheme.forWorld(world);
-    final prog = world.progression;
     return Pressable(
       onTap: onTap,
       child: (pressed) => AnimatedContainer(
@@ -436,18 +686,66 @@ class _ContinueHero extends StatelessWidget {
                   Text('Dejaste el tomo abierto',
                       style: AetherType.overline.copyWith(color: theme.accent)),
                   const SizedBox(height: 4),
-                  Text(character.name, style: AetherType.title),
+                  Text(entry?.title?.trim().isNotEmpty == true ? entry!.title! : world.name,
+                      style: AetherType.title),
                   const SizedBox(height: 2),
                   Text(
-                    prog.enabled
-                        ? '${world.name} · ${prog.unitLabelCapitalized} ${character.level}'
-                        : world.name,
+                    entry == null ? world.name : '${entry.characterName} · turno ${entry.turnCount}',
                     style: AetherType.caption,
                   ),
                 ],
               ),
             ),
             Icon(Icons.chevron_right_rounded, color: theme.accent),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A compact row for "Sigue leyendo"'s carousel/grid — world accent dot,
+/// title, and either "turno N" or "sin empezar".
+class _LibraryListTile extends StatelessWidget {
+  const _LibraryListTile({required this.row, required this.onTap});
+
+  final LibraryRow row;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = WorldTheme.forWorld(row.world).accent;
+    final entry = row.entry;
+    final title = entry?.title?.trim().isNotEmpty == true ? entry!.title! : row.world.name;
+    final subtitle = entry == null
+        ? 'Sin empezar'
+        : '${entry.characterName} · turno ${entry.turnCount}';
+    return Pressable(
+      onTap: onTap,
+      child: (pressed) => AnimatedContainer(
+        duration: AetherMotion.fast,
+        padding: const EdgeInsets.all(AetherSpace.sm),
+        decoration: BoxDecoration(
+          color: pressed ? AetherColors.surfaceRaised : AetherColors.surface,
+          borderRadius: AetherRadius.allMd,
+          border: Border.all(color: accent.withValues(alpha: entry == null ? 0.16 : 0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(width: 6, height: 6, decoration: BoxDecoration(color: accent, shape: BoxShape.circle)),
+            const SizedBox(width: AetherSpace.sm),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: AetherType.label.copyWith(fontSize: 13),
+                      overflow: TextOverflow.ellipsis),
+                  Text(subtitle, style: AetherType.caption.copyWith(fontSize: 10.5)),
+                ],
+              ),
+            ),
           ],
         ),
       ),

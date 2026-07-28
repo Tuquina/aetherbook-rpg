@@ -132,6 +132,13 @@ void main() {
       'tapping a saved story card resumes that exact session, not the '
       'latest one, through real screen navigation (WorldSelectScreen -> '
       'CreateStoryScreen -> GameScreen)', (tester) async {
+    // The home dashboard now has 3 responsive layouts (V2 §8a/§8b/§2a) —
+    // force the mobile one, since that's what this test actually exercises,
+    // rather than incidentally landing in tablet mode at the default
+    // 800x600 test surface.
+    tester.view.physicalSize = const Size(600, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
     // Two sessions share the same freeform world slug. `seeded` answers
     // loadLatestSession() and is deliberately the *other* session, so this
     // test fails loudly if resuming a tapped card ever falls back to "the
