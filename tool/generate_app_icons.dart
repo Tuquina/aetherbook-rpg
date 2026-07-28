@@ -32,6 +32,19 @@ Future<void> _capture(
   required double canvasSize,
   required double hexFraction,
 }) async {
+  // The test harness's root render view imposes *tight* constraints on
+  // whatever `pumpWidget` renders, sized to `tester.view.physicalSize` (the
+  // 800x600 default, unless overridden) — the `Container(width: canvasSize,
+  // height: canvasSize)` below only controls what IT hands its own child,
+  // not the size the harness forces on it as the top-level render object.
+  // Without this, every capture (regardless of the requested `canvasSize`)
+  // came out 800x600 with the hexagon shrunk to a speck in the middle —
+  // confirmed on disk (`file web/favicon.png` etc.) and exactly why the
+  // deployed favicon read as a plain dark square in the browser tab.
+  tester.view.physicalSize = Size(canvasSize, canvasSize);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+
   final key = GlobalKey();
   await tester.pumpWidget(
     Directionality(
