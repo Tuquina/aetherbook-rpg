@@ -10,6 +10,7 @@ import 'design/world_theme.dart';
 import 'game_controller.dart';
 import 'settings_screen.dart';
 import 'widgets/atmosphere.dart';
+import 'widgets/vow_status.dart';
 
 const _monthNames = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', //
@@ -376,15 +377,7 @@ class _VowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (color, icon, label) = switch (status) {
-      'roto' => (AetherColors.failure, Icons.warning_rounded, 'Roto'),
-      'sostenido' => (AetherColors.success, Icons.check_circle_rounded, 'Sostenido hasta el final'),
-      _ => (
-          AetherColors.failure,
-          Icons.warning_rounded,
-          'Puesto a prueba ${testedCount == 1 ? "una vez" : "$testedCount veces"}',
-        ),
-    };
+    final (:color, :icon, :label) = resolveVowStatus(status, testedCount);
 
     return Container(
       padding: const EdgeInsets.all(AetherSpace.md),

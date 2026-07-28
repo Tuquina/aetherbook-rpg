@@ -17,14 +17,15 @@ void main() {
         },
       };
 
-  Future<void> openSheet(WidgetTester tester, World world) async {
+  Future<void> openSheet(WidgetTester tester, World world, {int turnCount = 1}) async {
     // `personal_item` isn't world-declarative JSON (§7 of CLAUDE.md) — it's
     // set during chargen, so it's added here via copyWith instead.
     final character = world.startingCharacter.copyWith(personalItem: 'Un amuleto roto');
     await tester.pumpWidget(MaterialApp(
       home: Builder(
         builder: (context) => ElevatedButton(
-          onPressed: () => showCharacterSheet(context, world: world, character: character),
+          onPressed: () => showCharacterSheet(
+              context, world: world, character: character, turnCount: turnCount),
           child: const Text('open'),
         ),
       ),
@@ -57,5 +58,13 @@ void main() {
 
     final icon = tester.widget<Icon>(find.byIcon(Icons.auto_stories_rounded));
     expect(icon.color, AetherColors.gold);
+  });
+
+  testWidgets('shows a subtitle with the world name, module and turn count', (tester) async {
+    // No `graph` declared -> moduleFor resolves this to "Crea tu propia historia".
+    final world = World.fromJson(baseWorldJson());
+    await openSheet(tester, world, turnCount: 12);
+
+    expect(find.text('Mundo de prueba · Crea tu propia historia · turno 12'), findsOneWidget);
   });
 }

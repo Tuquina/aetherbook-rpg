@@ -6,6 +6,7 @@ import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'design/world_theme.dart';
 import 'widgets/sheet_shell.dart';
+import 'world_select_screen.dart' show moduleFor, StoryModuleInfo;
 
 /// The character's full stats — attributes, resources, origin, personal item
 /// and vow — as a bottom sheet reachable by tapping the name in `StatusBar`
@@ -18,6 +19,7 @@ Future<void> showCharacterSheet(
   BuildContext context, {
   required World world,
   required Character character,
+  required int turnCount,
 }) {
   final theme = WorldTheme.forWorld(world);
   final title =
@@ -30,16 +32,21 @@ Future<void> showCharacterSheet(
     builder: (_) => SheetShell(
       title: title,
       titleStyle: theme.titleStyle(AetherType.title),
-      child: _CharacterSheetBody(world: world, character: character),
+      child: _CharacterSheetBody(world: world, character: character, turnCount: turnCount),
     ),
   );
 }
 
 class _CharacterSheetBody extends StatelessWidget {
-  const _CharacterSheetBody({required this.world, required this.character});
+  const _CharacterSheetBody({
+    required this.world,
+    required this.character,
+    required this.turnCount,
+  });
 
   final World world;
   final Character character;
+  final int turnCount;
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +62,9 @@ class _CharacterSheetBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          Text('${world.name} · ${moduleFor(world).title} · turno $turnCount',
+              style: AetherType.caption.copyWith(color: AetherColors.parchmentDim)),
+          const SizedBox(height: AetherSpace.lg),
           if (origin != null || personalItem.isNotEmpty) ...[
             Wrap(
               spacing: AetherSpace.sm,

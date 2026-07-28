@@ -17,6 +17,7 @@ import 'widgets/confirm_sheet.dart';
 import 'widgets/fate_roll.dart';
 import 'widgets/status_bar.dart';
 import 'widgets/story_menu_sheet.dart';
+import 'widgets/vow_status.dart';
 import 'world_select_screen.dart';
 
 /// The single play screen: an atmospheric backdrop, the status bar up top, the
@@ -311,7 +312,9 @@ class _GameScreenState extends State<GameScreen> {
                                     onOpenInventory: () => showInventorySheet(context,
                                         world: c.world!, character: c.character!),
                                     onOpenCharacterSheet: () => showCharacterSheet(context,
-                                        world: c.world!, character: c.character!),
+                                        world: c.world!,
+                                        character: c.character!,
+                                        turnCount: c.turnCount),
                                     onBack: _openStoryMenu,
                                     collapse: _headerCollapse,
                                   ),
@@ -547,7 +550,9 @@ class _SplitView extends StatelessWidget {
                 onOpenInventory: () => showInventorySheet(context,
                     world: controller.world!, character: controller.character!),
                 onOpenCharacterSheet: () => showCharacterSheet(context,
-                    world: controller.world!, character: controller.character!),
+                    world: controller.world!,
+                    character: controller.character!,
+                    turnCount: controller.turnCount),
                 onBack: onBack,
                 collapse: 0,
               ),
@@ -977,15 +982,7 @@ class _EndingVowStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (color, icon, label) = switch (status) {
-      'roto' => (AetherColors.failure, Icons.warning_rounded, 'Roto'),
-      'sostenido' => (AetherColors.success, Icons.check_circle_rounded, 'Sostenido hasta el final'),
-      _ => (
-          AetherColors.failure,
-          Icons.warning_rounded,
-          'Puesto a prueba ${testedCount == 1 ? "una vez" : "$testedCount veces"}',
-        ),
-    };
+    final (:color, :icon, :label) = resolveVowStatus(status, testedCount);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AetherSpace.md),

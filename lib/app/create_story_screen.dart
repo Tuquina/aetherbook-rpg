@@ -44,7 +44,7 @@ class CreateStoryScreen extends StatefulWidget {
 
   final GameController controller;
 
-  /// The 5 genre worlds (aiNarrator module's `_moduleFor` bucket).
+  /// The 5 genre worlds (aiNarrator module's `moduleFor` bucket).
   final List<World> worlds;
 
   /// Starts a brand-new story in this genre (always chargen, never resumes).

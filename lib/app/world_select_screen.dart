@@ -111,7 +111,9 @@ StoryModuleStyle storyModuleStyle(StoryModule module) => switch (module) {
         ),
     };
 
-StoryModule _moduleFor(World world) {
+/// Public (unlike the rest of this file's private widgets) — `CharacterSheetSheet`
+/// needs it too, for its "world · módulo · turno N" subtitle line.
+StoryModule moduleFor(World world) {
   if (world.storyGraph == null) return StoryModule.aiNarrator;
   return world.aiRuntimeRequired ? StoryModule.preArmada : StoryModule.complete;
 }
@@ -155,7 +157,7 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
     if (autoOpen == null) return;
     _worlds.then((worlds) {
       if (!mounted) return;
-      final matching = worlds.where((w) => _moduleFor(w) == autoOpen).toList();
+      final matching = worlds.where((w) => moduleFor(w) == autoOpen).toList();
       _openModule(autoOpen, matching);
     });
   }
@@ -166,7 +168,7 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
   /// function type, and the caller (a story card's `onTap`) has no need to
   /// await it.
   Future<void> _select(World world) async {
-    if (!_moduleFor(world).enabled) return;
+    if (!moduleFor(world).enabled) return;
     await StoryNavigation.open(context, widget.controller, world);
   }
 
@@ -352,7 +354,7 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
                 for (final m in StoryModule.values) m: [],
               };
               for (final world in worlds) {
-                byModule[_moduleFor(world)]!.add(world);
+                byModule[moduleFor(world)]!.add(world);
               }
 
               return LayoutBuilder(
