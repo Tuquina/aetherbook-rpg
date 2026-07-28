@@ -4,10 +4,13 @@
 // degraded in-memory mode where there's no account system to gate on).
 import 'package:aetherbook/adapters/auth/fake_auth_adapter.dart';
 import 'package:aetherbook/adapters/narrator/fake_narrator_adapter.dart';
+import 'package:aetherbook/adapters/settings/fake_settings_adapter.dart';
 import 'package:aetherbook/app/account_screen.dart';
 import 'package:aetherbook/app/game_controller.dart';
+import 'package:aetherbook/app/onboarding_screen.dart';
 import 'package:aetherbook/app/splash_screen.dart';
 import 'package:aetherbook/app/world_select_screen.dart';
+import 'package:aetherbook/core/settings/user_settings.dart';
 import 'package:aetherbook/core/state/character.dart';
 import 'package:aetherbook/core/world/world.dart';
 import 'package:aetherbook/ports/world_repository_port.dart';
@@ -33,9 +36,10 @@ class _FakeWorldRepository implements WorldRepositoryPort {
       );
 }
 
-GameController _newController() => GameController(
+GameController _newController({FakeSettingsAdapter? settingsPort}) => GameController(
       worldRepository: _FakeWorldRepository(),
       narrator: const FakeNarratorAdapter(latency: Duration.zero),
+      settingsPort: settingsPort,
     );
 
 void main() {
@@ -113,5 +117,121 @@ void main() {
 
     expect(find.byType(WorldSelectScreen), findsOneWidget);
     expect(find.byType(AccountScreen), findsNothing);
+  });
+
+  group('onboarding gate (V2 §6c-e, settingsPort configured)', () {
+    testWidgets('a freshly signed-in account that has never seen onboarding is routed there',
+        (tester) async {
+      final auth = FakeAuthAdapter();
+      final settingsPort = FakeSettingsAdapter();
+      await tester.pumpWidget(MaterialApp(
+        home: SplashScreen(controller: _newController(settingsPort: settingsPort), auth: auth),
+      ));
+      await tester.pump();
+
+      await tester.tap(find.text('Comenzar'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.byType(AccountScreen), findsOneWidget);
+
+      await tester.tap(find.text('Continuar con Google'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(OnboardingScreen), findsOneWidget);
+      expect(find.byType(WorldSelectScreen), findsNothing);
+    });
+
+    testWidgets(
+        'an already-signed-in account that already saw onboarding goes straight to WorldSelectScreen',
+        (tester) async {
+      final auth = FakeAuthAdapter(anonymous: false, email: 'jugador@aetherbook.dev');
+      final settingsPort =
+          FakeSettingsAdapter(seeded: const UserSettings(hasSeenOnboarding: true));
+      await tester.pumpWidget(MaterialApp(
+        home: SplashScreen(controller: _newController(settingsPort: settingsPort), auth: auth),
+      ));
+      await tester.pump();
+
+      await tester.tap(find.text('Comenzar'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(WorldSelectScreen), findsOneWidget);
+      expect(find.byType(OnboardingScreen), findsNothing);
+    });
+
+    testWidgets(
+        'an already-signed-in account that never finished onboarding still gets routed there '
+        '(closed the app mid-onboarding on a previous launch)', (tester) async {
+      final auth = FakeAuthAdapter(anonymous: false, email: 'jugador@aetherbook.dev');
+      final settingsPort = FakeSettingsAdapter(); // hasSeenOnboarding: false by default
+      await tester.pumpWidget(MaterialApp(
+        home: SplashScreen(controller: _newController(settingsPort: settingsPort), auth: auth),
+      ));
+      await tester.pump();
+
+      await tester.tap(find.text('Comenzar'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(OnboardingScreen), findsOneWidget);
+    });
+
+    testWidgets('finishing onboarding by choosing a card lands on WorldSelectScreen',
+        (tester) async {
+      tester.view.physicalSize = const Size(900, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      final auth = FakeAuthAdapter(anonymous: false, email: 'jugador@aetherbook.dev');
+      final settingsPort = FakeSettingsAdapter();
+      await tester.pumpWidget(MaterialApp(
+        home: SplashScreen(controller: _newController(settingsPort: settingsPort), auth: auth),
+      ));
+      await tester.pump();
+      await tester.tap(find.text('Comenzar'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.byType(OnboardingScreen), findsOneWidget);
+
+      await tester.tap(find.text('Sigue'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.tap(find.text('Sigue'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('Una historia completa'), findsOneWidget);
+
+      await tester.tap(find.text('Una historia completa'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(WorldSelectScreen), findsOneWidget);
+      expect(settingsPort.saveSettingsCalls.last.hasSeenOnboarding, isTrue);
+    });
+
+    testWidgets('skipping onboarding also marks it seen and lands on WorldSelectScreen',
+        (tester) async {
+      tester.view.physicalSize = const Size(900, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      final auth = FakeAuthAdapter(anonymous: false, email: 'jugador@aetherbook.dev');
+      final settingsPort = FakeSettingsAdapter();
+      await tester.pumpWidget(MaterialApp(
+        home: SplashScreen(controller: _newController(settingsPort: settingsPort), auth: auth),
+      ));
+      await tester.pump();
+      await tester.tap(find.text('Comenzar'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.byType(OnboardingScreen), findsOneWidget);
+
+      await tester.tap(find.text('Saltar'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(WorldSelectScreen), findsOneWidget);
+      expect(settingsPort.saveSettingsCalls.last.hasSeenOnboarding, isTrue);
+    });
   });
 }

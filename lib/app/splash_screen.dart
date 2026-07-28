@@ -7,6 +7,7 @@ import 'account_screen.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'game_controller.dart';
+import 'onboarding_screen.dart';
 import 'widgets/atmosphere.dart';
 import 'widgets/brand_mark.dart';
 import 'world_select_screen.dart';
@@ -44,6 +45,8 @@ class _SplashScreenState extends State<SplashScreen>
     duration: const Duration(milliseconds: 4200),
   )..repeat();
 
+  bool _checkingOnboarding = false;
+
   @override
   void dispose() {
     _c.dispose();
@@ -58,23 +61,61 @@ class _SplashScreenState extends State<SplashScreen>
     final auth = widget.auth;
     if (auth != null && auth.isAnonymous) {
       Navigator.of(context).push(
-        AccountScreen.route(authPort: auth, onAuthenticated: _goToWorldSelect),
+        AccountScreen.route(authPort: auth, onAuthenticated: _afterAuth),
       );
     } else {
-      _goToWorldSelect();
+      _afterAuth();
     }
   }
 
-  void _goToWorldSelect() {
+  /// Reached once there's a real (or degraded in-memory) identity to play
+  /// with — either straight from [_begin] (a returning account, or no
+  /// account system at all) or via [AccountScreen.onAuthenticated] (a
+  /// freshly created/signed-in one). Loads this account's settings once
+  /// here (rather than never, or on every turn) so [OnboardingScreen] can be
+  /// gated on [UserSettings.hasSeenOnboarding] correctly even for an account
+  /// that signed up, then closed the app before ever finishing onboarding —
+  /// not just one that finishes it in the same sitting it was created.
+  Future<void> _afterAuth() async {
+    final settingsPort = widget.controller.settingsPort;
+    if (settingsPort == null) {
+      _goToWorldSelect();
+      return;
+    }
+    setState(() => _checkingOnboarding = true);
+    final settings = await settingsPort.loadSettings();
+    if (!mounted) return;
+    setState(() => _checkingOnboarding = false);
+    widget.controller.updateSettings(settings);
+    if (settings.hasSeenOnboarding) {
+      _goToWorldSelect();
+      return;
+    }
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: AetherMotion.slow,
-        pageBuilder: (_, _, _) => WorldSelectScreen(controller: widget.controller),
+        // `onDone` closes over `pageContext`, not this State's own
+        // `context`: by the time it fires, `OnboardingScreen` is what's
+        // actually mounted and live — `_SplashScreenState` itself was
+        // already disposed the moment this very `pushReplacement` replaced
+        // its route (the "already signed in, no AccountScreen push in
+        // between" path never pushes anything on top of Splash first, so
+        // this route IS Splash's own). Reaching back into a disposed
+        // State's `context` for the *next* navigation would throw.
+        pageBuilder: (pageContext, _, _) => OnboardingScreen(
+          controller: widget.controller,
+          settingsPort: settingsPort,
+          onDone: (module) =>
+              _goToWorldSelectFrom(pageContext, widget.controller, autoOpenModule: module),
+        ),
         transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
       ),
     );
   }
+
+  void _goToWorldSelect({StoryModule? autoOpenModule}) =>
+      _goToWorldSelectFrom(context, widget.controller, autoOpenModule: autoOpenModule);
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +170,11 @@ class _SplashScreenState extends State<SplashScreen>
                             const SizedBox(height: AetherSpace.huge),
                             const _ExplainerLines(),
                             const SizedBox(height: AetherSpace.xl),
-                            _PrimaryButton(label: 'Comenzar', onTap: _begin),
+                            _PrimaryButton(
+                              label: 'Comenzar',
+                              busy: _checkingOnboarding,
+                              onTap: _checkingOnboarding ? null : _begin,
+                            ),
                           ],
                         ),
                       ),
@@ -143,6 +188,27 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
   }
+}
+
+/// Pushes [WorldSelectScreen] as a replacement, using whichever
+/// [BuildContext] is actually live at the time — see the comment on its one
+/// caller inside [_SplashScreenState._afterAuth]'s `OnboardingScreen`
+/// `pageBuilder` for why this can't always be `_SplashScreenState`'s own
+/// `context` (that State can already be disposed by the time
+/// `OnboardingScreen.onDone` fires).
+void _goToWorldSelectFrom(BuildContext context, GameController controller,
+    {StoryModule? autoOpenModule}) {
+  Navigator.of(context).pushReplacement(
+    PageRouteBuilder(
+      transitionDuration: AetherMotion.slow,
+      pageBuilder: (_, _, _) => WorldSelectScreen(
+        controller: controller,
+        autoOpenModule: autoOpenModule,
+      ),
+      transitionsBuilder: (_, anim, _, child) =>
+          FadeTransition(opacity: anim, child: child),
+    ),
+  );
 }
 
 // ── Wordmark ──────────────────────────────────────────────────────────────
@@ -293,10 +359,11 @@ class _ExplainerLines extends StatelessWidget {
 // ── Primary button ──────────────────────────────────────────────────────────
 
 class _PrimaryButton extends StatefulWidget {
-  const _PrimaryButton({required this.label, required this.onTap});
+  const _PrimaryButton({required this.label, required this.onTap, this.busy = false});
 
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool busy;
 
   @override
   State<_PrimaryButton> createState() => _PrimaryButtonState();
@@ -308,9 +375,9 @@ class _PrimaryButtonState extends State<_PrimaryButton> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
+      onTapDown: widget.onTap == null ? null : (_) => setState(() => _pressed = true),
+      onTapUp: widget.onTap == null ? null : (_) => setState(() => _pressed = false),
+      onTapCancel: widget.onTap == null ? null : () => setState(() => _pressed = false),
       onTap: widget.onTap,
       child: AnimatedScale(
         scale: _pressed ? 0.97 : 1,
@@ -325,24 +392,30 @@ class _PrimaryButtonState extends State<_PrimaryButton> {
             boxShadow: AetherShadow.glow(AetherColors.gold,
                 strength: _pressed ? 0.5 : 0.35),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                widget.label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AetherColors.void_,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                  letterSpacing: 0.5,
+          child: widget.busy
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AetherColors.void_),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      widget.label,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AetherColors.void_,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(width: AetherSpace.sm),
+                    const Icon(Icons.arrow_forward_rounded,
+                        color: AetherColors.void_, size: 19),
+                  ],
                 ),
-              ),
-              const SizedBox(width: AetherSpace.sm),
-              const Icon(Icons.arrow_forward_rounded,
-                  color: AetherColors.void_, size: 19),
-            ],
-          ),
         ),
       ),
     );
