@@ -118,11 +118,68 @@
     {"id": "acople_aurora", "display_name": "Acople de Aurora", "description": "Recuperado al separar los coches del convoy. Prueba de un trabajo hecho limpio, bajo presión.", "category": "tool"}
   ],
 
+  "places": [
+    {
+      "id": "la_camara",
+      "display_name": "La Cámara",
+      "description": "Un depósito frigorífico de la red ferroviaria, antes de la Caída. Paredes de un metro, generador propio: hoy guarda sesenta y tres personas en vez de carne."
+    },
+    {
+      "id": "los_silos",
+      "display_name": "Los Silos",
+      "description": "Seis cilindros blancos y una bandera azul cosida una y otra vez. Gente delgada, no hambrienta — la diferencia se nota en cómo caminan."
+    },
+    {
+      "id": "san_gregorio",
+      "display_name": "San Gregorio",
+      "description": "Una ciudad muerta del otro lado del túnel. Los edificios siguen en pie, tercos, indiferentes a lo que pasó adentro de ellos."
+    },
+    {
+      "id": "tunel_17",
+      "display_name": "El Túnel 17",
+      "description": "Donde Damián condenó al convoy anterior. Huele a agua estancada, tela húmeda y una dulzura que el frío no pudo conservar."
+    },
+    {
+      "id": "torre_de_senales",
+      "display_name": "La Torre de Señales",
+      "description": "El tablero que decide qué vía se abre y cuál se cierra. Sobre Túnel 17, la palanca sigue inmovilizada con un precinto firmado por Damián."
+    }
+  ],
+
+  "terms": [
+    {
+      "id": "fiebre_lazaro",
+      "display_name": "Fiebre Lázaro",
+      "description": "La enfermedad que empezó todo. Trece meses después, sigue sin cura ni vacuna conocidas. Un mordido se convierte entre seis y cuarenta y ocho horas."
+    },
+    {
+      "id": "quietos",
+      "display_name": "Los Quietos",
+      "description": "Así les dicen delante de los chicos. Caminan poco, duermen de pie, recuerdan el sonido antes que la cara — es lo que son cuando nadie los provoca."
+    },
+    {
+      "id": "convoy_aurora",
+      "display_name": "El Convoy Aurora",
+      "description": "Un tren de carga con veinte plazas de pasajero, camino al este. La primera señal clara en trece meses — y sesenta y tres personas para veinte lugares."
+    },
+    {
+      "id": "la_caida",
+      "display_name": "La Caída",
+      "description": "Así llaman al colapso, cuando dejó de existir la palabra \"antes\". Nadie necesita explicar a qué se refiere."
+    },
+    {
+      "id": "registro_negro",
+      "display_name": "El Registro Negro",
+      "description": "La memoria del registrador de un tren guarda la verdad entera, minuto a minuto. No la explica ni la perdona."
+    }
+  ],
+
   "graph": {
     "start_node": "intro_fiebre_lazaro",
     "nodes": {
       "intro_fiebre_lazaro": {
         "type": "fixed_anchor",
+        "codex_reveals": ["termino:fiebre_lazaro", "termino:quietos", "termino:la_caida", "lugar:la_camara"],
         "narration": "En la reja de entrada a La Cámara alguien clavó un cartel el primer invierno, con la pintura que quedaba en el depósito de mantenimiento, y nadie lo bajó desde entonces:\n\nFIEBRE LÁZARO. TRECE MESES. NO HAY CURA CONOCIDA, NO HAY VACUNA CONOCIDA. UN MORDIDO SE CONVIERTE ENTRE SEIS Y CUARENTA Y OCHO HORAS. LOS LLAMAMOS QUIETOS PORQUE ES LO QUE SON CUANDO NADIE LOS PROVOCA — CAMINAN POCO, DUERMEN DE PIE, RECUERDAN EL SONIDO ANTES QUE LA CARA. DECILES ASÍ DELANTE DE LOS CHICOS. LA OTRA PALABRA YA NO SE USA ACÁ.\n\nDebajo, con otra letra, alguien agregó después: NO ES EL FIN DEL MUNDO. ES EL FIN DE UN HORARIO DE TRENES.\n\nLa Cámara fue, antes de la Caída, un depósito frigorífico de la red ferroviaria: paredes de un metro, generador propio, capacidad para guardar carne a treinta bajo cero. Hoy guarda personas — sesenta y tres, entre quienes duermen del lado caliente del panel aislante y quienes hacen guardia del otro. Damián Salvatierra fue operador de señales en la estación central antes de que existiera la palabra \"antes\". Ahora reparte turnos de guardia, cuenta litros de diésel y decide, algunas noches, quién duerme cerca del generador y quién no.\n\nHace cuatro días llegó, por una radio que no debería captar nada a esa distancia, la primera señal clara en trece meses: un convoy llamado Aurora viene hacia el este, con lugar para veinte personas más. Va a llegar a la estación de San Gregorio — del otro lado de una ciudad muerta y un túnel que Damián conoce mejor de lo que le gustaría admitir.\n\nEsto es lo que pasa la noche que el generador se detiene.",
         "choices": [
           {
@@ -612,6 +669,7 @@
 
       "p2_voz_aurora": {
         "type": "fixed_anchor",
+        "codex_reveals": ["termino:convoy_aurora"],
         "narration": "La voz llega rota en intervalos de siete segundos.\n\n—...unidad ferroviaria Aurora Seis... corredor sur... destino Faro Sur...\n\nAbril ajusta la bobina. Damián reconoce el patrón antes de entender las palabras: tres pulsos largos, dos cortos, identificación y ruta. Protocolo de carga. Nadie lo usaba para transportar pasajeros.\n\n—...arribo estimado, noventa y seis horas... detención condicional en San Gregorio Central... señal manual verde... vía diecisiete liberada...\n\nDamián no respira.\n\nSaúl entra apoyado en el marco. Escucha \"vía diecisiete\" y mira a Damián, no a la radio.\n\n—...capacidad disponible: veinte pasajeros... intercambio de combustible en destino... ventana de detención: ocho minutos...\n\nLa transmisión se repite.\n\nAbril escribe cada palabra. En \"veinte\" detiene el lápiz.\n\n—Somos sesenta y tres.\n\nDamián corrige una frecuencia que no necesita corrección.\n\n—El tren todavía está a cuatro días.\n\n—No pregunté cuándo.",
         "choices": [
           {
@@ -1607,6 +1665,7 @@
 
       "c3_n03_pacto_silos": {
         "type": "fixed_anchor",
+        "codex_reveals": ["lugar:los_silos"],
         "narration": "Los Silos se ven desde tres kilómetros: seis cilindros blancos que todavía reflejan luz, una torre de riego oxidada y una bandera azul que alguien cose de nuevo cada vez que el viento la deshilacha, solo para saber de dónde sopla.\n\nEl portón está hecho con dos cosechadoras enfrentadas, óxido contra óxido. Detrás hay personas delgadas, no hambrientas — hay una diferencia, y se nota en cómo caminan. Cada una lleva un pañuelo húmedo sobre la boca y nariz, como una máscara que ya nadie se molesta en explicar.\n\nCelia Ordóñez recibe al grupo dentro de una balanza para camiones, el metal frío colándose por las suelas. Sobre la mesa hay tres vasos de agua. Ninguno está lleno.\n\n—Ustedes tienen filtros —dice, sin preámbulo, con la voz de alguien que dejó de perder tiempo hace mucho—. Nosotros tenemos diésel. Y ahora los dos sabemos que viene un tren.",
         "conditional_inserts": [
           {"text": "Yago, si fue ayudado, entra detrás del grupo sin necesitar ayuda para caminar.", "gate": {"type": "flag", "key": "yago_helped"}},
@@ -1718,6 +1777,7 @@
 
       "c4_n01_entrada_san_gregorio": {
         "type": "fixed_anchor",
+        "codex_reveals": ["lugar:san_gregorio"],
         "narration": "San Gregorio aparece detrás de una loma como una fotografía mojada — los colores corridos, los bordes blandos, algo que ya no termina de estar en foco.\n\nLos edificios siguen en pie, tercos, indiferentes a lo que pasó adentro de ellos. Las ventanas reflejan el cielo de invierno sin dejar ver nada del otro lado. En la avenida de acceso hay carteles de evacuación despintados, flechas todavía pintadas sobre el pavimento agrietado y valijas abiertas que la lluvia de trece inviernos terminó de vaciar.\n\nNada se mueve hasta que el viento hace girar una bolsa contra un cordón.\n\nEntonces un quieto sale de detrás de un colectivo, despacio, como quien sale a buscar el diario. Otro le responde desde una estación de servicio, y después otro, y otro.\n\nDamián cuenta diecisiete antes de decidir que contar ya no sirve de nada.\n\nLa torre de señales se eleva a tres kilómetros, flaca y oxidada contra el cielo gris. En su parte más alta, una luz roja sigue encendida, terca como los edificios.\n\nNo debería haber electricidad en ningún lugar de esta ciudad. Y sin embargo.",
         "choices": [
           {
@@ -1924,6 +1984,7 @@
 
       "c4_n05_torre_senales": {
         "type": "fixed_anchor",
+        "codex_reveals": ["lugar:torre_de_senales"],
         "narration": "La torre está encima de la estación, rodeada de ventanas.\n\nDesde allí, San Gregorio parece vacía. La ilusión dura hasta que Damián distingue movimientos en las calles.\n\nEl tablero ocupa una pared. Palancas negras para agujas. Rojas para cierre. Verdes para vía libre. Sobre Túnel 17, la palanca está inmovilizada con un precinto firmado por Damián.",
         "choices": [
           {
@@ -1990,6 +2051,7 @@
 
       "c5_n01_tunel_17": {
         "type": "fixed_anchor",
+        "codex_reveals": ["lugar:tunel_17"],
         "narration": "La boca del Túnel 17 está detrás de una puerta de servicio.\n\nDamián utiliza la llave maestra. Los dientes entran, pero la cerradura tarda en ceder porque alguien la golpeó desde adentro.\n\nEl aire que sale huele a agua estancada, tela húmeda y una dulzura que el frío no pudo conservar.\n\nLas linternas alcanzan cuarenta metros.\n\nA los sesenta, la oscuridad devuelve un reflejo rojo.\n\nUn coche de pasajeros está inclinado contra la pared.\n\nC-17.",
         "choices": [
           {
@@ -2084,6 +2146,7 @@
 
       "c5_n03_registro_negro": {
         "type": "fixed_anchor",
+        "codex_reveals": ["termino:registro_negro"],
         "narration": "La pantalla del registrador está quebrada. La memoria interna responde cuando alguien conecta la batería.\n\nHora 22:13:41. C-17 espera señal.\n\nHora 22:14:02. Protección Civil ordena liberar vía principal para convoy médico y combustible.\n\nHora 22:14:19. El operador del Corredor Sur confirma.\n\nHora 22:14:31. La aguja cambia hacia Túnel 17.\n\nHora 22:14:45. El conductor pregunta si la puerta de obra está abierta.\n\nNo hay respuesta.\n\nHora 22:15:07. C-17 entra.\n\nHora 22:15:33. Impacto.\n\nDespués aparece una edición posterior:\n\nHora 03:51. Motivo de desvío: fallo automático del relé.\n\nUsuario que modifica: D. SALVATIERRA.",
         "conditional_inserts": [
           {"text": "—Decime que usaron tu clave —dice Abril, sin apartar los ojos de la pantalla.", "gate": {"type": "all", "gates": [{"type": "flag", "key": "team_has_abril"}, {"type": "flag", "key": "confessed_to_abril", "equals": false}]}}

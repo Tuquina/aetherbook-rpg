@@ -111,6 +111,62 @@
     {"id": "llave_azucena", "display_name": "Llave Azucena", "description": "Sin número, marcada apenas con una flor. Abre una puerta que no figura en ningún plano del hotel.", "category": "key"}
   ],
 
+  "places": [
+    {
+      "id": "kilometro_cero",
+      "display_name": "Kilómetro Cero",
+      "description": "El taller de Dante, que todavía huele a soldadura y aceite debajo de todo lo demás. Ya no es el refugio que era."
+    },
+    {
+      "id": "mercado_neon",
+      "display_name": "El Mercado Neón",
+      "description": "Un kilómetro entero de puestos bajo pantallas tan grandes que ya nadie mira hacia arriba. Se compra cualquier cosa, siempre que nadie pregunte de dónde salió."
+    },
+    {
+      "id": "club_cobalto",
+      "display_name": "El Club Cobalto",
+      "description": "Ocupa un ascensor que nunca se detiene. Cada piso es una sala distinta — azul para las apuestas, dorado para los contratos, rojo para la violencia autorizada."
+    },
+    {
+      "id": "torre_asterion",
+      "display_name": "La Torre Asterión",
+      "description": "Sede de la corporación que vigila medio Lucerna. De ahí sale Noa Serrat cuarenta minutos después de que empieza esta historia."
+    },
+    {
+      "id": "torre_lux",
+      "display_name": "Torre Lux",
+      "description": "Fue un banco. Ahora es un club privado donde el suelo proyecta cuánto vale cada metro cuadrado que se pisa."
+    }
+  ],
+
+  "terms": [
+    {
+      "id": "casa_orfeo",
+      "display_name": "Casa Orfeo",
+      "description": "La organización criminal que Dante dejó hace tres años, jurando no volver a deberle nada. Amara Orfeo la dirige con la misma calma de siempre."
+    },
+    {
+      "id": "apagon_violeta",
+      "display_name": "El Apagón Violeta",
+      "description": "Once minutos en que la ciudad entera queda a oscuras — salvo quien haya preparado señales propias. Suficiente tiempo para que Lucerna cambie de dueño."
+    },
+    {
+      "id": "nucleo_grid",
+      "display_name": "El Núcleo del Grid",
+      "description": "Una esfera entera de conexiones violetas, doce kilómetros bajo la Plaza de los Fundadores. Cada línea termina en una escritura de propiedad, una póliza o una cerradura de calle."
+    },
+    {
+      "id": "libro_violeta",
+      "display_name": "El Libro Violeta",
+      "description": "Un archivo que lo guarda todo: deudores, propiedades por cambiar de dueño, rutas de evacuación diseñadas para colapsar. Nadie que lo lee entero sigue creyendo lo mismo después."
+    },
+    {
+      "id": "subasta_violeta",
+      "display_name": "La Subasta Violeta",
+      "description": "Una sala circular donde se puja por lotes de infraestructura, deuda privada y algo que nadie se anima a llamar por su nombre: contingencias de población."
+    }
+  ],
+
   "graph": {
     "start_node": "intro_apagon_violeta",
     "nodes": {
@@ -339,6 +395,7 @@
 
       "p2_mensaje_orfeo": {
         "type": "fixed_anchor",
+        "codex_reveals": ["lugar:kilometro_cero", "lugar:torre_asterion", "termino:casa_orfeo"],
         "narration": "Kilómetro Cero tiene el portón abierto.\n\nDante apaga la moto antes de entrar. Las luces del taller alternan entre blanco y violeta, sin ningún patrón que tenga sentido. Una camilla de diagnóstico está volcada contra la pared. Sobre el suelo hay sangre suficiente para asustar y no tanta como para confirmar una muerte.\n\nUna pantalla se enciende sola.\n\nMila aparece sentada contra una pared negra, las manos sujetas por delante, un hematoma bajo el ojo izquierdo. Mira directo a la cámara.\n\n—Dante, no—\n\nLa imagen se congela ahí.\n\nAmara Orfeo ocupa la pantalla completa, con la misma calma de siempre, la misma paciencia que hace tres años Dante confundió con generosidad.\n\n—Noa Serrat va a salir de la Torre Asterión dentro de cuarenta minutos. Traémela viva al Club Cobalto. Tenés hasta el apagón — treinta y seis horas.",
         "choices": [
           {
@@ -781,6 +838,7 @@
 
       "c2_n02_mercado_neon": {
         "type": "fixed_anchor",
+        "codex_reveals": ["lugar:mercado_neon"],
         "narration": "El Mercado Neón es un kilómetro entero de puestos bajo pantallas publicitarias tan grandes que ya nadie mira hacia arriba. Se puede comprar cualquier cosa acá, siempre que nadie pregunte de dónde salió.\n\nDante necesita una identidad prestada y una salida rápida hacia la Clínica Espejo — y a medio camino, un par de ojos con máscara de Casa Orfeo se detienen un segundo de más sobre Noa.",
         "choices": [
           {
@@ -985,6 +1043,7 @@
 
       "c3_n01_club_cobalto": {
         "type": "fixed_anchor",
+        "codex_reveals": ["lugar:club_cobalto"],
         "narration": "El Club Cobalto ocupa un ascensor que nunca se detiene.\n\nCada piso es una sala distinta: azul para las apuestas, dorado para los contratos, rojo para la violencia autorizada. La mesa de Amara está en un piso que no figura en ningún panel de botones.\n\nEn la entrada, dos guardias piden armas con la misma cortesía con la que un mesero pediría un abrigo.",
         "choices": [
           {
@@ -1732,6 +1791,7 @@
 
       "c5_n04_libro_violeta": {
         "type": "fixed_anchor",
+        "codex_reveals": ["termino:libro_violeta"],
         "narration": "Los tres testigos coinciden durante nueve segundos.\n\nAntes de eso, Ghostline proyecta el accidente de la madre de Dante como si él mismo estuviera al volante del autobús: el semáforo en verde, el acelerón, el semáforo otra vez en rojo, un convoy negro cruzando sin frenar, y en el asiento trasero, su madre marcando un número que él nunca atendió.\n\nEl archivo que queda al final se llama, en el sistema, VIOLET_BOOK/FINAL. Contiene listas de deudores, propiedades que van a cambiar de dueño durante el apagón, rutas de evacuación diseñadas para colapsar, pagos de Asterión a Casa Orfeo, el historial completo de las pruebas de Umbral, la orden de extracción neural de Mila, y la firma de Noa al pie de todo.\n\n—Yo construí el modelo que decía cuánto valía cada calle vacía —dice Noa, sin que nadie se lo pida—. Pregunté cómo iban a vaciarla. Me respondieron con una palabra que cabía entera en una celda: migración. Mi pareja, Ivo, apareció después en una lista de \"resistencia probable\". Murió dos días antes en un supuesto robo.\n\n—Mi madre también cabía en una celda —dice Dante.",
         "choices": [
           {
@@ -2704,6 +2764,7 @@
 
       "c8_n03_torre_lux": {
         "type": "fixed_anchor",
+        "codex_reveals": ["lugar:torre_lux"],
         "narration": "Torre Lux fue un banco. Ahora es un club privado donde el suelo proyecta el valor por metro cuadrado de todo lo que se pisa. Al entrar, cada invitado ve cuánto aumentaría la zona si la gente pobre dejara de vivir ahí.\n\nLa subasta ocupa el piso 88. Hay que llegar antes de que empiece.",
         "choices": [
           {
@@ -2785,6 +2846,7 @@
 
       "c8_n04_subasta_violeta": {
         "type": "fixed_anchor",
+        "codex_reveals": ["termino:subasta_violeta"],
         "narration": "La sala es circular. Los compradores se sientan alrededor de una maqueta luminosa de Bajocielo. Cuando alguien puja, un edificio cambia al color de su corporación.\n\n—Los lotes incluyen infraestructura, deuda privada y contingencias de población —explica la subastadora.\n\nNadie pregunta qué significa la última parte.\n\nDante dispone de poco tiempo antes de que entreguen las llaves.",
         "choices": [
           {
@@ -2956,6 +3018,7 @@
 
       "c9_n01_apagon_violeta": {
         "type": "fixed_anchor",
+        "codex_reveals": ["termino:apagon_violeta"],
         "narration": "Durante la última hora, la ciudad entera emite avisos tranquilizadores: \"La pausa violeta optimiza Lucerna.\" \"Permanezca en su zona de consumo.\" \"Los servicios esenciales no serán interrumpidos.\"\n\nEl grupo abandona Torre Lux. El Núcleo Grid está doce kilómetros y cinco niveles de altura por debajo, bajo la Plaza de los Fundadores. Asterión ya empezó a cerrar vías.\n\nA diez segundos del apagón, toda la publicidad de la ciudad adopta el mismo violeta. La gente cuenta en voz alta, algunos por tradición, otros porque los altavoces los obligan.\n\nDiez. Los ascensores se detienen en planta segura.\n\nNueve. Las patrullas corporativas bloquean ruedas.\n\nOcho. Mila aprieta el botón del abrigo de su madre, si todavía lo tiene.\n\nSiete. Noa abre el canal, listo para lo que hayan preparado.\n\nSeis. Las luces de Bajocielo no esperan a cero.\n\nAl llegar a cero, Corona conserva iluminación de emergencia dorada. El Espectro queda en penumbra. Bajocielo se vuelve completamente negro, salvo por las señales analógicas que hayan preparado.\n\nPalimpsesto empieza.",
         "choices": [
           {
@@ -3082,6 +3145,7 @@
 
       "c9_n03_nucleo_grid": {
         "type": "fixed_anchor",
+        "codex_reveals": ["termino:nucleo_grid"],
         "narration": "El acceso al Núcleo se oculta bajo un monumento: cuatro fundadores de Lucerna sosteniendo entre las manos una ciudad de bronce. Durante el apagón, la estatua se abre y revela un ascensor cilíndrico que cae en vacío controlado, con francotiradores disparando desde los anillos de mantenimiento.\n\nAbajo, el núcleo es una esfera entera de conexiones violetas. Cada línea termina en una escritura de propiedad, una póliza o una cerradura de calle.\n\nArdan aparece en la pasarela superior, con la Llave Ejecutiva en la mano y dos guardias que todavía le quedan.\n\n—Usted cree que la ciudad es la gente que vive en ella —dice.\n\n—¿Y usted qué cree? —pregunta Dante.\n\n—Que es la gente que puede permitirse que siga funcionando.\n\nArdan intenta sobrecargar Ghostline con cada accidente que Umbral evitó — miles de muertes posibles, todas a la vez, inundando la visión de Dante.",
         "choices": [
           {

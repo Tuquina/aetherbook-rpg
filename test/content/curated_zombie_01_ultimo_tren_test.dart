@@ -446,4 +446,43 @@ void main() {
               '"items" — the inventory screen would show a bare id for them');
     });
   });
+
+  group('curated_zombie_01_ultimo_tren.json — Códice glossary (V2 §1a)', () {
+    test('declares 5 places and 5 terms', () {
+      final world = _loadWorld();
+      expect(world.places, hasLength(5));
+      expect(world.terms, hasLength(5));
+    });
+
+    test('every codex_reveals id across the graph references a declared '
+        'place or term', () {
+      final world = _loadWorld();
+      final placeIds = world.places.map((p) => 'lugar:${p.id}').toSet();
+      final termIds = world.terms.map((t) => 'termino:${t.id}').toSet();
+      for (final node in world.storyGraph!.nodes.values) {
+        for (final id in node.codexReveals) {
+          expect(
+            placeIds.contains(id) || termIds.contains(id),
+            isTrue,
+            reason: '"${node.id}" reveals "$id", which no declared place/term matches',
+          );
+        }
+      }
+    });
+
+    test('every declared place and term is revealed somewhere in the graph', () {
+      final world = _loadWorld();
+      final revealed = {
+        for (final node in world.storyGraph!.nodes.values) ...node.codexReveals,
+      };
+      for (final place in world.places) {
+        expect(revealed, contains('lugar:${place.id}'),
+            reason: '"${place.displayName}" is never revealed by any node');
+      }
+      for (final term in world.terms) {
+        expect(revealed, contains('termino:${term.id}'),
+            reason: '"${term.displayName}" is never revealed by any node');
+      }
+    });
+  });
 }

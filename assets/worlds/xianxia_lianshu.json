@@ -305,6 +305,62 @@
     }
   ],
 
+  "places": [
+    {
+      "id": "casa_de_tinta",
+      "display_name": "La Casa de Tinta",
+      "description": "Un refugio de calígrafos reconvertido, entre pinceles y tablillas en blanco. Huo Zhen guarda ahí la campana muda y trata a quien llega herido."
+    },
+    {
+      "id": "torre_de_campanas",
+      "display_name": "La Torre de las Campanas",
+      "description": "Una de las tres rutas hacia el Pabellón. Sus campanas dejaron de sonar hace generaciones — nadie en la ciudad recuerda por qué."
+    },
+    {
+      "id": "salon_quieto",
+      "display_name": "El Salón Quieto",
+      "description": "Donde el Pabellón sedan a quienes sobrevivieron un ciclo de borrado con el cuerpo intacto, pero no el nombre. Siete permanecen ahí, dormidos."
+    },
+    {
+      "id": "archivo_de_la_lluvia",
+      "display_name": "El Archivo de la Lluvia",
+      "description": "Los registros que el Pabellón preferiría perdidos, guardados donde la humedad los vuelve casi ilegibles. Casi."
+    },
+    {
+      "id": "ciudad_que_olvida",
+      "display_name": "La Ciudad que Olvida",
+      "description": "Así llama el Pabellón a Lianshu cuando quiere sonar poético. La ciudad no elige olvidar: se lo hacen, ciclo tras ciclo."
+    }
+  ],
+
+  "terms": [
+    {
+      "id": "qi",
+      "display_name": "Qi",
+      "description": "La energía vital que todo cultivador aprende a sentir y dirigir. Se gasta, se recupera con calma, y a veces se pierde de golpe."
+    },
+    {
+      "id": "registro_celeste",
+      "display_name": "El Registro Celeste",
+      "description": "El sistema que borra un nombre del mundo, ciclo tras ciclo. Lo construyeron personas — nadie ha confirmado nunca que haya una voluntad consciente detrás."
+    },
+    {
+      "id": "marea_palida",
+      "display_name": "La Marea Pálida",
+      "description": "Lo que queda de siglos de recuerdos y vínculos amputados por los borrados. No es una cosa: es una ausencia con forma propia."
+    },
+    {
+      "id": "deuda_del_registro",
+      "display_name": "Deuda del Registro",
+      "description": "Lo que le debes al Registro Celeste por manipular su memoria o robarle un nombre. Sube en silencio y se cobra con intereses."
+    },
+    {
+      "id": "la_tablilla",
+      "display_name": "La Tablilla",
+      "description": "El objeto donde el Registro inscribe un nombre antes de borrarlo. Alterar la propia — o la de alguien más — nunca sale gratis."
+    }
+  ],
+
   "graph": {
     "start_node": "p1_barca_funeraria",
     "nodes": {
@@ -360,6 +416,7 @@
 
       "p2_bajo_el_puente": {
         "type": "bounded_corridor",
+        "codex_reveals": ["termino:qi"],
         "goal": "Establecer la relación inicial con Suyin y elegir una prioridad.",
         "turn_budget": 2,
         "fallback_exit": "c1_n01_casa_de_tinta",
@@ -418,6 +475,7 @@
 
       "c1_n01_casa_de_tinta": {
         "type": "state_hub",
+        "codex_reveals": ["lugar:casa_de_tinta", "termino:la_tablilla"],
         "activities": [
           {"id": "descansar", "label": "Descansar y tratar heridas", "repeatable": true, "effects": [{"type": "resource", "key": "vitality", "value": 9999}]},
           {"id": "meditar_con_huo", "label": "Meditar con Huo Zhen", "repeatable": false, "effects": [{"type": "resource", "key": "qi", "value": 2}]},
@@ -443,6 +501,7 @@
 
       "c1_n02_buscar_acceso": {
         "type": "bounded_corridor",
+        "codex_reveals": ["lugar:torre_de_campanas"],
         "goal": "Obtener exactamente un access_token y sembrar una prueba secundaria.",
         "turn_budget": 3,
         "fallback_exit": "c1_n03_coro_en_el_campanario",
@@ -542,6 +601,7 @@
 
       "c1_n03_coro_en_el_campanario": {
         "type": "fixed_anchor",
+        "codex_reveals": ["termino:registro_celeste"],
         "narration": "Las cometas blancas del festival quedan suspendidas sin viento. Una por una, giran hacia ti. Las campanas producen un sonido amortiguado y las sombras de la plaza empiezan a hablar con voces que sus dueños no reconocen. El Coro te llama Octavo.",
         "fixed_reveals": [
           "Siete personas ya fueron borradas.",
@@ -626,6 +686,7 @@
 
       "c2_n02_salon_quieto": {
         "type": "fixed_anchor",
+        "codex_reveals": ["lugar:salon_quieto"],
         "narration": "El Salón Quieto no parece una prisión. Hay ocho camas limpias bajo telas translúcidas. Siete están ocupadas. Sobre cada cabecera cuelga una tablilla en blanco; la octava cama está preparada y conserva la temperatura del cuerpo que esperaba.\n\nTao tararea tres notas. Suyin se detiene antes de tocarlo.",
         "fixed_reveals": [
           "CANON FIJO: Tao no reconoce a Suyin. Reconoce la melodía."
@@ -675,6 +736,7 @@
 
       "c2_n03_archivo_de_la_lluvia": {
         "type": "fixed_anchor",
+        "codex_reveals": ["lugar:archivo_de_la_lluvia"],
         "narration": "El archivo guarda documentos en cilindros de piedra atravesados por lluvia canalizada. La tinta verdadera solo aparece mientras el papel está mojado.",
         "fixed_reveals": [
           "El consentimiento del protagonista lleva el sello de Suyin: ella lo falsificó para entrar al sistema y después cambió la tablilla para frustrar el ritual."
@@ -732,6 +794,7 @@
 
       "c2_n04_la_fuga": {
         "type": "bounded_corridor",
+        "codex_reveals": ["termino:deuda_del_registro"],
         "goal": "Salir del Pabellón eligiendo qué se protege primero.",
         "turn_budget": 3,
         "fallback_exit": "c3_n01_ciudad_que_olvida",
@@ -788,6 +851,7 @@
 
       "c3_n01_ciudad_que_olvida": {
         "type": "fixed_anchor",
+        "codex_reveals": ["lugar:ciudad_que_olvida"],
         "narration": "La llovizna de siempre cae sobre Nueve Campanas, pero algo en la ciudad ya no encaja: retratos sin rostro, vecinos que dudan antes de nombrar a alguien querido, campanas que doblan fuera de horario.",
         "choices": [
           {
@@ -922,6 +986,7 @@
 
       "c3_n03_primera_ola": {
         "type": "fixed_anchor",
+        "codex_reveals": ["termino:marea_palida"],
         "narration": "La ola impacta el Distrito de los Tintoreros. Las personas olvidan rutas familiares; los puentes rituales dejan de reconocer a quienes los cruzan; recuerdos se manifiestan como corrientes visibles.",
         "extended_conflict": {"successes_required": 3, "failures_allowed": 2, "repeat_attribute_penalty": -2},
         "choices": [
