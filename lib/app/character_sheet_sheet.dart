@@ -46,6 +46,7 @@ class _CharacterSheetBody extends StatelessWidget {
     final origin = world.originByIdOrNull(character.originId);
     final vow = world.vowByIdOrNull(character.vowId);
     final personalItem = character.personalItem ?? '';
+    final theme = WorldTheme.forWorld(world);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
@@ -60,9 +61,15 @@ class _CharacterSheetBody extends StatelessWidget {
               runSpacing: AetherSpace.sm,
               children: [
                 if (origin != null)
-                  _InfoChip(icon: Icons.person_outline_rounded, label: origin.displayName),
+                  _InfoChip(
+                      icon: Icons.person_outline_rounded,
+                      label: origin.displayName,
+                      accent: theme.accent),
                 if (personalItem.isNotEmpty)
-                  _InfoChip(icon: Icons.auto_stories_rounded, label: personalItem),
+                  _InfoChip(
+                      icon: Icons.auto_stories_rounded,
+                      label: personalItem,
+                      accent: theme.accent),
               ],
             ),
             const SizedBox(height: AetherSpace.lg),
@@ -71,15 +78,15 @@ class _CharacterSheetBody extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(AetherSpace.lg),
               decoration: BoxDecoration(
-                color: AetherColors.goldGlow,
+                color: theme.accent.withValues(alpha: 0.12),
                 borderRadius: AetherRadius.allLg,
-                border: Border.all(color: AetherColors.gold.withValues(alpha: 0.35)),
+                border: Border.all(color: theme.accent.withValues(alpha: 0.35)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(world.chargenVowLabel.toUpperCase(),
-                      style: AetherType.overline.copyWith(color: AetherColors.goldSoft)),
+                      style: AetherType.overline.copyWith(color: theme.accent)),
                   const SizedBox(height: AetherSpace.sm),
                   Text('"${vow.text}"',
                       style: AetherType.body.copyWith(
@@ -98,10 +105,13 @@ class _CharacterSheetBody extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: AetherSpace.sm,
               crossAxisSpacing: AetherSpace.sm,
-              childAspectRatio: 2.4,
+              childAspectRatio: 2.1,
               children: [
                 for (final key in world.attributeKeys)
-                  _AttributeCard(label: key, value: character.attributes[key] ?? 1),
+                  _AttributeCard(
+                      label: key,
+                      value: character.attributes[key] ?? 1,
+                      accent: theme.accent),
               ],
             ),
             const SizedBox(height: AetherSpace.xl),
@@ -125,10 +135,11 @@ class _CharacterSheetBody extends StatelessWidget {
 }
 
 class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.icon, required this.label});
+  const _InfoChip({required this.icon, required this.label, required this.accent});
 
   final IconData icon;
   final String label;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
@@ -137,12 +148,12 @@ class _InfoChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: AetherColors.surfaceRaised,
         borderRadius: AetherRadius.allPill,
-        border: Border.all(color: AetherColors.hairline),
+        border: Border.all(color: accent.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AetherColors.goldSoft),
+          Icon(icon, size: 14, color: accent),
           const SizedBox(width: 6),
           Text(label,
               style: AetherType.caption.copyWith(color: AetherColors.parchment)),
@@ -153,13 +164,20 @@ class _InfoChip extends StatelessWidget {
 }
 
 class _AttributeCard extends StatelessWidget {
-  const _AttributeCard({required this.label, required this.value});
+  const _AttributeCard({required this.label, required this.value, required this.accent});
 
   final String label;
   final int value;
+  final Color accent;
+
+  /// Purely decorative fill under the attribute's real value — normalized
+  /// against a fixed soft cap, not a new mechanical readout (the number
+  /// above it is still the one the engine actually resolves checks with).
+  static const _decorativeCap = 5;
 
   @override
   Widget build(BuildContext context) {
+    final fill = (value / _decorativeCap).clamp(0.0, 1.0);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AetherSpace.md, vertical: AetherSpace.sm),
       decoration: BoxDecoration(
@@ -167,17 +185,36 @@ class _AttributeCard extends StatelessWidget {
         borderRadius: AetherRadius.allMd,
         border: Border.all(color: AetherColors.hairline),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label,
-              style: AetherType.overline.copyWith(
-                  color: AetherColors.parchmentDim, fontSize: 10)),
-          Text('$value',
-              style: const TextStyle(
-                  color: AetherColors.parchment,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label,
+                  style: AetherType.overline.copyWith(
+                      color: AetherColors.parchmentDim, fontSize: 10)),
+              Text('$value',
+                  style: const TextStyle(
+                      color: AetherColors.parchment,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18)),
+            ],
+          ),
+          const SizedBox(height: 5),
+          ClipRRect(
+            borderRadius: AetherRadius.allPill,
+            child: Container(
+              height: 3,
+              color: AetherColors.void_,
+              alignment: Alignment.centerLeft,
+              child: FractionallySizedBox(
+                widthFactor: fill,
+                child: Container(color: accent),
+              ),
+            ),
+          ),
         ],
       ),
     );
