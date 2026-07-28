@@ -817,6 +817,81 @@ Only proceed with a sub-stage once its blocking decision in
     fix above (never previously exercised since the test default was always
     800px wide). Not fixed — flagging here since it wasn't reported
     elsewhere yet.
+- **6i — Game screen states and wide layout (V2 prototype §1a/§1b/§1c).**
+  ✅ **Done (2026-07-28)**. `game_screen.dart` had Stage 4's collapsible
+  header/`ChoiceCard`/compact `FateRoll`/scene-bleed, but never got §1b's
+  polished loading/error/ending states or §1c's real wide layout — the
+  `_ReadingFrame` just centered the same mobile column in a 720px card on
+  any width. This closes both gaps:
+  - **Loading**: `_ChoicesBar`'s busy state gained the mockup's "Puedes
+    seguir leyendo el turno anterior" caption under `DestinyWriting` — the
+    rest of the mockup's loading skeleton was judged already covered in
+    spirit (the previous turn's real text/image staying visible while
+    waiting is arguably better than a static skeleton wipe, and matches
+    what that caption itself promises).
+  - **Narrator error**: new `_NarratorErrorPanel` (icon, fixed reassuring
+    copy, "Reintentar"/"Elegir otra vez") replaces the old bare red error
+    text, plus the stale narration now dims to 40% opacity while an error is
+    showing. `GameController` gained `retryLastAction()`/`clearError()` and
+    a `_lastAction` closure captured at the top of every turn-attempting
+    method (`choose`/`continueStory`/`_chooseOption`/`chooseEnding`) —
+    replaying it is safe because `_resolveTurn` never commits anything to
+    `_session`/`_error` until it either succeeds or hits its `catch`.
+    Deliberately **not** built: the mockup's attempt counter/auto-retry
+    countdown — nothing in the client or the narrator Edge Function tracks
+    attempts today, and building that just for this panel was judged out of
+    proportion to a visual pass.
+  - **Ending reveal**: new `_EndingRevealOverlay`, shown once between
+    confirming an `Ending` and reading its epilogue (turns/level/juramento
+    stats, single "Leer el epílogo" CTA). Deliberately the **lightweight**
+    version you chose over full fidelity: `Ending` gained no new
+    `title`/`summaryQuote` fields, so the headline reuses
+    `Ending.visibleChoice` instead of authoring new copy across ~21
+    endings/failures in 3 worlds' content. Built as a pure UI interstitial
+    with zero engine changes — `GameController.chooseEnding` still resolves
+    and narrates the epilogue in one call exactly as before; the overlay
+    just delays *revealing* that already-finished narration one beat,
+    tracked entirely in `_GameScreenState` (`_pendingEnding`/
+    `_endingRevealedFor`).
+  - **Wide layout (§1c)**: `game_screen.dart` now reuses
+    `AetherBreakpoints.tablet` (already introduced for the home dashboard,
+    Stage 6h) as its own mobile/split-view switch, via a `LayoutBuilder`.
+    Below it, mobile is byte-for-byte the same column, scroll-gate and all.
+    At or above it, a new `_SplitView` (fixed-width `_ScenePanel` on the
+    left, `StatusBar` pinned uncollapsed + narration + an always-visible
+    `_ChoicesBar` — no scroll-gated hint — on the right) takes over, and
+    `_ReadingFrame` now frames whichever child at its own width (720px
+    mobile, 1040px wide, was previously a single hardcoded 720px for
+    everything). `StatusBar`/`FateRoll` are reused completely unchanged
+    (no compact variant built) — an accepted, minor size/density difference
+    from the mockup rather than doubling either widget's surface area.
+  - **Two pre-existing bugs found and fixed along the way** (both
+    surfaced only once a test exercised a genuinely realistic mobile
+    width instead of the historical 800px default): `fate_roll.dart`'s
+    `_OutcomeLabel` Row had no flex protection at all and overflowed
+    horizontally for any critical/natural-roll outcome at normal mobile
+    column widths (~550px) — fixed by wrapping the "vs dificultad N" text
+    in an `Expanded` with `overflow: ellipsis`. `test/vertical_slice_test.dart`
+    forcing a **narrow** viewport (600×1000, needed to dodge Stage 6h's new
+    tablet-breakpoint collision at the old 800×600 default) also exposed a
+    third, separate, **not fixed** issue: `_armRevealGate`'s single-frame
+    check of `maxScrollExtent` can race a turn whose content sits right at
+    the edge of fitting without scrolling, permanently stranding the
+    choices bar behind "Sigue leyendo" — confirmed present on unmodified
+    code too (not something this stage introduced). Worked around by giving
+    that one test a taller viewport (600×2000) instead of fixing the race;
+    flagging it here as a real, pre-existing UX bug worth its own
+    investigation, in the same spirit as the `_GenreGridCard` overflow
+    flagged in 6h.
+  - 704 Flutter tests passing (up from 699), `analyze` clean. No backend
+    changes this stage — pure Flutter, no migration, no Edge Function
+    redeploy needed.
+  - **Not independently re-verified visually this session**: the browser
+    preview is still blocked by the same stray Docker container on port
+    8080 from prior sessions (this time with a different, more actionable
+    error suggesting a `.claude/launch.json` `autoPort` fix — not attempted,
+    judged out of scope for this stage). Recommend a manual look once
+    deployed, same as every prior stage.
 
 ---
 
@@ -907,6 +982,7 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 | 6e — Story-graph editor | Deferred (2026-07-27) | — |
 | 6f — Publishing/UGC | Deferred (2026-07-27) | — |
 | 6g — Perfil, Ajustes, onboarding | ✅ Done and deployed (2026-07-28) — 2 migrations applied, Edge Function redeployed (v10); visual sign-off still recommended, see 6g notes | — |
-| 6h — Home dashboard, responsive | ✅ Done (2026-07-28), migration applied, not yet pushed; visual sign-off still recommended, see 6h notes | — |
+| 6h — Home dashboard, responsive | ✅ Done and deployed (2026-07-28), migration applied; visual sign-off still recommended, see 6h notes | — |
+| 6i — Game screen states + wide layout | ✅ Done (2026-07-28), no backend changes; visual sign-off still recommended, see 6i notes | — |
 | 7 — Ending/account/offline/resilience polish | Not started | Stage 4, 6a |
 | 8 — Accessibility/responsiveness/performance/release | Not started | Stages 1-7 |
