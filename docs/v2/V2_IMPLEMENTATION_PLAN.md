@@ -1153,18 +1153,82 @@ Only proceed with a sub-stage once its blocking decision in
 
 ## Stage 7 — Ending, account, offline, and resilience polish
 
-**Goal:** narrator retry-count surfaced (Edge Function + `GameController`
-change), re-verify image-failure-never-blocks after all UI changes, re-verify
-AI-free curated stories make zero network calls after the redesign.
+**Status:** ✅ **Done (2026-07-28)**. All three original goals closed; one
+correction to the original scoping and one real bug found along the way.
 
-**Files:** `supabase/functions/narrator/types.ts`, `index.ts`,
-`game_controller.dart`, `game_screen.dart`.
-
-**Verification:** re-run `test/content/curated_zombie_01_ultimo_tren_test.dart`
-and `test/content/curated_cyberpunk_02_apagon_violeta_test.dart`, plus a
-manual network-tab check in the browser preview during a curated playthrough.
-
-**Risk:** low-medium — touches the Edge Function, needs a deploy.
+- **Narrator retry-count surfaced.** **Correction to the original plan:**
+  scoped as "Edge Function + `GameController` change," but the Edge
+  Function's wire contract already carried everything needed — `index.ts`'s
+  502 "all providers failed" response has always included an `attempts`
+  array (one entry per provider `FallbackNarratorAdapter` tried), just
+  never parsed by the client, and never covered by a test at the HTTP
+  boundary (`fallback_narrator_adapter_test.ts` tested the orchestrator
+  directly, never the wire shape `index.ts` actually serializes). Closed
+  that real test gap (`index_test.ts`, new case) instead of changing
+  production TS. Client side: `NarratorHttpException` gained
+  `attemptCount`, parsed best-effort from the 502 body — but rather than
+  importing this concrete adapter exception into `GameController` (which
+  would violate CLAUDE.md §4's "client depends on ports, never a concrete
+  adapter"), added a small port-level interface, `NarratorAttemptInfo`
+  (`lib/ports/narrator_port.dart`), that `NarratorHttpException` implements
+  and `GameController` type-checks against instead.
+  `GameController.narratorAttemptCount` threads through every place `_error`
+  is set/cleared. `_NarratorErrorPanel` shows "Lo intentamos N veces, con
+  fuentes distintas, sin éxito" when present — **not** the mockup's live
+  "Intento 2 de 3 · reintentando en 8 s" countdown, since by the time this
+  panel renders every configured provider has already failed; there's no
+  in-progress retry loop left to count down, so an honest "N attempts, all
+  failed" reads better than mimicking a countdown with no countdown behind
+  it. Tests: 2 new Dart cases in `http_narrator_adapter_test.dart` (parses
+  a real attempts array; stays `null` for any other/malformed body), 1 new
+  widget case in `game_screen_error_ending_test.dart` (shows the line,
+  clears it after a successful retry), 1 new Deno case in `index_test.ts`.
+- **Re-verified image-failure-never-blocks — found and fixed a real bug.**
+  `ImageGeneratorPort`/`HttpImageGeneratorAdapter` still never throws
+  (confirmed by re-reading both). But `_generateImageForTurn`/
+  `_generateAvatarForCharacter` (both fire-and-forget `unawaited(...)`
+  calls, detached from `_resolveTurn`'s own try/catch) called
+  `_persistence?.saveTurnImage`/`saveCharacterAvatar` **unguarded** — a real
+  network call that *can* throw, with nothing upstream positioned to catch
+  it. Since the image/portrait already updated in memory by that point,
+  the contract "a nice-to-have image failure never surfaces to the player"
+  was silently broken for this one specific failure mode (persistence,
+  not generation) — never exercised by any existing test, since no fake
+  persistence adapter had ever been made to throw. Fixed by wrapping both
+  persistence calls in their own try/catch, swallowed silently, matching
+  the same "never surfaces" contract the generation step already had.
+  Tests: 2 new cases in `game_controller_persistence_test.dart` (a
+  `_ImageSaveThrowsRepository` fake proves the image/avatar still shows in
+  memory and `controller.error` stays `null` even when persisting it
+  throws).
+- **Re-verified AI-free curated stories make zero network calls — found and
+  closed a real coverage gap.** `curated_zombie_01_ultimo_tren` already had
+  a genuine runtime smoke test (`game_controller_curated_zombie_smoke_test.dart`)
+  playing its real JSON through the real `GameController` with a
+  `_ForbiddenNarrator` that fails the test if `narrate()` is ever called —
+  but `curated_cyberpunk_02_apagon_violeta` only ever had the static
+  content-schema test (`test/content/curated_cyberpunk_02_apagon_violeta_test.dart`,
+  which inspects the parsed graph's structure/reachability but never
+  resolves a single real turn). New
+  `test/app/game_controller_curated_cyberpunk_smoke_test.dart`, same
+  pattern: real chargen (piloto fantasma origin, fixed protagonist "Dante
+  Rivas") through the real opening chapter (`intro_apagon_violeta` →
+  `p0_perfil` → `p0_postura` → `p1_entrega_rota` → `p1_aerotaxi`, including
+  a real reflejos-vs-DC12 check), `_ForbiddenNarrator` never fires. Passed
+  on the first run — no engine/content bug found here, just a real gap in
+  what was actually being exercised at runtime.
+- 799 Flutter tests passing (up from 792 at the start of this stage),
+  63 Deno tests passing, `analyze`/`deno check` clean throughout.
+- **No Edge Function deploy needed** — unlike the original risk note below,
+  no production TS behavior actually changed (only a test was added to
+  `index_test.ts`, confirming existing behavior already correct), so
+  there's nothing new to push to Supabase for this stage.
+- Manual network-tab check during a curated playthrough (the plan's
+  original verification bullet) not done this session — same recurring
+  browser-preview-tooling caveat as Stage 6b onward; the two runtime smoke
+  tests above are a stronger check than a manual look would have been
+  anyway, since a `_ForbiddenNarrator` fails loudly on the very first
+  violation instead of relying on eyeballing a network tab.
 
 ---
 
@@ -1244,5 +1308,5 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 | 6k — Theming por mundo (títulos, textura, ficha) + arreglos de MyStoriesScreen | ✅ Done and deployed (2026-07-28) — `story_library_current_node_id` migration applied, `get_advisors` clean; visual sign-off still recommended, see 6k notes | — |
 | 6l — Home dashboard: hero real (imagen/cita/2 botones) + miniaturas parejas | ✅ Done and deployed (2026-07-28) — `story_library_last_turn` migration applied; visual sign-off still recommended, see 6l notes | — |
 | 6m — ChargenScreen theming fix + `CharacterSheetSheet` real gaps (retrato, etiqueta, juramento, subtítulo) | ✅ Done and deployed (2026-07-28) — `characters_avatar_url` migration applied, `get_advisors` clean; driven by your own visual audit, no outstanding sign-off caveat for the flagged gaps | — |
-| 7 — Ending/account/offline/resilience polish | Not started | Stage 4, 6a |
+| 7 — Ending/account/offline/resilience polish | ✅ Done (2026-07-28) — no Edge Function deploy needed (wire contract was already correct, just untested); found and fixed a real image/avatar persistence-failure bug along the way | — |
 | 8 — Accessibility/responsiveness/performance/release | Not started | Stages 1-7 |
