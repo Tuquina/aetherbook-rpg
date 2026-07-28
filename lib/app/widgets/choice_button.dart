@@ -100,7 +100,7 @@ class FreeActionField extends StatelessWidget {
         hintStyle: AetherType.caption
             .copyWith(color: AetherColors.parchmentFaint, fontSize: 15),
         filled: true,
-        fillColor: AetherColors.void_,
+        fillColor: AetherColors.surface,
         suffixIcon: IconButton(
           icon: const Icon(Icons.send_rounded,
               color: AetherColors.gold, size: 20),
@@ -108,7 +108,7 @@ class FreeActionField extends StatelessWidget {
         ),
         enabledBorder: const OutlineInputBorder(
           borderRadius: AetherRadius.allMd,
-          borderSide: BorderSide(color: AetherColors.hairline),
+          borderSide: BorderSide(color: AetherColors.hairlineStrong),
         ),
         focusedBorder: const OutlineInputBorder(
           borderRadius: AetherRadius.allMd,
