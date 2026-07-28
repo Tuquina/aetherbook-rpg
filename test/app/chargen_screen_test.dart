@@ -5,6 +5,7 @@
 // visible at once, which was true before the Stage 3 reflow but isn't anymore.
 import 'package:aetherbook/adapters/narrator/fake_narrator_adapter.dart';
 import 'package:aetherbook/app/chargen_screen.dart';
+import 'package:aetherbook/app/design/tokens.dart';
 import 'package:aetherbook/app/game_controller.dart';
 import 'package:aetherbook/core/engine/dice.dart';
 import 'package:aetherbook/core/state/character.dart';
@@ -29,6 +30,7 @@ const _vows = [Vow(id: 'volver', text: 'Voy a volver a casa.')];
 World _worldWith({
   List<ToneOption> tones = const [],
   bool hasFreeAttributePoint = false,
+  String? themeAccentHex,
 }) =>
     World(
       slug: 'isekai',
@@ -49,6 +51,7 @@ World _worldWith({
         name: 'Convocado', level: 1, exp: 0, attributes: {}, resources: {}),
       seedNarration: 'Comienza.',
       seedChoices: const ['Avanzar'],
+      themeAccentHex: themeAccentHex,
     );
 
 class _FakeWorldRepository implements WorldRepositoryPort {
@@ -69,6 +72,26 @@ void _useTallViewport(WidgetTester tester) {
 
 Future<GameController> _pumpChargen(WidgetTester tester, World world) async {
   _useTallViewport(tester);
+  final controller = GameController(
+    worldRepository: _FakeWorldRepository(world),
+    narrator: const FakeNarratorAdapter(latency: Duration.zero),
+    dice: const FixedDice(10),
+  );
+  await tester.pumpWidget(MaterialApp(
+    home: ChargenScreen(controller: controller, worldSlug: world.slug, world: world),
+  ));
+  await tester.pump();
+  return controller;
+}
+
+/// Below `AetherBreakpoints.tablet` — no `_SidePanel`, so it never
+/// duplicates the same `Icons.radio_button_checked`/step-checklist icons the
+/// origin/vow cards themselves use, which would otherwise make a bare
+/// `find.byIcon(...)` ambiguous.
+Future<GameController> _pumpChargenMobile(WidgetTester tester, World world) async {
+  tester.view.physicalSize = const Size(600, 1400);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
   final controller = GameController(
     worldRepository: _FakeWorldRepository(world),
     narrator: const FakeNarratorAdapter(latency: Duration.zero),
@@ -300,6 +323,65 @@ void main() {
       // The live preview shows exactly once (in the side panel), not
       // duplicated inside step 3's own content.
       expect(find.text('Así entras al mundo'), findsOneWidget);
+    });
+  });
+
+  group('ChargenScreen per-world theming (V2 §4a-4d)', () {
+    testWidgets('an unthemed world keeps everything gold, same as before', (tester) async {
+      await _pumpChargenMobile(tester, _worldWith());
+
+      await tester.tap(find.text('Convocado'));
+      await tester.pump();
+
+      final icon = tester.widget<Icon>(find.byIcon(Icons.radio_button_checked));
+      expect(icon.color, AetherColors.gold);
+    });
+
+    testWidgets('a themed world tints the selected origin card with its own accent, not gold',
+        (tester) async {
+      await _pumpChargenMobile(tester, _worldWith(themeAccentHex: '#F0564A'));
+
+      await tester.tap(find.text('Convocado'));
+      await tester.pump();
+
+      final icon = tester.widget<Icon>(find.byIcon(Icons.radio_button_checked));
+      expect(icon.color, const Color(0xFFF0564A));
+      expect(icon.color, isNot(AetherColors.gold));
+    });
+
+    testWidgets('a themed world tints the selected free-attribute-point chip', (tester) async {
+      await _pumpChargenMobile(
+          tester, _worldWith(hasFreeAttributePoint: true, themeAccentHex: '#F0564A'));
+
+      await tester.tap(find.text('ingenio'));
+      await tester.pump();
+
+      final chipText = tester.widget<Text>(find.text('ingenio'));
+      expect(chipText.style?.color, const Color(0xFFF0564A));
+    });
+
+    testWidgets('a themed world tints the step CTA button, not the fixed gold gradient',
+        (tester) async {
+      await _pumpChargenMobile(tester, _worldWith(themeAccentHex: '#F0564A'));
+      await tester.enterText(find.byType(TextField).first, 'Yuki');
+      await tester.tap(find.text('Convocado'));
+      await tester.pump();
+
+      final container = tester
+          .widget<Container>(find.ancestor(of: find.text('Siguiente'), matching: find.byType(Container)).first);
+      final gradient = (container.decoration as BoxDecoration).gradient as LinearGradient;
+      expect(gradient.colors.first, const Color(0xFFF0564A));
+    });
+
+    testWidgets('a themed world tints the live character-preview box border and vow quote',
+        (tester) async {
+      await _pumpChargenMobile(tester, _worldWith(themeAccentHex: '#F0564A'));
+      await _completeStepOne(tester);
+      await _completeStepTwo(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final vowQuote = tester.widget<Text>(find.textContaining('Voy a volver a casa'));
+      expect(vowQuote.style?.color, const Color(0xFFF0564A));
     });
   });
 }

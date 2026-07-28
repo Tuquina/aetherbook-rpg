@@ -6,6 +6,7 @@ import '../core/world/world.dart';
 import 'design/breakpoints.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
+import 'design/world_theme.dart';
 import 'game_controller.dart';
 import 'game_screen.dart';
 import 'widgets/atmosphere.dart';
@@ -244,6 +245,7 @@ class _ChargenScreenState extends State<ChargenScreen> {
           enabled: _canAdvance,
           busy: _submitting,
           label: _step < _stepCount - 1 ? 'Siguiente' : 'Confirmar ficha',
+          accent: WorldTheme.forWorld(widget.world).accent,
           onTap: _advance,
         ),
       );
@@ -422,6 +424,7 @@ class _StepOne extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent = WorldTheme.forWorld(world).accent;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -460,6 +463,7 @@ class _StepOne extends StatelessWidget {
             title: origin.displayName,
             subtitle: origin.narrativeConnection,
             selected: originId == origin.id,
+            accent: accent,
             onTap: () => onOriginTap(origin.id),
           ),
         if (world.hasFreeAttributePoint) ...[
@@ -474,6 +478,7 @@ class _StepOne extends StatelessWidget {
                 _AttributeChip(
                   label: attribute,
                   selected: freeAttributePoint == attribute,
+                  accent: accent,
                   onTap: () => onFreePointTap(attribute),
                 ),
             ],
@@ -501,6 +506,7 @@ class _StepTwo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent = WorldTheme.forWorld(world).accent;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -512,6 +518,7 @@ class _StepTwo extends StatelessWidget {
               title: tone.label,
               subtitle: tone.blurb,
               selected: chosenTone == tone.id,
+              accent: accent,
               onTap: () => onToneTap(tone.id),
             ),
           if (chosenTone != null) ...[
@@ -519,7 +526,7 @@ class _StepTwo extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(AetherSpace.md),
               decoration: BoxDecoration(
-                color: AetherColors.goldGlow,
+                color: accent.withValues(alpha: 0.12),
                 borderRadius: AetherRadius.allSm,
               ),
               child: Text(
@@ -537,6 +544,7 @@ class _StepTwo extends StatelessWidget {
           _SelectableCard(
             title: '"${vow.text}"',
             selected: vowId == vow.id,
+            accent: accent,
             onTap: () => onVowTap(vow.id),
           ),
       ],
@@ -595,18 +603,19 @@ class _CharacterPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vow = world.vowById(character.vowId!);
+    final accent = WorldTheme.forWorld(world).accent;
     return Container(
       padding: const EdgeInsets.all(AetherSpace.lg),
       decoration: BoxDecoration(
         color: AetherColors.surfaceRaised,
         borderRadius: AetherRadius.allLg,
-        border: Border.all(color: AetherColors.gold.withValues(alpha: 0.32)),
+        border: Border.all(color: accent.withValues(alpha: 0.32)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Así entras al mundo',
-              style: AetherType.overline.copyWith(color: AetherColors.goldSoft)),
+              style: AetherType.overline.copyWith(color: accent)),
           const SizedBox(height: AetherSpace.md),
           Text(
             character.name.isEmpty ? world.startingCharacter.name : character.name,
@@ -631,8 +640,7 @@ class _CharacterPreview extends StatelessWidget {
           Container(height: 1, color: AetherColors.hairline),
           const SizedBox(height: AetherSpace.md),
           Text('"${vow.text}"',
-              style: AetherType.body.copyWith(
-                  fontStyle: FontStyle.italic, color: AetherColors.goldSoft)),
+              style: AetherType.body.copyWith(fontStyle: FontStyle.italic, color: accent)),
         ],
       ),
     );
@@ -727,6 +735,7 @@ class _SelectableCard extends StatelessWidget {
   const _SelectableCard({
     required this.title,
     required this.selected,
+    required this.accent,
     required this.onTap,
     this.subtitle,
   });
@@ -734,6 +743,7 @@ class _SelectableCard extends StatelessWidget {
   final String title;
   final String? subtitle;
   final bool selected;
+  final Color accent;
   final VoidCallback onTap;
 
   @override
@@ -750,7 +760,7 @@ class _SelectableCard extends StatelessWidget {
             color: selected ? AetherColors.surfaceRaised : AetherColors.surface,
             borderRadius: AetherRadius.allMd,
             border: Border.all(
-              color: selected ? AetherColors.gold : AetherColors.hairlineStrong,
+              color: selected ? accent : AetherColors.hairlineStrong,
             ),
           ),
           child: Row(
@@ -759,7 +769,7 @@ class _SelectableCard extends StatelessWidget {
               Icon(
                 selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
                 size: 18,
-                color: selected ? AetherColors.gold : AetherColors.parchmentFaint,
+                color: selected ? accent : AetherColors.parchmentFaint,
               ),
               const SizedBox(width: AetherSpace.md),
               Expanded(
@@ -777,15 +787,15 @@ class _SelectableCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: AetherSpace.sm, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AetherColors.goldGlow,
+                          color: accent.withValues(alpha: 0.14),
                           borderRadius: AetherRadius.allSm,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('PASIVA',
-                                style: AetherType.overline.copyWith(
-                                    fontSize: 9.5, color: AetherColors.goldSoft)),
+                                style: AetherType.overline
+                                    .copyWith(fontSize: 9.5, color: accent)),
                             const SizedBox(height: 2),
                             Text(parts.passive!,
                                 style: AetherType.caption
@@ -806,10 +816,16 @@ class _SelectableCard extends StatelessWidget {
 }
 
 class _AttributeChip extends StatelessWidget {
-  const _AttributeChip({required this.label, required this.selected, required this.onTap});
+  const _AttributeChip({
+    required this.label,
+    required this.selected,
+    required this.accent,
+    required this.onTap,
+  });
 
   final String label;
   final bool selected;
+  final Color accent;
   final VoidCallback onTap;
 
   @override
@@ -820,17 +836,17 @@ class _AttributeChip extends StatelessWidget {
         duration: AetherMotion.fast,
         padding: const EdgeInsets.symmetric(horizontal: AetherSpace.lg, vertical: AetherSpace.sm),
         decoration: BoxDecoration(
-          color: selected ? AetherColors.goldGlow : AetherColors.surface,
+          color: selected ? accent.withValues(alpha: 0.16) : AetherColors.surface,
           borderRadius: AetherRadius.allPill,
           border: Border.all(
-            color: selected ? AetherColors.gold : AetherColors.hairlineStrong,
+            color: selected ? accent : AetherColors.hairlineStrong,
           ),
         ),
         child: Text(
           label,
           style: AetherType.label.copyWith(
             fontSize: 14,
-            color: selected ? AetherColors.goldSoft : AetherColors.parchment,
+            color: selected ? accent : AetherColors.parchment,
           ),
         ),
       ),
@@ -844,12 +860,14 @@ class _StepCta extends StatelessWidget {
     required this.onTap,
     required this.busy,
     required this.label,
+    required this.accent,
   });
 
   final bool enabled;
   final VoidCallback onTap;
   final bool busy;
   final String label;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
@@ -860,11 +878,12 @@ class _StepCta extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: AetherSpace.lg),
         decoration: BoxDecoration(
           gradient: enabled
-              ? const LinearGradient(colors: [AetherColors.gold, AetherColors.goldBright])
+              ? LinearGradient(
+                  colors: [accent, Color.lerp(accent, Colors.white, 0.3) ?? accent])
               : null,
           color: enabled ? null : AetherColors.surfaceRaised,
           borderRadius: AetherRadius.allMd,
-          boxShadow: enabled ? AetherShadow.glow(AetherColors.gold, strength: 0.35) : null,
+          boxShadow: enabled ? AetherShadow.glow(accent, strength: 0.35) : null,
         ),
         child: Center(
           child: busy
