@@ -4,6 +4,7 @@ import '../core/state/character.dart';
 import '../core/world/world.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
+import 'design/world_theme.dart';
 import 'widgets/sheet_shell.dart';
 
 /// The character's full stats — attributes, resources, origin, personal item
@@ -18,13 +19,17 @@ Future<void> showCharacterSheet(
   required World world,
   required Character character,
 }) {
+  final theme = WorldTheme.forWorld(world);
+  final title =
+      theme.titleUppercase ? character.name.toUpperCase() : character.name;
   return showModalBottomSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
     barrierColor: AetherColors.void_.withValues(alpha: 0.72),
     isScrollControlled: true,
     builder: (_) => SheetShell(
-      title: character.name,
+      title: title,
+      titleStyle: theme.titleStyle(AetherType.title),
       child: _CharacterSheetBody(world: world, character: character),
     ),
   );

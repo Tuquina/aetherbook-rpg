@@ -6,6 +6,11 @@
   "theme_accent": "#55E0F0",
   "theme_base": "#0C1016",
   "theme_secondary": "#FF4FA3",
+  "theme_title_font": "Archivo",
+  "theme_title_weight": 700,
+  "theme_title_tracking": 2,
+  "theme_title_uppercase": true,
+  "theme_texture": "scanline",
   "system_prompt": "",
   "image_style_suffix": "",
 

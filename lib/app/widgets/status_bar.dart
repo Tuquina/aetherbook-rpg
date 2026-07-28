@@ -5,6 +5,7 @@ import '../../core/state/character.dart';
 import '../../core/world/world.dart';
 import '../design/tokens.dart';
 import '../design/typography.dart';
+import '../design/world_theme.dart';
 
 /// The persistent status bar (GDD §9: "ficha/diario siempre a mano"). Shows
 /// who you are, your progression toward the next realm, and doors into your
@@ -56,6 +57,11 @@ class StatusBar extends StatelessWidget {
     final toNext = expProgression.expToNext(character.level);
     final progress = (character.exp / toNext).clamp(0.0, 1.0);
     final expanded = 1.0 - collapse.clamp(0.0, 1.0);
+    final theme = WorldTheme.forWorld(world);
+    final baseTitle = AetherType.title.copyWith(fontSize: 17);
+    final nameStyle = theme.titleStyle(baseTitle);
+    final displayName =
+        theme.titleUppercase ? character.name.toUpperCase() : character.name;
 
     return Container(
       decoration: const BoxDecoration(
@@ -93,8 +99,8 @@ class StatusBar extends StatelessWidget {
                           Row(
                             children: [
                               Flexible(
-                                child: Text(character.name,
-                                    style: AetherType.title.copyWith(fontSize: 17),
+                                child: Text(displayName,
+                                    style: nameStyle,
                                     overflow: TextOverflow.ellipsis),
                               ),
                               if (prog.enabled) ...[

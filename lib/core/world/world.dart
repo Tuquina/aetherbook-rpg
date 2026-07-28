@@ -66,6 +66,12 @@ class World {
     this.themeAccentHex,
     this.themeBaseHex,
     this.themeSecondaryHex,
+    this.themeTitleFontFamily,
+    this.themeTitleFontWeight,
+    this.themeTitleLetterSpacing,
+    this.themeTitleUppercase = false,
+    this.themeTitleColorHex,
+    this.themeTexture,
   });
 
   final String slug;
@@ -258,6 +264,30 @@ class World {
   final String? themeBaseHex;
   final String? themeSecondaryHex;
 
+  /// Per-world title-treatment tokens (V2 §4a: "tratamiento de títulos") —
+  /// `null`/`false` fields fall back to `AetherType`'s fixed Marcellus/600
+  /// styling, same degrade-gracefully pattern as the color tokens above.
+  /// Applied only where the mockup itself applies it (the scene and the
+  /// character sheet) — `MyStoriesScreen`/`WorldSelectScreen` stay
+  /// deliberately neutral (§4d: "biblioteca sin tema propio").
+  final String? themeTitleFontFamily;
+  final int? themeTitleFontWeight;
+  final double? themeTitleLetterSpacing;
+  final bool themeTitleUppercase;
+
+  /// An alternate title color distinct from [themeAccentHex] — only
+  /// Post-apocalíptico uses this today (a desaturated tone, since its
+  /// vívid accent would look wrong on a title).
+  final String? themeTitleColorHex;
+
+  /// Which background texture (V2 §4a) this world's "in-world" screens
+  /// (scene, character sheet) render — one of `radial_warm`/`fog`/
+  /// `hard_diagonal`/`scanline`/`grain`, or `null` for the app's default
+  /// radial treatment. Parsed into `WorldTextureKind` by
+  /// `lib/app/design/world_theme.dart`, same reason hex strings are used
+  /// for colors above (`core/` stays Flutter-free).
+  final String? themeTexture;
+
   CharacterOrigin originById(String id) => origins.firstWhere(
         (o) => o.id == id,
         orElse: () => throw ArgumentError('unknown origin: $id'),
@@ -417,6 +447,12 @@ class World {
       themeAccentHex: json['theme_accent'] as String?,
       themeBaseHex: json['theme_base'] as String?,
       themeSecondaryHex: json['theme_secondary'] as String?,
+      themeTitleFontFamily: json['theme_title_font'] as String?,
+      themeTitleFontWeight: (json['theme_title_weight'] as num?)?.toInt(),
+      themeTitleLetterSpacing: (json['theme_title_tracking'] as num?)?.toDouble(),
+      themeTitleUppercase: json['theme_title_uppercase'] as bool? ?? false,
+      themeTitleColorHex: json['theme_title_color'] as String?,
+      themeTexture: json['theme_texture'] as String?,
     );
   }
 

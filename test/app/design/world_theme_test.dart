@@ -5,7 +5,18 @@ import 'package:aetherbook/core/world/world.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-World _worldWith({String? accent, String? base, String? secondary}) => World(
+World _worldWith({
+  String? accent,
+  String? base,
+  String? secondary,
+  String? titleFont,
+  int? titleWeight,
+  double? titleTracking,
+  bool titleUppercase = false,
+  String? titleColor,
+  String? texture,
+}) =>
+    World(
       slug: 'test',
       name: 'Mundo de prueba',
       theme: 'test',
@@ -22,6 +33,12 @@ World _worldWith({String? accent, String? base, String? secondary}) => World(
       themeAccentHex: accent,
       themeBaseHex: base,
       themeSecondaryHex: secondary,
+      themeTitleFontFamily: titleFont,
+      themeTitleFontWeight: titleWeight,
+      themeTitleLetterSpacing: titleTracking,
+      themeTitleUppercase: titleUppercase,
+      themeTitleColorHex: titleColor,
+      themeTexture: texture,
     );
 
 void main() {
@@ -66,6 +83,49 @@ void main() {
       expect(theme.accent, AetherColors.gold); // fell back
       expect(theme.base, const Color(0xFF0F1D1A)); // parsed fine
       expect(theme.secondary, AetherColors.nova); // never declared, fell back
+    });
+  });
+
+  group('WorldTheme.titleStyle', () {
+    const fallback = TextStyle(fontFamily: 'Marcellus', fontWeight: FontWeight.w600);
+
+    test('a themeless world renders the base style unchanged', () {
+      final theme = WorldTheme.forWorld(_worldWith());
+      final style = theme.titleStyle(fallback);
+      expect(style.fontFamily, fallback.fontFamily);
+      expect(style.fontWeight, fallback.fontWeight);
+      expect(style.letterSpacing, isNull);
+      expect(style.color, isNull);
+      expect(theme.titleUppercase, isFalse);
+      expect(theme.texture, isNull);
+    });
+
+    test('applies a declared title treatment over the base style', () {
+      final theme = WorldTheme.forWorld(_worldWith(
+        titleFont: 'Archivo',
+        titleWeight: 800,
+        titleTracking: -0.4,
+        titleUppercase: true,
+        texture: 'hard_diagonal',
+      ));
+      final style = theme.titleStyle(fallback);
+      expect(style.fontFamily, 'Archivo');
+      expect(style.fontWeight, FontWeight.w800);
+      expect(style.letterSpacing, -0.4);
+      expect(style.color, isNull); // no title_color declared -> keeps base's
+      expect(theme.titleUppercase, isTrue);
+      expect(theme.texture, WorldTextureKind.hardDiagonal);
+    });
+
+    test('a declared title color overrides the base style\'s color', () {
+      final theme = WorldTheme.forWorld(_worldWith(titleColor: '#D6D2AC'));
+      final style = theme.titleStyle(fallback.copyWith(color: AetherColors.parchment));
+      expect(style.color, const Color(0xFFD6D2AC));
+    });
+
+    test('an unrecognized texture string falls back to null (default)', () {
+      final theme = WorldTheme.forWorld(_worldWith(texture: 'not-a-texture'));
+      expect(theme.texture, isNull);
     });
   });
 }

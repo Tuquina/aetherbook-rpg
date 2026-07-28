@@ -18,11 +18,18 @@ class SheetShell extends StatelessWidget {
     super.key,
     required this.title,
     required this.child,
+    this.titleStyle,
     this.maxHeightFraction = 0.78,
   });
 
   final String title;
   final Widget child;
+
+  /// Overrides the title's text style — used to apply a world's title
+  /// treatment (`WorldTheme.titleStyle`, V2 §4a) to sheets opened from
+  /// inside a themed world (the character sheet). Falls back to
+  /// `AetherType.title` when `null`, same as before this existed.
+  final TextStyle? titleStyle;
 
   /// Fraction of the screen height this sheet may grow to before its own
   /// content has to scroll internally.
@@ -59,7 +66,8 @@ class SheetShell extends StatelessWidget {
                     AetherSpace.xl, AetherSpace.md, AetherSpace.md, AetherSpace.xs),
                 child: Row(
                   children: [
-                    Expanded(child: Text(title, style: AetherType.title)),
+                    Expanded(
+                        child: Text(title, style: titleStyle ?? AetherType.title)),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
                       tooltip: 'Cerrar',

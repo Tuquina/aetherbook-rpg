@@ -363,6 +363,35 @@ void main() {
       expect(world.themeBaseHex, '#0F1D1A');
       expect(world.themeSecondaryHex, '#D8B65E');
     });
+
+    test('title-treatment and texture fields default to null/false when '
+        'undeclared', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(world.themeTitleFontFamily, isNull);
+      expect(world.themeTitleFontWeight, isNull);
+      expect(world.themeTitleLetterSpacing, isNull);
+      expect(world.themeTitleUppercase, isFalse);
+      expect(world.themeTitleColorHex, isNull);
+      expect(world.themeTexture, isNull);
+    });
+
+    test('parses theme_title_font, _weight, _tracking, _uppercase, _color '
+        'and theme_texture from the JSON', () {
+      final json = baseWorldJson()
+        ..['theme_title_font'] = 'Archivo'
+        ..['theme_title_weight'] = 800
+        ..['theme_title_tracking'] = -0.4
+        ..['theme_title_uppercase'] = true
+        ..['theme_title_color'] = '#D6D2AC'
+        ..['theme_texture'] = 'hard_diagonal';
+      final world = World.fromJson(json);
+      expect(world.themeTitleFontFamily, 'Archivo');
+      expect(world.themeTitleFontWeight, 800);
+      expect(world.themeTitleLetterSpacing, -0.4);
+      expect(world.themeTitleUppercase, isTrue);
+      expect(world.themeTitleColorHex, '#D6D2AC');
+      expect(world.themeTexture, 'hard_diagonal');
+    });
   });
 
   group('World — relationship delta bounds (ApplyStateDeltas wiring)', () {
