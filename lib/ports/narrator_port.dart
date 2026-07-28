@@ -147,3 +147,14 @@ class NarratorResponse {
 abstract class NarratorPort {
   Future<NarratorResponse> narrate(NarratorRequest request);
 }
+
+/// An optional detail a [NarratorPort] failure can carry: how many distinct
+/// providers the narrator actually tried before giving up (V2 Stage 7's
+/// narrator retry-count). Any exception a `NarratorPort` implementation
+/// throws may implement this so [GameController] can surface it without
+/// depending on a concrete adapter's exception type (CLAUDE.md §4) — `null`
+/// when the failure carries no such detail (a plain network error, for
+/// instance).
+abstract class NarratorAttemptInfo {
+  int? get attemptCount;
+}

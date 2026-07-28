@@ -90,6 +90,30 @@ Deno.test("returns 200 with the narrator's JSON on a valid request", async () =>
   assertEquals(json.narration, "narración de prueba");
 });
 
+Deno.test(
+  "returns 502 with a provider-by-provider attempts array when every provider fails " +
+    "(V2 Stage 7: this is the shape the Dart client's retry-count UI parses)",
+  async () => {
+    const failingChain: NarratorAdapter[] = [
+      { name: "gemini", narrate: () => Promise.reject(new Error("quota exceeded")) },
+      { name: "groq", narrate: () => Promise.reject(new Error("also down")) },
+    ];
+
+    const req = new Request("http://local/narrator", {
+      method: "POST",
+      body: JSON.stringify(validBody),
+    });
+    const res = await handleRequest(req, () => failingChain);
+
+    assertEquals(res.status, 502);
+    const json = await res.json();
+    assertEquals(json.error, "all narrator providers failed");
+    assertEquals(json.attempts.length, 2);
+    assertEquals(json.attempts[0].provider, "gemini");
+    assertEquals(json.attempts[1].provider, "groq");
+  },
+);
+
 Deno.test("isNarratorRequest accepts a well-formed request", () => {
   assertEquals(isNarratorRequest(validBody), true);
 });

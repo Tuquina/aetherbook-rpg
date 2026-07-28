@@ -292,7 +292,8 @@ void main() {
       expect(capturedBody!['avoidedThemes'], isEmpty);
     });
 
-    test('throws NarratorHttpException on a non-200 response', () async {
+    test('throws NarratorHttpException on a non-200 response; attemptCount '
+        'stays null when the body carries no attempts array', () async {
       final client = MockClient((request) async {
         return http.Response('{"error":"boom"}', 502);
       });
@@ -311,12 +312,63 @@ void main() {
           resolution: null,
         )),
         throwsA(
-          isA<NarratorHttpException>().having(
-            (e) => e.statusCode,
-            'statusCode',
-            502,
-          ),
+          isA<NarratorHttpException>()
+              .having((e) => e.statusCode, 'statusCode', 502)
+              .having((e) => e.attemptCount, 'attemptCount', isNull),
         ),
+      );
+    });
+
+    test('surfaces the provider attempt count from a 502 "all providers '
+        'failed" body (V2 Stage 7)', () async {
+      final client = MockClient((request) async {
+        return http.Response(
+          '{"error":"all narrator providers failed","attempts":'
+          '[{"provider":"gemini","error":"quota exceeded"},'
+          '{"provider":"groq","error":"also down"}]}',
+          502,
+        );
+      });
+
+      final adapter = HttpNarratorAdapter(
+        endpoint: endpoint,
+        publishableKey: 'pub-key',
+        client: client,
+      );
+
+      expect(
+        () => adapter.narrate(NarratorRequest(
+          world: _world,
+          character: _character,
+          playerAction: 'x',
+          resolution: null,
+        )),
+        throwsA(isA<NarratorHttpException>()
+            .having((e) => e.attemptCount, 'attemptCount', 2)),
+      );
+    });
+
+    test('attemptCount stays null when the error body is not valid JSON',
+        () async {
+      final client = MockClient((request) async {
+        return http.Response('not json at all', 502);
+      });
+
+      final adapter = HttpNarratorAdapter(
+        endpoint: endpoint,
+        publishableKey: 'pub-key',
+        client: client,
+      );
+
+      expect(
+        () => adapter.narrate(NarratorRequest(
+          world: _world,
+          character: _character,
+          playerAction: 'x',
+          resolution: null,
+        )),
+        throwsA(isA<NarratorHttpException>()
+            .having((e) => e.attemptCount, 'attemptCount', isNull)),
       );
     });
 

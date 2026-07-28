@@ -15,11 +15,21 @@ import 'narrator_json_parser.dart';
 /// Thrown when the call to the narrator Edge Function itself fails: network
 /// error, timeout, or a non-2xx response. Distinct from [NarratorParseException],
 /// which is about the narrator's *content* being malformed.
-class NarratorHttpException implements Exception {
-  NarratorHttpException(this.message, {this.statusCode});
+class NarratorHttpException implements Exception, NarratorAttemptInfo {
+  NarratorHttpException(this.message, {this.statusCode, this.attemptCount});
 
   final String message;
   final int? statusCode;
+
+  /// How many providers the Edge Function actually tried before giving up
+  /// (V2 Stage 7's "narrator retry-count surfaced") — parsed from the 502
+  /// body's `attempts` array (`index.ts`'s `AllNarratorProvidersFailedError`
+  /// branch). `null` for any other failure shape: a plain network error, a
+  /// non-502 status, or a 502 body that doesn't carry that field (never
+  /// crashes on an unexpected shape, same tolerant-parsing posture as
+  /// `narrator_json_parser.dart`).
+  @override
+  final int? attemptCount;
 
   @override
   String toString() => 'NarratorHttpException: $message';
@@ -72,10 +82,23 @@ class HttpNarratorAdapter implements NarratorPort {
       throw NarratorHttpException(
         'Edge Function responded ${response.statusCode}: ${response.body}',
         statusCode: response.statusCode,
+        attemptCount: _attemptCountFrom(response.body),
       );
     }
 
     return parseNarratorJson(response.body);
+  }
+
+  int? _attemptCountFrom(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map && decoded['attempts'] is List) {
+        return (decoded['attempts'] as List).length;
+      }
+    } catch (_) {
+      // Not JSON, or not the shape we expect -- no attempt count to show.
+    }
+    return null;
   }
 
   Map<String, Object?> _requestBody(NarratorRequest request) {

@@ -745,19 +745,30 @@ class _SceneImageShimmerState extends State<_SceneImageShimmer>
 /// committed (see `GameController._resolveTurn`'s catch block), so this
 /// always shows a fixed, reassuring message rather than the raw exception
 /// text `controller.error` carries, which is meant for logs/debugging, not
-/// the player. No attempt counter or auto-retry countdown: the mockup shows
-/// one, but nothing in the client or the narrator Edge Function tracks
-/// attempts today, and inventing that machinery just for this panel would
-/// be scope well beyond a visual pass — "Reintentar" simply re-runs the
-/// exact same last action on tap.
+/// the player. [attemptCount] (V2 Stage 7) surfaces how many distinct
+/// providers the Edge Function actually tried before giving up — real data
+/// parsed off the wire (`NarratorHttpException.attemptCount`), not the
+/// mockup's live auto-retry countdown ("Intento 2 de 3 · reintentando en
+/// 8 s"): by the time this panel shows, every configured provider has
+/// already failed, so there's no in-progress countdown to display honestly
+/// — "Reintentar" simply re-runs the exact same last action on tap, same as
+/// before. `null` whenever the failure carries no such detail (a plain
+/// network error, or a curated world's own resolution error, which never
+/// touches the narrator at all) — the line is omitted entirely then.
 class _NarratorErrorPanel extends StatelessWidget {
-  const _NarratorErrorPanel({required this.onRetry, required this.onChooseAgain});
+  const _NarratorErrorPanel({
+    required this.onRetry,
+    required this.onChooseAgain,
+    this.attemptCount,
+  });
 
   final VoidCallback onRetry;
   final VoidCallback onChooseAgain;
+  final int? attemptCount;
 
   @override
   Widget build(BuildContext context) {
+    final count = attemptCount;
     return Container(
       padding: const EdgeInsets.all(AetherSpace.lg),
       decoration: BoxDecoration(
@@ -783,6 +794,15 @@ class _NarratorErrorPanel extends StatelessWidget {
             'contestar; puede ser la conexión.',
             style: AetherType.body,
           ),
+          if (count != null) ...[
+            const SizedBox(height: AetherSpace.sm),
+            Text(
+              count == 1
+                  ? 'Lo intentamos una vez, sin éxito.'
+                  : 'Lo intentamos $count veces, con fuentes distintas, sin éxito.',
+              style: AetherType.caption.copyWith(color: AetherColors.parchmentDim),
+            ),
+          ],
           const SizedBox(height: AetherSpace.lg),
           Row(
             children: [
@@ -1243,6 +1263,7 @@ class _ChoicesBar extends StatelessWidget {
                   ? _NarratorErrorPanel(
                       onRetry: controller.retryLastAction,
                       onChooseAgain: controller.clearError,
+                      attemptCount: controller.narratorAttemptCount,
                     )
                   : atEpilogue
                   ? _EndOfStory(

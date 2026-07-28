@@ -80,6 +80,31 @@ class _FakeWorldRepository implements WorldRepositoryPort {
   Future<World> loadWorld(String slug) async => world;
 }
 
+/// Same as [_FakeGameStateRepository] but `saveTurnImage`/`saveCharacterAvatar`
+/// throw — simulates a network/RLS failure while persisting a "nice to have"
+/// image (V2 Stage 7: re-verifying image-failure-never-blocks after all the
+/// UI changes). Both calls happen inside a fire-and-forget `unawaited(...)`
+/// future, detached from `_resolveTurn`'s own try/catch, so nothing upstream
+/// would catch an unguarded throw here.
+class _ImageSaveThrowsRepository extends _FakeGameStateRepository {
+  @override
+  Future<void> saveTurnImage({
+    required String sessionId,
+    required int turnIndex,
+    required String imageUrl,
+  }) async {
+    throw Exception('simulated network failure saving the scene image');
+  }
+
+  @override
+  Future<void> saveCharacterAvatar({
+    required String sessionId,
+    required String avatarUrl,
+  }) async {
+    throw Exception('simulated network failure saving the avatar');
+  }
+}
+
 /// In-memory fake of the persistence port — records every call so tests can
 /// assert on it, without touching Supabase.
 class _FakeGameStateRepository implements GameStateRepositoryPort {
@@ -944,6 +969,29 @@ void main() {
         expect(controller.imageLoading, isFalse);
         expect(imageGenerator.prompts, isEmpty);
       });
+
+      test('a persistence failure while saving the scene image never '
+          'surfaces to the player — the image still shows in memory (V2 '
+          'Stage 7)', () async {
+        final persistence = _ImageSaveThrowsRepository();
+        final imageGenerator = _CapturingImageGenerator();
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          persistence: persistence,
+          imageGenerator: imageGenerator,
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('xianxia');
+        await controller.choose('Meditar');
+        await Future<void>.delayed(Duration.zero);
+
+        // The image still shows -- only persisting it silently failed.
+        expect(controller.imageUrl, 'https://cdn.example/scene.jpg');
+        expect(controller.imageLoading, isFalse);
+        expect(controller.error, isNull);
+      });
     });
 
     group('character portrait (V2 §4c)', () {
@@ -1054,6 +1102,28 @@ void main() {
 
         expect(controller.avatarLoading, isFalse);
         expect(controller.character!.avatarUrl, isNull);
+      });
+
+      test('a persistence failure while saving the avatar never surfaces to '
+          'the player — the portrait still shows in memory (V2 Stage 7)',
+          () async {
+        final persistence = _ImageSaveThrowsRepository();
+        final imageGenerator = _CapturingImageGenerator();
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          persistence: persistence,
+          imageGenerator: imageGenerator,
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('xianxia');
+        await Future<void>.delayed(Duration.zero);
+
+        // The portrait still shows -- only persisting it silently failed.
+        expect(controller.avatarLoading, isFalse);
+        expect(controller.character!.avatarUrl, 'https://cdn.example/scene.jpg');
+        expect(controller.error, isNull);
       });
     });
   });

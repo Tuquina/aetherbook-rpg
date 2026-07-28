@@ -1,6 +1,7 @@
 // V2 design prototype §1b: the narrator-error retry panel and the
 // "final descubierto" interstitial before the epilogue. Neither had a
 // widget test before this file.
+import 'package:aetherbook/adapters/narrator/http_narrator_adapter.dart';
 import 'package:aetherbook/app/game_controller.dart';
 import 'package:aetherbook/app/game_screen.dart';
 import 'package:aetherbook/core/engine/dice.dart';
@@ -27,6 +28,34 @@ class _FlakyNarrator implements NarratorPort {
     calls++;
     if (calls == 1) {
       throw Exception('simulated narrator outage');
+    }
+    return const NarratorResponse(
+      narration: 'El camino se aclara.',
+      tone: 'sereno',
+      suggestedChoices: [],
+      stateDeltas: [],
+      imagePrompt: '',
+    );
+  }
+}
+
+/// Throws a [NarratorHttpException] carrying a real `attemptCount`, once —
+/// exercises `_NarratorErrorPanel`'s Stage-7 attempt-count line without a
+/// real network call, mirroring `_FlakyNarrator` but with the specific
+/// exception shape the Edge Function's 502 "all providers failed" body
+/// produces.
+class _AllProvidersFailedNarrator implements NarratorPort {
+  int calls = 0;
+
+  @override
+  Future<NarratorResponse> narrate(NarratorRequest request) async {
+    calls++;
+    if (calls == 1) {
+      throw NarratorHttpException(
+        'Edge Function responded 502: all narrator providers failed',
+        statusCode: 502,
+        attemptCount: 2,
+      );
     }
     return const NarratorResponse(
       narration: 'El camino se aclara.',
@@ -161,6 +190,10 @@ void main() {
     expect(find.text('EL NARRADOR NO RESPONDE'), findsOneWidget);
     expect(find.text('Reintentar'), findsOneWidget);
     expect(narrator.calls, 1);
+    // A plain exception (not NarratorHttpException) carries no attempt
+    // detail (V2 Stage 7) -- no attempt-count line should render.
+    expect(controller.narratorAttemptCount, isNull);
+    expect(find.textContaining('Lo intentamos'), findsNothing);
 
     await tester.tap(find.text('Reintentar'));
     await tester.pump();
@@ -169,6 +202,35 @@ void main() {
     expect(narrator.calls, 2);
     expect(controller.error, isNull);
     expect(find.text('EL NARRADOR NO RESPONDE'), findsNothing);
+    expect(find.textContaining('El camino se aclara.'), findsOneWidget);
+  });
+
+  testWidgets(
+      'a 502 "all providers failed" response shows how many were tried '
+      '(V2 Stage 7)', (tester) async {
+    final narrator = _AllProvidersFailedNarrator();
+    final controller = GameController(
+      worldRepository: _FakeWorldRepository(_freeformWorld()),
+      narrator: narrator,
+      dice: const FixedDice(10),
+    );
+
+    await _pumpMobile(tester, controller, 'error_test');
+
+    await tester.tap(find.text('Avanzar'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('EL NARRADOR NO RESPONDE'), findsOneWidget);
+    expect(controller.narratorAttemptCount, 2);
+    expect(find.text('Lo intentamos 2 veces, con fuentes distintas, sin éxito.'),
+        findsOneWidget);
+
+    await tester.tap(find.text('Reintentar'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(controller.narratorAttemptCount, isNull);
     expect(find.textContaining('El camino se aclara.'), findsOneWidget);
   });
 

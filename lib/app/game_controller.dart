@@ -141,6 +141,13 @@ class GameController extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  /// How many distinct providers the narrator actually tried before giving
+  /// up on the turn currently failing (V2 Stage 7) — `null` whenever [_error]
+  /// is `null`, or when it's set but the underlying failure carries no such
+  /// detail (a plain network error, or a curated world's own resolution
+  /// error, which never touches [NarratorPort] at all).
+  int? _narratorAttemptCount;
+
   /// Replays whichever public method last attempted a turn (`choose`,
   /// `continueStory`, `chooseStoryChoice`/`chooseHubActivity`, `chooseEnding`)
   /// — set at the top of each, right where `_error` is cleared. Backs
@@ -200,6 +207,7 @@ class GameController extends ChangeNotifier {
   int get turnCount => _session?.turns.length ?? 0;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  int? get narratorAttemptCount => _narratorAttemptCount;
 
   /// Re-attempts whatever action last failed (V2 §1b's "Reintentar") — a
   /// no-op if nothing has been attempted yet or nothing is currently
@@ -215,6 +223,7 @@ class GameController extends ChangeNotifier {
   void clearError() {
     if (_error == null) return;
     _error = null;
+    _narratorAttemptCount = null;
     notifyListeners();
   }
   bool get isReady => _world != null && _session != null;
@@ -408,6 +417,7 @@ class GameController extends ChangeNotifier {
   }) async {
     _isLoading = true;
     _error = null;
+    _narratorAttemptCount = null;
     notifyListeners();
     try {
       final world = await _worldRepository.loadWorld(worldSlug);
@@ -661,6 +671,7 @@ class GameController extends ChangeNotifier {
 
     _isLoading = true;
     _error = null;
+    _narratorAttemptCount = null;
     _lastAction = () => choose(action);
     notifyListeners();
 
@@ -708,6 +719,7 @@ class GameController extends ChangeNotifier {
 
     _isLoading = true;
     _error = null;
+    _narratorAttemptCount = null;
     _lastAction = continueStory;
     notifyListeners();
 
@@ -771,6 +783,7 @@ class GameController extends ChangeNotifier {
 
     _isLoading = true;
     _error = null;
+    _narratorAttemptCount = null;
     _lastAction = () => chooseEnding(ending);
     notifyListeners();
 
@@ -868,6 +881,7 @@ class GameController extends ChangeNotifier {
 
     _isLoading = true;
     _error = null;
+    _narratorAttemptCount = null;
     _lastAction = () => _chooseOption(choice);
     notifyListeners();
 
@@ -1107,6 +1121,7 @@ class GameController extends ChangeNotifier {
       }
     } catch (e) {
       _error = world.aiRuntimeRequired ? 'El narrador falló: $e' : 'Error al resolver el turno: $e';
+      _narratorAttemptCount = e is NarratorAttemptInfo ? e.attemptCount : null;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -1144,11 +1159,21 @@ class GameController extends ChangeNotifier {
       _imageUrl = url;
       notifyListeners();
       if (sessionId != null) {
-        await _persistence?.saveTurnImage(
-          sessionId: sessionId,
-          turnIndex: turnIndex,
-          imageUrl: url,
-        );
+        // Persisting the image is itself "nice to have" (GDD §6): the image
+        // is already showing in memory, so a save failure here (network,
+        // RLS, whatever) must never surface to the player — same contract
+        // as `ImageGeneratorPort` never throwing. This call runs detached
+        // from `_resolveTurn`'s own try/catch (this whole method is fired
+        // via `unawaited`), so nothing upstream would catch it otherwise.
+        try {
+          await _persistence?.saveTurnImage(
+            sessionId: sessionId,
+            turnIndex: turnIndex,
+            imageUrl: url,
+          );
+        } catch (_) {
+          // Swallowed on purpose -- see comment above.
+        }
       }
     } else {
       notifyListeners();
@@ -1195,7 +1220,16 @@ class GameController extends ChangeNotifier {
     }
     notifyListeners();
     if (sessionId != null) {
-      await _persistence?.saveCharacterAvatar(sessionId: sessionId, avatarUrl: url);
+      // Same "never surfaces to the player" contract as
+      // `_generateImageForTurn`'s save above -- the portrait is already
+      // showing in memory, so a persistence failure here is swallowed, not
+      // propagated (this method also runs detached, via `unawaited`, from
+      // whatever called it).
+      try {
+        await _persistence?.saveCharacterAvatar(sessionId: sessionId, avatarUrl: url);
+      } catch (_) {
+        // Swallowed on purpose -- see comment above.
+      }
     }
   }
 
