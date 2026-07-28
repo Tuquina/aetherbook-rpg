@@ -231,6 +231,35 @@ void main() {
       final world = World.fromJson(baseWorldJson());
       expect(() => world.techniqueById('no_existe'), throwsArgumentError);
     });
+
+    test('parses places and terms for the Códice glossary (V2 §1a)', () {
+      final json = baseWorldJson()
+        ..['places'] = [
+          {
+            'id': 'casa_de_tinta',
+            'display_name': 'La Casa de Tinta',
+            'description': 'Un taller de caligrafía reconvertido en refugio.',
+          },
+        ]
+        ..['terms'] = [
+          {
+            'id': 'ledger_debt',
+            'display_name': 'Deuda del registro',
+            'description': 'Lo que le debes al mundo por manipular su memoria.',
+          },
+        ];
+      final world = World.fromJson(json);
+      expect(world.places, hasLength(1));
+      expect(world.places.single.displayName, 'La Casa de Tinta');
+      expect(world.terms, hasLength(1));
+      expect(world.terms.single.displayName, 'Deuda del registro');
+    });
+
+    test('places and terms default to empty when undeclared', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(world.places, isEmpty);
+      expect(world.terms, isEmpty);
+    });
   });
 
   group('World opponents', () {

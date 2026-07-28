@@ -28,6 +28,13 @@ sealed class StoryNode {
 
   final String id;
 
+  /// Ids (prefixed `lugar:`/`termino:`, matching `World.places`/`World.terms`)
+  /// revealed to the player on arrival at this node — the Códice's per-story
+  /// glossary (V2 §1a) marks them discovered the same turn the graph advances
+  /// here (`GameController._resolveTurn`). Curated-only, purely additive:
+  /// never proposed by the narrator, never gates anything else.
+  List<String> get codexReveals;
+
   factory StoryNode.fromJson(String id, Map<String, dynamic> json) {
     final type = json['type'] as String? ?? 'fixed_anchor';
     return switch (type) {
@@ -51,6 +58,7 @@ final class FixedAnchorNode extends StoryNode {
     this.forbiddenReveals = const [],
     this.extendedConflict,
     this.conditionalInserts = const [],
+    this.codexReveals = const [],
   });
 
   final String narration;
@@ -61,6 +69,9 @@ final class FixedAnchorNode extends StoryNode {
 
   /// Facts the narrator must never reveal here yet (§19.1 `forbidden_reveals`).
   final List<String> forbiddenReveals;
+
+  @override
+  final List<String> codexReveals;
 
   /// When set, this set-piece resolves as an extended conflict (§6.12) —
   /// e.g. "Coro en el campanario" — instead of a single check.
@@ -98,6 +109,7 @@ final class FixedAnchorNode extends StoryNode {
               (json['extended_conflict'] as Map).cast<String, dynamic>())
           : null,
       conditionalInserts: _insertsFromJson(json['conditional_inserts']),
+      codexReveals: _stringList(json['codex_reveals']),
     );
   }
 }
@@ -140,6 +152,7 @@ final class BoundedCorridorNode extends StoryNode {
     this.allowedObstacles = const [],
     this.forbiddenReveals = const [],
     this.choices = const [],
+    this.codexReveals = const [],
   });
 
   /// The single objective the AI is allowed to pursue here.
@@ -156,6 +169,9 @@ final class BoundedCorridorNode extends StoryNode {
   final List<String> allowedNpcs;
   final List<String> allowedObstacles;
   final List<String> forbiddenReveals;
+
+  @override
+  final List<String> codexReveals;
 
   /// Explicit exits out of the corridor before the turn budget is spent
   /// (e.g. choosing one of several access routes).
@@ -181,6 +197,7 @@ final class BoundedCorridorNode extends StoryNode {
       allowedObstacles: _stringList(json['allowed_obstacles']),
       forbiddenReveals: _stringList(json['forbidden_reveals']),
       choices: _choicesFromJson(json['choices']),
+      codexReveals: _stringList(json['codex_reveals']),
     );
   }
 }
@@ -193,12 +210,16 @@ final class StateHubNode extends StoryNode {
     required super.id,
     this.activities = const [],
     this.exits = const [],
+    this.codexReveals = const [],
   });
 
   final List<HubActivity> activities;
 
   /// Choices that leave the hub and advance the graph.
   final List<StoryChoice> exits;
+
+  @override
+  final List<String> codexReveals;
 
   List<HubActivity> availableActivities(Character character) => [
         for (final activity in activities)
@@ -218,6 +239,7 @@ final class StateHubNode extends StoryNode {
           HubActivity.fromJson((a as Map).cast<String, dynamic>()),
       ],
       exits: _choicesFromJson(json['exits']),
+      codexReveals: _stringList(json['codex_reveals']),
     );
   }
 }
@@ -233,6 +255,7 @@ final class ResolutionNode extends StoryNode {
     this.epilogueBeats = const [],
     this.finalTechniqueRules = const [],
     this.epilogueNodeId,
+    this.codexReveals = const [],
   });
 
   /// The scene's own scene-setting prose, shown once on arrival alongside
@@ -259,6 +282,9 @@ final class ResolutionNode extends StoryNode {
   /// nowhere further to go).
   final String? epilogueNodeId;
 
+  @override
+  final List<String> codexReveals;
+
   /// Endings whose hard requirement is currently satisfied. Soft
   /// requirements only affect [Ending.difficultyFor], never availability.
   List<Ending> availableEndings(Character character) => [
@@ -283,6 +309,7 @@ final class ResolutionNode extends StoryNode {
           FinalTechniqueRule.fromJson((r as Map).cast<String, dynamic>()),
       ],
       epilogueNodeId: json['epilogue_node_id'] as String?,
+      codexReveals: _stringList(json['codex_reveals']),
     );
   }
 }

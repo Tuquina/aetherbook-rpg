@@ -305,8 +305,8 @@ class _GameScreenState extends State<GameScreen> {
                                   StatusBar(
                                     world: c.world!,
                                     character: c.character!,
-                                    onOpenCodex: () =>
-                                        Navigator.of(context).push(CodexScreen.route()),
+                                    onOpenCodex: () => Navigator.of(context).push(
+                                        CodexScreen.route(world: c.world!, character: c.character!)),
                                     onOpenInventory: () => showInventorySheet(context,
                                         world: c.world!, character: c.character!),
                                     onOpenCharacterSheet: () => showCharacterSheet(context,
@@ -541,7 +541,8 @@ class _SplitView extends StatelessWidget {
               StatusBar(
                 world: controller.world!,
                 character: controller.character!,
-                onOpenCodex: () => Navigator.of(context).push(CodexScreen.route()),
+                onOpenCodex: () => Navigator.of(context).push(CodexScreen.route(
+                    world: controller.world!, character: controller.character!)),
                 onOpenInventory: () => showInventorySheet(context,
                     world: controller.world!, character: controller.character!),
                 onOpenCharacterSheet: () => showCharacterSheet(context,

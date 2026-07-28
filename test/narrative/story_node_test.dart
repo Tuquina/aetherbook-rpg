@@ -57,6 +57,7 @@ void main() {
         'narration': 'El sendero se abre.',
         'fixed_reveals': ['Siete personas ya fueron borradas.'],
         'forbidden_reveals': ['El ritual original distribuía recuerdos.'],
+        'codex_reveals': ['lugar:campanario', 'termino:coro'],
         'choices': [
           {
             'label': 'Ir al templo',
@@ -73,8 +74,14 @@ void main() {
       expect(anchor.narration, 'El sendero se abre.');
       expect(anchor.fixedReveals, ['Siete personas ya fueron borradas.']);
       expect(anchor.forbiddenReveals, ['El ritual original distribuía recuerdos.']);
+      expect(anchor.codexReveals, ['lugar:campanario', 'termino:coro']);
       expect(anchor.choices.single.targetNodeId, 'beat_2');
       expect(anchor.choices.single.effects.single.type, StateDeltaType.flag);
+    });
+
+    test('codexReveals defaults to empty when omitted', () {
+      final node = StoryNode.fromJson('beat_y', {'narration': 'y'}) as FixedAnchorNode;
+      expect(node.codexReveals, isEmpty);
     });
 
     test('StoryNode.fromJson defaults to fixed_anchor when type is omitted', () {
@@ -159,6 +166,7 @@ void main() {
         'allowed_npcs': ['Mei Ruo'],
         'allowed_obstacles': ['patrulla'],
         'forbidden_reveals': ['los siete cuerpos'],
+        'codex_reveals': ['persona:mei_ruo'],
       });
 
       expect(node, isA<BoundedCorridorNode>());
@@ -170,6 +178,7 @@ void main() {
       expect(corridor.allowedNpcs, ['Mei Ruo']);
       expect(corridor.allowedObstacles, ['patrulla']);
       expect(corridor.forbiddenReveals, ['los siete cuerpos']);
+      expect(corridor.codexReveals, ['persona:mei_ruo']);
     });
 
     test('isBudgetExhausted compares turns used against the budget', () {
@@ -218,6 +227,7 @@ void main() {
         'exits': [
           {'label': 'Ir al mercado', 'target': 'c1_n02_buscar_acceso'},
         ],
+        'codex_reveals': ['lugar:casa_de_tinta'],
       });
 
       expect(node, isA<StateHubNode>());
@@ -226,6 +236,7 @@ void main() {
       expect(hub.activities.first.repeatable, isTrue);
       expect(hub.activities.last.repeatable, isFalse);
       expect(hub.exits.single.targetNodeId, 'c1_n02_buscar_acceso');
+      expect(hub.codexReveals, ['lugar:casa_de_tinta']);
     });
 
     test('availableActivities and availableExits filter by gate', () {
@@ -308,18 +319,21 @@ void main() {
             'technique_id': 'nombre_que_devora_nombres',
           },
         ],
+        'codex_reveals': ['termino:ledger_debt'],
       }) as ResolutionNode;
 
       expect(node.epilogueBeats.single.movement, 'la_tablilla');
       expect(node.finalTechniqueRules.single.techniqueId, 'nombre_que_devora_nombres');
+      expect(node.codexReveals, ['termino:ledger_debt']);
     });
 
-    test('epilogueBeats and finalTechniqueRules default to empty', () {
+    test('epilogueBeats, finalTechniqueRules and codexReveals default to empty', () {
       final node =
           StoryNode.fromJson('c5_n03_ritual_final', {'type': 'resolution'})
               as ResolutionNode;
       expect(node.epilogueBeats, isEmpty);
       expect(node.finalTechniqueRules, isEmpty);
+      expect(node.codexReveals, isEmpty);
     });
   });
 }

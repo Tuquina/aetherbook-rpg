@@ -1,9 +1,50 @@
 // V2 §3b/3c/3d: CodexScreen split into "Formas de jugar" (tappable rows into
 // a per-module deep dive) and "Reglas" (the general mechanics explainers
 // that used to be the whole screen). No test existed for this screen before.
+// V2 §1a: a third "Glosario" tab appears when world/character are supplied
+// (GameScreen's status-bar icon does this) -- the per-story lore glossary.
 import 'package:aetherbook/app/codex_screen.dart';
+import 'package:aetherbook/core/state/character.dart';
+import 'package:aetherbook/core/world/codex_place.dart';
+import 'package:aetherbook/core/world/codex_term.dart';
+import 'package:aetherbook/core/world/item_definition.dart';
+import 'package:aetherbook/core/world/npc.dart';
+import 'package:aetherbook/core/world/world.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+World _worldWithGlossary() => World(
+      slug: 'glossary_test',
+      name: 'Mundo de prueba',
+      theme: 'test',
+      tone: 'neutro',
+      systemPrompt: '',
+      imageStyleSuffix: '',
+      defaultDifficulty: 12,
+      criticalMargin: 5,
+      primaryAttribute: 'voluntad',
+      places: const [
+        CodexPlace(id: 'casa_de_tinta', displayName: 'La Casa de Tinta', description: 'Un refugio.'),
+      ],
+      npcs: const [
+        Npc(id: 'huo_zhen', displayName: 'Huo Zhen', description: 'Un maestro retirado.'),
+      ],
+      items: const [
+        ItemDefinition(id: 'llave', displayName: 'Llave torcida', description: 'Abre otra puerta.'),
+      ],
+      terms: const [
+        CodexTerm(id: 'qi', displayName: 'Qi', description: 'La energía vital del mundo.'),
+      ],
+      startingCharacter: const Character(
+        name: 'Protagonista',
+        level: 1,
+        exp: 0,
+        attributes: {'voluntad': 1},
+        resources: {},
+      ),
+      seedNarration: '',
+      seedChoices: const [],
+    );
 
 void main() {
   Future<void> pumpCodex(WidgetTester tester) async {
@@ -67,5 +108,47 @@ void main() {
     await tester.tap(find.text('Crea tu propia historia'));
     await tester.pumpAndSettle();
     expect(find.text('Elegís género, no guion'), findsOneWidget);
+  });
+
+  testWidgets('without world/character, there is no "Glosario" tab',
+      (tester) async {
+    await pumpCodex(tester);
+    expect(find.text('Glosario'), findsNothing);
+  });
+
+  testWidgets('with world/character, "Glosario" shows discovered entries in '
+      'full and undiscovered ones locked, with a running count',
+      (tester) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    final world = _worldWithGlossary();
+    // Only the NPC has been "discovered" (a relationship entry exists) --
+    // the place, the item and the term have no such signal yet.
+    const character = Character(
+      name: 'Protagonista',
+      level: 1,
+      exp: 0,
+      attributes: {'voluntad': 1},
+      resources: {},
+      relationships: {'huo_zhen': 1},
+    );
+    await tester.pumpWidget(MaterialApp(
+        home: CodexScreen(world: world, character: character)));
+    await tester.pump();
+
+    await tester.tap(find.text('Glosario'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 de 4 entradas'), findsOneWidget);
+    expect(find.text('Huo Zhen'), findsOneWidget); // discovered: full name + description
+    expect(find.text('Un maestro retirado.'), findsOneWidget);
+    expect(find.text('???'), findsNWidgets(3)); // lugar/objeto/término, all locked
+    expect(find.text('La Casa de Tinta'), findsNothing);
+
+    await tester.tap(find.text('Personas'));
+    await tester.pumpAndSettle();
+    expect(find.text('Huo Zhen'), findsOneWidget);
+    expect(find.text('???'), findsNothing);
   });
 }

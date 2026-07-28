@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/state/character.dart';
+import '../core/world/world.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'widgets/atmosphere.dart';
@@ -7,22 +9,35 @@ import 'world_select_screen.dart'
     show StoryModule, StoryModuleInfo, storyModuleStyle;
 
 /// The Codex — how the game works (GDD §9: rules always within reach). Split
-/// into two tabs (V2 design prototype §3b/3c/3d, "particionado por modo"):
+/// into tabs (V2 design prototype §3b/3c/3d, "particionado por modo"):
 /// "Formas de jugar" leads into a rich per-module explainer
 /// ([_ModeDetailScreen]) instead of the flat one-line-per-module list this
 /// screen used to show inline; "Reglas" keeps the general mechanics
 /// explainers (Fate Rolls, progression, resources, etc.) that apply
 /// regardless of which module a story belongs to.
+///
+/// When opened from *inside* an active story ([world]/[character] both
+/// non-null — `GameScreen`'s status-bar icon does this; every other call
+/// site keeps pushing this screen with neither), a third "Glosario" tab
+/// appears: the per-story lore glossary (V2 §1a's "Lugares"/"Personas"/
+/// "Objetos"/"Términos" chips), filterable and gated by discovery.
 class CodexScreen extends StatelessWidget {
-  const CodexScreen({super.key});
+  const CodexScreen({super.key, this.world, this.character});
 
-  static Route<void> route() =>
-      MaterialPageRoute(builder: (_) => const CodexScreen());
+  final World? world;
+  final Character? character;
+
+  static Route<void> route({World? world, Character? character}) =>
+      MaterialPageRoute(
+          builder: (_) => CodexScreen(world: world, character: character));
 
   @override
   Widget build(BuildContext context) {
+    final world = this.world;
+    final character = this.character;
+    final hasGlossary = world != null && character != null;
     return DefaultTabController(
-      length: 2,
+      length: hasGlossary ? 3 : 2,
       child: Scaffold(
         body: AetherBackground(
           particles: false,
@@ -33,19 +48,25 @@ class CodexScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _header(context),
-                    const TabBar(
+                    TabBar(
                       labelColor: AetherColors.goldBright,
                       unselectedLabelColor: AetherColors.parchmentDim,
                       indicatorColor: AetherColors.gold,
                       labelStyle: AetherType.label,
                       tabs: [
-                        Tab(text: 'Formas de jugar'),
-                        Tab(text: 'Reglas'),
+                        const Tab(text: 'Formas de jugar'),
+                        const Tab(text: 'Reglas'),
+                        if (hasGlossary) const Tab(text: 'Glosario'),
                       ],
                     ),
-                    const Expanded(
+                    Expanded(
                       child: TabBarView(
-                        children: [_ModesTab(), _RulesTab()],
+                        children: [
+                          const _ModesTab(),
+                          const _RulesTab(),
+                          if (hasGlossary)
+                            _GlossaryTab(world: world, character: character),
+                        ],
                       ),
                     ),
                   ],
@@ -262,6 +283,246 @@ class _RulesTab extends StatelessWidget {
               'según en qué gastas.',
         ),
       ],
+    );
+  }
+}
+
+enum _GlossaryCategory { lugar, persona, objeto, termino }
+
+extension on _GlossaryCategory {
+  String get label => switch (this) {
+        _GlossaryCategory.lugar => 'Lugares',
+        _GlossaryCategory.persona => 'Personas',
+        _GlossaryCategory.objeto => 'Objetos',
+        _GlossaryCategory.termino => 'Términos',
+      };
+
+  String get singularLabel => switch (this) {
+        _GlossaryCategory.lugar => 'Lugar',
+        _GlossaryCategory.persona => 'Persona',
+        _GlossaryCategory.objeto => 'Objeto',
+        _GlossaryCategory.termino => 'Término',
+      };
+}
+
+/// One glossary row — a place, person, object or term the current story
+/// knows about. [discovered] gates whether [description] is actually shown
+/// (V2 §1a: undiscovered entries appear locked, by name only, so the
+/// running "X de Y" count means something).
+class _GlossaryEntry {
+  const _GlossaryEntry({
+    required this.category,
+    required this.name,
+    required this.description,
+    required this.discovered,
+  });
+
+  final _GlossaryCategory category;
+  final String name;
+  final String description;
+  final bool discovered;
+}
+
+/// Builds the full per-story glossary from [world]'s declarative content,
+/// reading discovery off [character] via whichever signal already fits each
+/// category — no new tracking needed for personas/objetos, since a
+/// relationship or an inventory entry already *is* proof of discovery:
+/// - **Personas**: `character.relationships` already has an entry the first
+///   time a relationship delta ever touches that NPC.
+/// - **Objetos**: `character.list('inventory')` already contains the id the
+///   first time it's granted.
+/// - **Lugares**/**Términos**: no existing signal — these ride the new
+///   `codex_discovered_<id>` flags `GameController._resolveTurn` sets from a
+///   node's `codexReveals` (`core/narrative/story_node.dart`).
+List<_GlossaryEntry> _buildGlossary(World world, Character character) {
+  return [
+    for (final place in world.places)
+      _GlossaryEntry(
+        category: _GlossaryCategory.lugar,
+        name: place.displayName,
+        description: place.description,
+        discovered: character.flag('codex_discovered_lugar:${place.id}'),
+      ),
+    for (final npc in world.npcs)
+      _GlossaryEntry(
+        category: _GlossaryCategory.persona,
+        name: npc.displayName,
+        description: npc.description,
+        discovered: character.relationships.containsKey(npc.id),
+      ),
+    for (final item in world.items)
+      _GlossaryEntry(
+        category: _GlossaryCategory.objeto,
+        name: item.displayName,
+        description: item.description,
+        discovered: character.list('inventory').contains(item.id),
+      ),
+    for (final term in world.terms)
+      _GlossaryEntry(
+        category: _GlossaryCategory.termino,
+        name: term.displayName,
+        description: term.description,
+        discovered: character.flag('codex_discovered_termino:${term.id}'),
+      ),
+  ];
+}
+
+/// The per-story lore glossary (V2 §1a) — filter chips per category, a
+/// running "X de Y entradas" count, and a list where undiscovered entries
+/// show only their name (locked) instead of their description.
+class _GlossaryTab extends StatefulWidget {
+  const _GlossaryTab({required this.world, required this.character});
+
+  final World world;
+  final Character character;
+
+  @override
+  State<_GlossaryTab> createState() => _GlossaryTabState();
+}
+
+class _GlossaryTabState extends State<_GlossaryTab> {
+  _GlossaryCategory? _filter;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = _buildGlossary(widget.world, widget.character);
+    final discoveredCount = entries.where((e) => e.discovered).length;
+    final filtered = [
+      for (final entry in entries)
+        if (_filter == null || entry.category == _filter) entry,
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+              AetherSpace.lg, AetherSpace.md, AetherSpace.lg, 0),
+          child: Text('$discoveredCount de ${entries.length} entradas',
+              style: AetherType.overline.copyWith(color: AetherColors.parchmentFaint)),
+        ),
+        const SizedBox(height: AetherSpace.sm),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AetherSpace.lg),
+          child: Wrap(
+            spacing: AetherSpace.sm,
+            runSpacing: AetherSpace.sm,
+            children: [
+              _CategoryChip(
+                label: 'Todas',
+                selected: _filter == null,
+                onTap: () => setState(() => _filter = null),
+              ),
+              for (final category in _GlossaryCategory.values)
+                _CategoryChip(
+                  label: category.label,
+                  selected: _filter == category,
+                  onTap: () => setState(() => _filter = category),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AetherSpace.sm),
+        Expanded(
+          child: filtered.isEmpty
+              ? Center(
+                  child: Text('Todavía no hay nada acá.',
+                      style: AetherType.body.copyWith(color: AetherColors.parchmentDim)),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(
+                      AetherSpace.lg, 0, AetherSpace.lg, AetherSpace.huge),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, i) => _GlossaryRow(entry: filtered[i]),
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  const _CategoryChip({required this.label, required this.selected, required this.onTap});
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: AetherSpace.md, vertical: AetherSpace.sm),
+        decoration: BoxDecoration(
+          color: selected ? AetherColors.gold.withValues(alpha: 0.16) : null,
+          border: Border.all(
+            color: selected ? AetherColors.gold.withValues(alpha: 0.5) : AetherColors.hairline,
+          ),
+          borderRadius: AetherRadius.allPill,
+        ),
+        child: Text(
+          label,
+          style: AetherType.label.copyWith(
+            fontSize: 12,
+            color: selected ? AetherColors.goldBright : AetherColors.parchmentFaint,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GlossaryRow extends StatelessWidget {
+  const _GlossaryRow({required this.entry});
+
+  final _GlossaryEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: AetherSpace.sm),
+      padding: const EdgeInsets.all(AetherSpace.md),
+      decoration: BoxDecoration(
+        color: AetherColors.surface,
+        borderRadius: AetherRadius.allMd,
+        border: Border.all(color: AetherColors.hairline),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            entry.discovered ? Icons.auto_stories_rounded : Icons.lock_outline_rounded,
+            size: 17,
+            color: entry.discovered ? AetherColors.gold : AetherColors.parchmentFaint,
+          ),
+          const SizedBox(width: AetherSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry.category.singularLabel.toUpperCase(),
+                  style: AetherType.overline
+                      .copyWith(color: AetherColors.parchmentFaint, fontSize: 9),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  entry.discovered ? entry.name : '???',
+                  style: AetherType.title.copyWith(
+                    fontSize: 15,
+                    color: entry.discovered ? AetherColors.parchment : AetherColors.parchmentDim,
+                  ),
+                ),
+                if (entry.discovered && entry.description.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(entry.description, style: AetherType.body.copyWith(fontSize: 13.5)),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

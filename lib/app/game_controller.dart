@@ -943,7 +943,18 @@ class GameController extends ChangeNotifier {
       }
 
       final beforeLevel = session.character.level;
-      final candidateDeltas = [...curatedEffects, ...proposedDeltas];
+      // Resolved once, up front, so its `codexReveals` (Códice glossary
+      // discovery, V2 §1a) can ride through the same `_applyDeltas` call as
+      // everything else — curated-only, synthesized as ordinary `flag`
+      // deltas rather than a new delta type, since that's all discovery
+      // ever needs to be.
+      final nextNode =
+          nextNodeId != null ? world.storyGraph!.nodeById(nextNodeId) : null;
+      final codexDeltas = [
+        for (final id in nextNode?.codexReveals ?? const <String>[])
+          StateDelta(type: StateDeltaType.flag, key: 'codex_discovered_$id', value: true),
+      ];
+      final candidateDeltas = [...curatedEffects, ...proposedDeltas, ...codexDeltas];
       final application = _applyDeltas(session.character, candidateDeltas);
 
       final turn = Turn(
@@ -960,13 +971,13 @@ class GameController extends ChangeNotifier {
 
       var narrationToShow = narration;
       if (nextNodeId != null) {
-        final nextNode = world.storyGraph!.nodeById(nextNodeId);
+        final node = nextNode!;
         updatedSession = updatedSession.copyWith(
           currentNodeId: nextNodeId,
           clearExtendedConflictProgress: true,
-          corridorTurnsUsed: nextNode is BoundedCorridorNode ? 0 : updatedSession.corridorTurnsUsed,
+          corridorTurnsUsed: node is BoundedCorridorNode ? 0 : updatedSession.corridorTurnsUsed,
         );
-        final literal = _literalNarrationOf(nextNode, updatedSession.character);
+        final literal = _literalNarrationOf(node, updatedSession.character);
         if (literal != null) {
           narrationToShow =
               narrationToShow.isEmpty ? literal : '$narrationToShow\n\n$literal';
