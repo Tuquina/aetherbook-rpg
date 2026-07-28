@@ -364,6 +364,11 @@ class _DestinyWritingState extends State<DestinyWriting>
 
   @override
   Widget build(BuildContext context) {
+    // Respect the OS "reduce motion" preference (V2 Stage 8), same pattern
+    // as `AetherBackground`/`SplashScreen` -- this indicator pulses for as
+    // long as a turn is loading, which can be several seconds.
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+    if (reduceMotion && _c.isAnimating) _c.stop();
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
@@ -374,8 +379,9 @@ class _DestinyWritingState extends State<DestinyWriting>
             mainAxisSize: MainAxisSize.min,
             children: List.generate(3, (i) {
               final phase = (_c.value - i * 0.18) % 1.0;
-              final glow = (0.4 + 0.6 * (1 - (phase * 2 - 1).abs()))
-                  .clamp(0.0, 1.0);
+              final glow = reduceMotion
+                  ? 0.7
+                  : (0.4 + 0.6 * (1 - (phase * 2 - 1).abs())).clamp(0.0, 1.0);
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 3),
                 child: Container(

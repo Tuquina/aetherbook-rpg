@@ -119,4 +119,31 @@ void main() {
       expect(overlayPainterCount(tester), 1);
     });
   });
+
+  group('reduced motion (V2 Stage 8)', () {
+    testWidgets(
+        "AetherBackground's particle drift stops under disableAnimations "
+        '(otherwise a never-ending ticker keeps pumpAndSettle from ever '
+        'settling)', (tester) async {
+      await tester.pumpWidget(const MediaQuery(
+        data: MediaQueryData(disableAnimations: true),
+        child: MaterialApp(
+            home: AetherBackground(particles: true, child: SizedBox())),
+      ));
+
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets(
+        "DestinyWriting's pulsing dots stop under disableAnimations, "
+        'still showing a fixed glow (not invisible)', (tester) async {
+      await tester.pumpWidget(const MediaQuery(
+        data: MediaQueryData(disableAnimations: true),
+        child: MaterialApp(home: Scaffold(body: DestinyWriting())),
+      ));
+
+      await tester.pumpAndSettle();
+      expect(find.textContaining('El destino se escribe'), findsOneWidget);
+    });
+  });
 }

@@ -727,13 +727,17 @@ class _SceneImageShimmerState extends State<_SceneImageShimmer>
 
   @override
   Widget build(BuildContext context) {
+    // Respect the OS "reduce motion" preference (V2 Stage 8), same pattern
+    // as `AetherBackground`/`DestinyWriting`.
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+    if (reduceMotion && _controller.isAnimating) _controller.stop();
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) => ColoredBox(
         color: Color.lerp(
           AetherColors.surface,
           AetherColors.surfaceRaised,
-          _controller.value,
+          reduceMotion ? 0.5 : _controller.value,
         )!,
       ),
     );
