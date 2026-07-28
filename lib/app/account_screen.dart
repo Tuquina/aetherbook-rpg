@@ -6,6 +6,7 @@ import '../ports/auth_port.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'widgets/atmosphere.dart';
+import 'widgets/brand_mark.dart';
 
 /// Lets the player attach a durable identity (Google, or email+password) to
 /// their (until now anonymous) session. Reached from [SplashScreen]'s
@@ -206,8 +207,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     ),
                   ),
                   const SizedBox(height: AetherSpace.lg),
-                  const Icon(Icons.shield_moon_rounded,
-                      color: AetherColors.gold, size: 40),
+                  const BrandMark(size: 44),
                   const SizedBox(height: AetherSpace.lg),
                   if (alreadyLinked)
                     ..._linkedContent(widget.authPort.email!)

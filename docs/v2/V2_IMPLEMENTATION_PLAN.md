@@ -117,6 +117,39 @@ visually total but mechanically inert (no domain/persistence impact).
 
 **Risk:** low.
 
+**Follow-up closed (2026-07-27), the rest of §10a:** `V2_GAP_ANALYSIS.md`
+flagged `10a` as only "Partial" — the typography swap above was done, but
+the tome→symbol swap and the three explanatory lines it also calls for were
+not. Closed now, prompted by you noticing the splash screen still looked
+like the old one:
+- New `lib/app/widgets/brand_mark.dart` (`BrandMark`) — the hexagon-with-"A"
+  symbol (V2 prototype §7a/§10a/§10b), the one brand mark used everywhere
+  the app shows an identity from here on. Two treatments: an outlined
+  gradient-bordered version for the splash (`filled: false`, with a `glow`
+  parameter tied to the same shimmer clock the wordmark already used, so
+  reduce-motion silences both together) and a flat solid-gold version for
+  inline use elsewhere (`filled: true`).
+- `splash_screen.dart`: the old animated `_TomePainter` (removed entirely)
+  is replaced by `BrandMark`; three explanatory lines now sit between the
+  tagline and the button (escribes-lo-que-quieras / el-mundo-recuerda /
+  cinco-mundos); the button's icon moved from a leading book glyph to a
+  trailing arrow, matching the prototype exactly.
+- `account_screen.dart`: swapped its placeholder `Icons.shield_moon_rounded`
+  (never a real brand element) for the same `BrandMark` — the design's own
+  sync notes call for "el hexágono con la «A» como único logo en todas las
+  pantallas".
+
+**Deliberately not done in this pass:** the Google button on
+`account_screen.dart` still uses a generic Material `Icons.g_mobiledata_rounded`
+rather than Google's real 4-color "G" mark the prototype specifies as an
+inline SVG — transcribing that path by hand was judged not worth it next to
+just fixing the splash gap that was actually reported; flagging as a real,
+known small gap rather than silently leaving it unmentioned. Also not done:
+a distinct **web-only** layout for the splash (prototype §8a/8b) — today's
+`splash_screen.dart` is the same single-column layout at every width,
+bounded by `ConstrainedBox(maxWidth: 440)`; a real two-column web treatment
+would be new work, not a fix to what's here.
+
 ---
 
 ## Stage 2 — Story discovery and library

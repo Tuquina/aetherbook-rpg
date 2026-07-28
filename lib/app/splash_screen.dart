@@ -8,15 +8,21 @@ import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'game_controller.dart';
 import 'widgets/atmosphere.dart';
+import 'widgets/brand_mark.dart';
 import 'world_select_screen.dart';
 
-/// The entry screen: an animated tome, the wordmark, and the way in. A moment
+/// The entry screen: the brand symbol, the wordmark, and the way in. A moment
 /// of arrival before the world opens (GDD §9). Anonymous play happens
 /// transparently (CLAUDE.md-adjacent: no account required to start) — the
 /// account button opens [AccountScreen] to opt into attaching a durable
 /// email, so progress survives switching devices/browsers instead of
 /// staying tied to this one's local storage. "Comenzar" leads to
 /// [WorldSelectScreen], where the player picks which story to enter.
+///
+/// V2 (design prototype §10a): the old animated tome painter is replaced by
+/// [BrandMark] (the same symbol every other screen uses), and three short
+/// lines now say what this actually is before "Comenzar" — there was no such
+/// explanation before this.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key, required this.controller, this.auth});
 
@@ -90,15 +96,10 @@ class _SplashScreenState extends State<SplashScreen>
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            SizedBox(
-                              height: 170,
-                              child: AnimatedBuilder(
-                                animation: _c,
-                                builder: (context, _) => CustomPaint(
-                                  painter: _TomePainter(t: _c.value),
-                                  size: const Size(220, 170),
-                                ),
-                              ),
+                            AnimatedBuilder(
+                              animation: _c,
+                              builder: (context, _) =>
+                                  BrandMark(size: 66, filled: false, glow: _c.value),
                             ),
                             const SizedBox(height: AetherSpace.xl),
                             AnimatedBuilder(
@@ -117,6 +118,8 @@ class _SplashScreenState extends State<SplashScreen>
                                   fontStyle: FontStyle.italic),
                             ),
                             const SizedBox(height: AetherSpace.huge),
+                            const _ExplainerLines(),
+                            const SizedBox(height: AetherSpace.xl),
                             _PrimaryButton(label: 'Comenzar', onTap: _begin),
                             const SizedBox(height: AetherSpace.md),
                             if (widget.auth != null)
@@ -249,6 +252,48 @@ class _OrnamentDivider extends StatelessWidget {
   }
 }
 
+// ── Explainer lines ─────────────────────────────────────────────────────────
+
+/// Three short lines saying what this actually is (V2 prototype §10a) —
+/// there was no such explanation on the splash screen before. Grounded in
+/// what the app actually does: freeform action instead of A/B choices,
+/// long-memory continuity, and the 5-worlds-or-your-own breadth (CLAUDE.md §1).
+class _ExplainerLines extends StatelessWidget {
+  const _ExplainerLines();
+
+  static const _lines = [
+    (Icons.edit_note_rounded, 'Escribes lo que quieras hacer; no eliges entre A y B'),
+    (Icons.psychology_outlined, 'El mundo recuerda lo que hiciste hace veinte turnos'),
+    (Icons.public_rounded, 'Cinco mundos, o el que escribas tú'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final (icon, text) in _lines)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AetherSpace.sm),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(icon, size: 19, color: AetherColors.goldBright),
+                const SizedBox(width: AetherSpace.md),
+                Expanded(
+                  child: Text(
+                    text,
+                    style: AetherType.body.copyWith(fontSize: 13.5, height: 1.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 // ── Primary button ──────────────────────────────────────────────────────────
 
 class _PrimaryButton extends StatefulWidget {
@@ -287,9 +332,6 @@ class _PrimaryButtonState extends State<_PrimaryButton> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.auto_stories_rounded,
-                  color: AetherColors.void_, size: 19),
-              const SizedBox(width: AetherSpace.sm),
               Text(
                 widget.label,
                 textAlign: TextAlign.center,
@@ -300,6 +342,9 @@ class _PrimaryButtonState extends State<_PrimaryButton> {
                   letterSpacing: 0.5,
                 ),
               ),
+              const SizedBox(width: AetherSpace.sm),
+              const Icon(Icons.arrow_forward_rounded,
+                  color: AetherColors.void_, size: 19),
             ],
           ),
         ),
@@ -330,114 +375,3 @@ class _EntranceFade extends StatelessWidget {
   }
 }
 
-// ── The animated tome ───────────────────────────────────────────────────────
-
-/// Paints an open book seen slightly from above, with one page perpetually
-/// turning from the right leaf to the left, the whole thing floating.
-class _TomePainter extends CustomPainter {
-  _TomePainter({required this.t});
-
-  /// Global loop time 0..1.
-  final double t;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final float = math.sin(t * 2 * math.pi) * 5;
-    canvas.translate(0, float);
-
-    // Glow behind the book.
-    canvas.drawCircle(
-      Offset(cx, size.height * 0.55),
-      size.width * 0.42,
-      Paint()
-        ..color = AetherColors.gold.withValues(alpha: 0.10)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 28),
-    );
-
-    // Spine points.
-    final spineTop = Offset(cx, 26);
-    final spineBottom = Offset(cx, 118);
-
-    // Static leaves.
-    final leftOuterTop = Offset(cx - 88, 38);
-    final leftOuterBottom = Offset(cx - 80, 126);
-    final rightOuterTop = Offset(cx + 88, 38);
-    final rightOuterBottom = Offset(cx + 80, 126);
-
-    _leaf(canvas, [spineTop, leftOuterTop, leftOuterBottom, spineBottom],
-        lines: true, mirror: false, cx: cx);
-    _leaf(canvas, [spineTop, rightOuterTop, rightOuterBottom, spineBottom],
-        lines: true, mirror: true, cx: cx);
-
-    // Turning page: a page turn happens in the first ~40% of the loop.
-    final turn = (t / 0.4).clamp(0.0, 1.0);
-    if (turn > 0 && turn < 1) {
-      final lift = math.sin(turn * math.pi);
-      final outerTop = Offset.lerp(rightOuterTop, leftOuterTop, turn)!
-          .translate(0, -lift * 26);
-      final outerBottom = Offset.lerp(rightOuterBottom, leftOuterBottom, turn)!
-          .translate(0, -lift * 20);
-      final page = [spineTop, outerTop, outerBottom, spineBottom];
-
-      // Shade the lifting page a touch brighter, catching the light.
-      canvas.drawPath(
-        _pathOf(page),
-        Paint()..color = AetherColors.parchment.withValues(alpha: 0.10 + 0.10 * lift),
-      );
-      canvas.drawPath(
-        _pathOf(page),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.4
-          ..strokeJoin = StrokeJoin.round
-          ..color = AetherColors.goldBright.withValues(alpha: 0.9),
-      );
-    }
-
-    // The spine, drawn last so it sits on top.
-    canvas.drawLine(
-      spineTop,
-      spineBottom,
-      Paint()
-        ..strokeWidth = 2
-        ..color = AetherColors.gold.withValues(alpha: 0.9),
-    );
-  }
-
-  void _leaf(Canvas canvas, List<Offset> pts,
-      {required bool lines, required bool mirror, required double cx}) {
-    canvas.drawPath(
-        _pathOf(pts), Paint()..color = AetherColors.surface.withValues(alpha: 0.9));
-    canvas.drawPath(
-      _pathOf(pts),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.4
-        ..strokeJoin = StrokeJoin.round
-        ..color = AetherColors.gold.withValues(alpha: 0.7),
-    );
-    if (lines) {
-      final linePaint = Paint()
-        ..strokeWidth = 1
-        ..color = AetherColors.gold.withValues(alpha: 0.22);
-      for (var i = 0; i < 4; i++) {
-        final y = 52.0 + i * 15;
-        final innerX = cx + (mirror ? 10 : -10);
-        final outerX = cx + (mirror ? 66 : -66);
-        canvas.drawLine(Offset(innerX, y), Offset(outerX, y - 2), linePaint);
-      }
-    }
-  }
-
-  Path _pathOf(List<Offset> pts) {
-    final path = Path()..moveTo(pts.first.dx, pts.first.dy);
-    for (final p in pts.skip(1)) {
-      path.lineTo(p.dx, p.dy);
-    }
-    return path..close();
-  }
-
-  @override
-  bool shouldRepaint(_TomePainter oldDelegate) => oldDelegate.t != t;
-}
