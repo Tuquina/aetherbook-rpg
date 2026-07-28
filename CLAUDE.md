@@ -197,3 +197,26 @@ Con eso, la Fase 1 está funcionalmente completa: las dos campañas son jugables
 - No hay keys ni secrets en el código.
 - No se agregaron dependencias de infra a `core/`.
 - Si tocaste el contrato del narrador o el modelo de datos, actualizaste el GDD.
+
+---
+
+## 13. Versionado y releases
+
+Desde la versión `1.0.0+1` (scaffold inicial de Flutter, nunca versionada a propósito), el proyecto adopta [Conventional Commits](https://www.conventionalcommits.org/es/v1.0.0/) para el **título** de cada commit — el cuerpo sigue siendo texto libre en español explicando el porqué, como siempre. Formato del título:
+
+```
+<tipo>(<scope opcional>)<!>: <resumen en imperativo>
+```
+
+- **Tipos:** `feat` (funcionalidad nueva → bump *minor*), `fix`/`perf` (arreglo → bump *patch*), `docs`/`chore`/`test`/`refactor`/`style`/`build`/`ci` (no fuerzan bump, entran al changelog como "Otros cambios").
+- **Breaking change:** `!` después del tipo/scope (`feat!:`, `fix(auth)!:`) o un pie `BREAKING CHANGE: ...` en el cuerpo → bump *major*, gane lo que gane entre los demás commits del rango.
+- El *scope* es opcional y libre (`feat(chargen): ...`, `fix(narrator): ...`).
+
+**Cortar un release es siempre manual** — nunca automático en cada push (decisión explícita: evitar ruido de releases por cada commit). `tool/release.sh` hace el trabajo mecánico:
+
+```bash
+tool/release.sh            # dry run: calcula el bump y lo muestra, no toca nada
+tool/release.sh --apply    # bump de pubspec.yaml + CHANGELOG.md, commit y tag local
+```
+
+Mira los commits desde el último tag `vX.Y.Z`, decide el bump más alto entre todos ellos (major > minor > patch, default patch si no hay ningún `feat`/`fix`/breaking en el rango — un release pedido a mano siempre publica algo), y genera las notas agrupadas por tipo. No hace push ni crea nada público por sí solo — al terminar imprime los dos comandos para publicarlo (`git push && git push origin vX.Y.Z` y `gh release create vX.Y.Z --notes-file ...`), que corren aparte, con la misma confirmación explícita que cualquier otro push/publicación de este proyecto.
