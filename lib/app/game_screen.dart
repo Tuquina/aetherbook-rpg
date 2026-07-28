@@ -336,11 +336,15 @@ class _NarrationView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (resolution != null) ...[
-                  FateRoll(
-                    key: ValueKey(resolution),
-                    resolution: resolution,
-                    criticalMargin: controller.world!.criticalMargin,
-                  ),
+                  // "Mostrar la tirada" off (V2 §6b): the outcome still
+                  // narrates normally, it just never renders the dice-check
+                  // widget itself.
+                  if (controller.settings.showTheRoll)
+                    FateRoll(
+                      key: ValueKey(resolution),
+                      resolution: resolution,
+                      criticalMargin: controller.world!.criticalMargin,
+                    ),
                   if (controller.lastLevelsGained > 0)
                     Padding(
                       padding: const EdgeInsets.only(top: AetherSpace.md),

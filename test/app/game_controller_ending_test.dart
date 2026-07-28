@@ -16,7 +16,10 @@ import 'package:aetherbook/core/narrative/final_technique_rule.dart';
 import 'package:aetherbook/core/narrative/gate.dart';
 import 'package:aetherbook/core/narrative/story_graph.dart';
 import 'package:aetherbook/core/narrative/story_node.dart';
+import 'package:aetherbook/core/narrative/extended_conflict.dart';
 import 'package:aetherbook/core/state/character.dart';
+import 'package:aetherbook/core/state/game_session.dart';
+import 'package:aetherbook/ports/game_state_repository_port.dart';
 import 'package:aetherbook/ports/narrator_port.dart';
 import 'package:aetherbook/ports/world_repository_port.dart';
 import 'package:aetherbook/core/world/world.dart';
@@ -107,6 +110,7 @@ final _world = World(
     exp: 0,
     attributes: {'voluntad': 1},
     resources: {},
+    vowId: 'no_dejar_a_nadie',
   ),
   seedNarration: '',
   seedChoices: const [],
@@ -115,13 +119,100 @@ final _world = World(
 );
 
 class _FakeWorldRepository implements WorldRepositoryPort {
+  _FakeWorldRepository([World? overrideWorld]) : _servedWorld = overrideWorld ?? _world;
+
+  final World _servedWorld;
+
   @override
-  Future<World> loadWorld(String slug) async => _world;
+  Future<World> loadWorld(String slug) async => _servedWorld;
 }
 
 GameController _controllerWith(Dice dice) => GameController(
       worldRepository: _FakeWorldRepository(),
       narrator: const _ForbiddenNarrator(),
+      dice: dice,
+    );
+
+/// Minimal in-memory [GameStateRepositoryPort] — only `createSession` and
+/// `completeSession` matter for the vow-finalization/session-completion
+/// tests below, everything else is a no-op.
+class _FakeGameStateRepository implements GameStateRepositoryPort {
+  final List<String> completedSessionIds = [];
+
+  @override
+  Future<GameSession> createSession({
+    required String worldSlug,
+    String? campaignSlug,
+    required Character character,
+    String? title,
+  }) async =>
+      GameSession(id: 'session-climax', worldSlug: worldSlug, character: character);
+
+  @override
+  Future<void> completeSession(String sessionId) async {
+    completedSessionIds.add(sessionId);
+  }
+
+  @override
+  Future<GameSession?> loadLatestSession(String worldSlug) async => null;
+
+  @override
+  Future<GameSession?> loadSession(String sessionId) async => null;
+
+  @override
+  Future<List<GameSessionSummary>> listActiveSessions(List<String> worldSlugs) async => const [];
+
+  @override
+  Future<void> saveCharacter(String sessionId, Character character) async {}
+
+  @override
+  Future<void> appendTurn({
+    required String sessionId,
+    required int turnIndex,
+    required playerAction,
+    required resolution,
+    required String narration,
+    required String tone,
+    required List<String> suggestedChoices,
+  }) async {}
+
+  @override
+  Future<void> saveTurnImage({
+    required String sessionId,
+    required int turnIndex,
+    required String imageUrl,
+  }) async {}
+
+  @override
+  Future<void> saveGraphPosition({
+    required String sessionId,
+    String? currentNodeId,
+    required int corridorTurnsUsed,
+    ExtendedConflictProgress? extendedConflictProgress,
+  }) async {}
+
+  @override
+  Future<void> abandonSession(String sessionId) async {}
+
+  @override
+  Future<List<SessionReadingStat>> readingStats() async => const [];
+
+  @override
+  Future<String?> loadLatestMemoryDigest(String sessionId) async => null;
+
+  @override
+  Future<void> saveMemoryDigest({
+    required String sessionId,
+    required int upToTurn,
+    required String summaryText,
+  }) async {}
+}
+
+GameController _controllerWithPersistence(Dice dice, _FakeGameStateRepository persistence) =>
+    GameController(
+      worldRepository: _FakeWorldRepository(),
+      narrator: const _ForbiddenNarrator(),
+      persistence: persistence,
       dice: dice,
     );
 
@@ -220,6 +311,71 @@ void main() {
       // authored 2nd), not the fallback id the failure redirected to.
       expect(controller.achievedEndingOrdinal, 2);
       expect(controller.achievedEndingsTotal, 3);
+    });
+  });
+
+  group('GameController.chooseEnding — vow finalization & session completion '
+      '(V2 §6a Perfil)', () {
+    test('a vow never tested becomes sostenido, and the session is marked completed',
+        () async {
+      final persistence = _FakeGameStateRepository();
+      final controller = _controllerWithPersistence(const FixedDice(20), persistence);
+      await controller.start('climax_test');
+
+      final ending =
+          controller.availableEndings.firstWhere((e) => e.id == 'final_luz');
+      await controller.chooseEnding(ending);
+
+      expect(controller.character!.varValue('vow_status'), 'sostenido');
+      expect(persistence.completedSessionIds, ['session-climax']);
+    });
+
+    test('a vow already broken earlier in the story is never overwritten back to sostenido',
+        () async {
+      // A variant of the same climax world whose starting character already
+      // carries `vow_status: roto` — standing in for "the narrator proposed
+      // `roto` on an earlier turn" without needing a mid-story delta
+      // injection path this AI-free synthetic world has no way to exercise.
+      final brokenVowWorld = World(
+        slug: 'climax_test',
+        name: 'Mundo de prueba del clímax',
+        theme: 'test',
+        tone: 'neutro',
+        systemPrompt: '',
+        imageStyleSuffix: '',
+        defaultDifficulty: 99,
+        criticalMargin: 5,
+        primaryAttribute: 'voluntad',
+        storyGraph: _graph,
+        startingCharacter: const Character(
+          name: 'Protagonista',
+          level: 1,
+          exp: 0,
+          attributes: {'voluntad': 1},
+          resources: {},
+          vowId: 'no_dejar_a_nadie',
+          vars: {'vow_status': 'roto'},
+        ),
+        seedNarration: '',
+        seedChoices: const [],
+        aiRuntimeRequired: false,
+        allowFreeText: false,
+      );
+      final persistence = _FakeGameStateRepository();
+      final controller = GameController(
+        worldRepository: _FakeWorldRepository(brokenVowWorld),
+        narrator: const _ForbiddenNarrator(),
+        persistence: persistence,
+        dice: const FixedDice(20),
+      );
+      await controller.start('climax_test');
+
+      final ending =
+          controller.availableEndings.firstWhere((e) => e.id == 'final_luz');
+      await controller.chooseEnding(ending);
+
+      expect(controller.character!.varValue('vow_status'), 'roto');
+      expect(persistence.completedSessionIds, ['session-climax']);
     });
   });
 }

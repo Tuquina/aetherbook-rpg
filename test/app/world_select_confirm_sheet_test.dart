@@ -153,6 +153,12 @@ class _FakeGameStateRepository implements GameStateRepositoryPort {
   Future<void> abandonSession(String sessionId) async {
     abandonedSessionIds.add(sessionId);
   }
+
+  @override
+  Future<void> completeSession(String sessionId) async {}
+
+  @override
+  Future<List<SessionReadingStat>> readingStats() async => const [];
 }
 
 void main() {

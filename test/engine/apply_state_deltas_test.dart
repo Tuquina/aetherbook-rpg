@@ -440,6 +440,51 @@ void main() {
     });
   });
 
+  group('ApplyStateDeltas — vowStatus (V2 §6a juramento outcome)', () {
+    test('puesto_a_prueba stores the status and increments the tested count', () {
+      final result = apply(base(), [
+        const StateDelta(type: StateDeltaType.vowStatus, key: 'vow_status', value: 'puesto_a_prueba'),
+      ]);
+      expect(result.character.varValue('vow_status'), 'puesto_a_prueba');
+      expect(result.character.meter('vow_tested_count'), 1);
+      expect(result.applied, hasLength(1));
+    });
+
+    test('a second puesto_a_prueba keeps incrementing the tested count', () {
+      final once = apply(base(), [
+        const StateDelta(type: StateDeltaType.vowStatus, key: 'vow_status', value: 'puesto_a_prueba'),
+      ]).character;
+      final twice = apply(once, [
+        const StateDelta(type: StateDeltaType.vowStatus, key: 'vow_status', value: 'puesto_a_prueba'),
+      ]).character;
+      expect(twice.meter('vow_tested_count'), 2);
+    });
+
+    test('roto stores the status without touching the tested count', () {
+      final result = apply(base(), [
+        const StateDelta(type: StateDeltaType.vowStatus, key: 'vow_status', value: 'roto'),
+      ]);
+      expect(result.character.varValue('vow_status'), 'roto');
+      expect(result.character.meter('vow_tested_count'), 0);
+    });
+
+    test('sostenido stores the status without touching the tested count', () {
+      final result = apply(base(), [
+        const StateDelta(type: StateDeltaType.vowStatus, key: 'vow_status', value: 'sostenido'),
+      ]);
+      expect(result.character.varValue('vow_status'), 'sostenido');
+      expect(result.character.meter('vow_tested_count'), 0);
+    });
+
+    test('rejects any value outside the three-state enum', () {
+      final result = apply(base(), [
+        const StateDelta(type: StateDeltaType.vowStatus, key: 'vow_status', value: 'quien_sabe'),
+      ]);
+      expect(result.rejected, hasLength(1));
+      expect(result.character.varValue('vow_status'), isNull);
+    });
+  });
+
   group('ApplyStateDeltas — absolute set for meter/resource', () {
     test("operation 'set' replaces a meter outright instead of adding", () {
       final withBounds = const ApplyStateDeltas(

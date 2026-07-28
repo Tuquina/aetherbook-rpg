@@ -53,6 +53,10 @@ class ResolveStoryChoice {
     required Character character,
     ExtendedConflict? extendedConflict,
     ExtendedConflictProgress conflictProgress = const ExtendedConflictProgress(),
+
+    /// Forwarded to `ResolvePlayerAction.call` (V2 design prototype §6b's
+    /// world-harshness setting) — see its doc comment.
+    int difficultyOffset = 0,
   }) {
     ActionResolution? resolution;
     final ActionOutcome outcome;
@@ -72,6 +76,7 @@ class ResolveStoryChoice {
         difficulty: choice.checkDifficulty!,
         modifiers: modifier,
         rollMode: rollMode,
+        difficultyOffset: difficultyOffset,
       );
       outcome = resolution.outcome;
     } else {

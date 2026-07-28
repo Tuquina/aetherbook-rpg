@@ -93,6 +93,55 @@ void main() {
     });
   });
 
+  group('ResolvePlayerAction — difficultyOffset (V2 §6b world harshness)', () {
+    test('a negative offset (indulgente) can turn a failure into a success', () {
+      final resolve = ResolvePlayerAction(const FixedDice(10));
+      // 3 + 10 = 13; difficulty 15 -> failure with no offset.
+      final withoutOffset =
+          resolve(attributeKey: 'espiritu', attribute: 3, difficulty: 15);
+      expect(withoutOffset.outcome, ActionOutcome.failure);
+
+      // Same roll, difficultyOffset -2 -> effective difficulty 13 -> success.
+      final withOffset = resolve(
+        attributeKey: 'espiritu',
+        attribute: 3,
+        difficulty: 15,
+        difficultyOffset: -2,
+      );
+      expect(withOffset.outcome, ActionOutcome.success);
+      expect(withOffset.difficulty, 13);
+    });
+
+    test('a positive offset (cruel) can turn a success into a failure', () {
+      final resolve = ResolvePlayerAction(const FixedDice(10));
+      // 3 + 10 = 13 vs difficulty 12 -> success with no offset.
+      final withoutOffset =
+          resolve(attributeKey: 'espiritu', attribute: 3, difficulty: 12);
+      expect(withoutOffset.outcome, ActionOutcome.success);
+
+      final withOffset = resolve(
+        attributeKey: 'espiritu',
+        attribute: 3,
+        difficulty: 12,
+        difficultyOffset: 2,
+      );
+      expect(withOffset.outcome, ActionOutcome.failure);
+      expect(withOffset.difficulty, 14);
+    });
+
+    test('a natural 20 still always criticals regardless of a positive offset', () {
+      final resolve = ResolvePlayerAction(const FixedDice(20));
+      final result = resolve(
+        attributeKey: 'espiritu',
+        attribute: 0,
+        difficulty: 12,
+        difficultyOffset: 2,
+      );
+      expect(result.outcome, ActionOutcome.criticalSuccess);
+      expect(result.isNatural20, isTrue);
+    });
+  });
+
   group('ResolvePlayerAction — rollMode (ventaja/desventaja)', () {
     test('advantage keeps the higher of two d20s', () {
       final resolve = ResolvePlayerAction(SequenceDice([8, 17]));

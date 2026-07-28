@@ -31,12 +31,20 @@ class ResolvePlayerAction {
     int modifiers = 0,
     int criticalMargin = 5,
     RollMode rollMode = RollMode.normal,
+
+    /// Added to [difficulty] before every band check (V2 design prototype
+    /// §6b's "Dureza del mundo") — negative makes checks easier, positive
+    /// makes them harder. Never changes which attribute is rolled or what
+    /// content is offered, only how forgiving the thresholds are. Default 0
+    /// keeps every existing caller's behavior unchanged.
+    int difficultyOffset = 0,
   }) {
     if (criticalMargin < 1) {
       throw ArgumentError.value(
           criticalMargin, 'criticalMargin', 'must be >= 1');
     }
 
+    final effectiveDifficulty = difficulty + difficultyOffset;
     final (roll, discardedRoll) = _rollFor(rollMode);
     final total = attribute + modifiers + roll;
     final isNatural20 = roll == 20;
@@ -47,9 +55,9 @@ class ResolvePlayerAction {
       outcome = ActionOutcome.criticalSuccess;
     } else if (isNatural1) {
       outcome = ActionOutcome.failure;
-    } else if (total >= difficulty + criticalMargin) {
+    } else if (total >= effectiveDifficulty + criticalMargin) {
       outcome = ActionOutcome.criticalSuccess;
-    } else if (total >= difficulty) {
+    } else if (total >= effectiveDifficulty) {
       outcome = ActionOutcome.success;
     } else {
       outcome = ActionOutcome.failure;
@@ -61,7 +69,7 @@ class ResolvePlayerAction {
       attribute: attribute,
       modifiers: modifiers,
       roll: roll,
-      difficulty: difficulty,
+      difficulty: effectiveDifficulty,
       total: total,
       isNatural20: isNatural20,
       isNatural1: isNatural1,

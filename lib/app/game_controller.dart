@@ -25,13 +25,16 @@ import '../core/narrative/extended_conflict.dart';
 import '../core/narrative/hub_activity.dart';
 import '../core/narrative/story_choice.dart';
 import '../core/narrative/story_node.dart';
+import '../core/settings/user_settings.dart';
 import '../core/state/character.dart';
 import '../core/state/game_session.dart';
 import '../core/world/world.dart';
+import '../ports/auth_port.dart';
 import '../ports/game_state_repository_port.dart';
 import '../ports/image_generator_port.dart';
 import '../ports/memory_digest_port.dart';
 import '../ports/narrator_port.dart';
+import '../ports/settings_port.dart';
 import '../ports/world_repository_port.dart';
 
 /// The current node's fixed_reveals/forbidden_reveals/goal, extracted once
@@ -82,6 +85,8 @@ class GameController extends ChangeNotifier {
     GameStateRepositoryPort? persistence,
     MemoryDigestPort? memoryDigest,
     ImageGeneratorPort? imageGenerator,
+    this.auth,
+    this.settingsPort,
     int digestEveryNTurns = 5,
     Dice? dice,
   })  : _worldRepository = worldRepository,
@@ -101,6 +106,14 @@ class GameController extends ChangeNotifier {
   final GameStateRepositoryPort? _persistence;
   final MemoryDigestPort? _memoryDigest;
   final ImageGeneratorPort? _imageGenerator;
+
+  /// Exposed (unlike the other ports above) so any screen already holding a
+  /// `GameController` — `WorldSelectScreen`, `ProfileScreen` — can reach
+  /// account/settings features without a constructor param rippling through
+  /// every intermediate screen. `null` in the same in-memory-only degraded
+  /// mode every other port above already handles.
+  final AuthPort? auth;
+  final SettingsPort? settingsPort;
   final int _digestEveryNTurns;
   final ResolvePlayerAction _resolve;
   final ClassifyFreeAction _classifyFreeAction;
@@ -111,6 +124,12 @@ class GameController extends ChangeNotifier {
   /// progression config (a world may scale levels differently, or not at all).
   ApplyStateDeltas _applyDeltas = const ApplyStateDeltas();
   String? _memoryDigestText;
+
+  /// Account-wide player preferences (V2 design prototype §6b) — `null`
+  /// until [updateSettings] is called (e.g. once `SettingsPort.loadSettings`
+  /// resolves after sign-in), in which case every setting behaves as its
+  /// [UserSettings] default (harshness `justo`, illustrate/suggest/etc. on).
+  UserSettings? _settings;
 
   World? _world;
   GameSession? _session;
@@ -167,6 +186,19 @@ class GameController extends ChangeNotifier {
 
   /// The current medium-term memory digest, if any has been generated yet.
   String? get memoryDigestText => _memoryDigestText;
+
+  /// Account-wide preferences currently in effect — [UserSettings]'s
+  /// defaults until [updateSettings] is called.
+  UserSettings get settings => _settings ?? const UserSettings();
+
+  /// Replaces the in-memory settings snapshot (called once `SettingsPort`
+  /// resolves, and again whenever `SettingsScreen` saves a change) — never
+  /// persists anything itself, purely in-memory state for the rest of the
+  /// controller to read.
+  void updateSettings(UserSettings settings) {
+    _settings = settings;
+    notifyListeners();
+  }
 
   /// Where the player currently is in the world's `StoryGraph`, or `null` for
   /// a freeform world with no graph at all (Fase 0 style).
@@ -249,6 +281,17 @@ class GameController extends ChangeNotifier {
   /// persistence configured (nothing to abandon in memory-only mode).
   Future<void> abandonStory(String sessionId) async {
     await _persistence?.abandonSession(sessionId);
+  }
+
+  /// One [SessionReadingStat] per session this account has ever started —
+  /// what `ProfileScreen` (V2 §6a Perfil) aggregates into tomos/turnos/
+  /// terminadas, the per-world breakdown, and the juramentos list. Empty
+  /// (never an error) without persistence configured, same degradation as
+  /// everything else in this class.
+  Future<List<SessionReadingStat>> readingStats() {
+    final persistence = _persistence;
+    if (persistence == null) return Future.value(const []);
+    return persistence.readingStats();
   }
 
   /// Abandons the session currently loaded in memory (V2 Stage 5's
@@ -548,6 +591,7 @@ class GameController extends ChangeNotifier {
       attribute: session.character.attribute(classification.attributeKey),
       difficulty: world.defaultDifficulty,
       criticalMargin: world.criticalMargin,
+      difficultyOffset: settings.worldHarshness.difficultyOffset,
     );
 
     final node = currentNode;
@@ -655,6 +699,7 @@ class GameController extends ChangeNotifier {
       attribute: character.attribute(world.primaryAttribute),
       difficulty: ending.difficultyFor(character),
       criticalMargin: world.criticalMargin,
+      difficultyOffset: settings.worldHarshness.difficultyOffset,
     );
 
     final resolvedEndingId =
@@ -682,6 +727,18 @@ class GameController extends ChangeNotifier {
         break;
       }
     }
+    // Finalize the vow's outcome for Perfil (V2 §6a): reaching the climax
+    // is the one deterministic "this story is done" moment — a vow already
+    // marked `roto` stays broken, everything else (never tested, or tested
+    // and held) becomes `sostenido` ("hasta el final"). Never narrator-
+    // proposed, and skipped entirely for a world with no vow at chargen.
+    if (character.vowId != null && character.varValue('vow_status') != 'roto') {
+      effects.add(const StateDelta(
+        type: StateDeltaType.vowStatus,
+        key: 'vow_status',
+        value: 'sostenido',
+      ));
+    }
 
     // Captured here, not derived later: `currentNode` stops being this
     // `ResolutionNode` the moment `_resolveTurn` advances to
@@ -708,6 +765,11 @@ class GameController extends ChangeNotifier {
       nextNodeId: node.epilogueNodeId,
       curatedResultText: resultText,
     );
+
+    final sessionId = session.id;
+    if (_persistence != null && sessionId != null) {
+      await _persistence.completeSession(sessionId);
+    }
   }
 
   Future<void> _chooseOption(Checkable choice) async {
@@ -736,6 +798,7 @@ class GameController extends ChangeNotifier {
       character: character,
       extendedConflict: extendedConflict,
       conflictProgress: conflictProgress,
+      difficultyOffset: settings.worldHarshness.difficultyOffset,
     );
 
     String? nextNodeId;
@@ -804,7 +867,12 @@ class GameController extends ChangeNotifier {
             nodeFixedReveals: nodeContext.fixedReveals,
             nodeForbiddenReveals: nodeContext.forbiddenReveals,
             nodeGoal: nodeContext.goal,
-            isFreeform: world.storyGraph == null,
+            // "Sugerir acciones" off (V2 §6b) simply asks the narrator for
+            // no suggestions at all, even in a freeform world — the player
+            // only ever writes free text.
+            isFreeform: world.storyGraph == null && settings.suggestActions,
+            vowText: world.vowByIdOrNull(session.character.vowId)?.text,
+            avoidedThemes: settings.avoidedThemeLabels,
           ),
         );
         narration = response.narration;
@@ -875,6 +943,7 @@ class GameController extends ChangeNotifier {
       final imageGenerator = _imageGenerator;
       if (imageGenerator != null &&
           world.aiRuntimeRequired &&
+          settings.illustrateScenes &&
           imagePrompt != null &&
           imagePrompt.trim().isNotEmpty) {
         _imageUrl = null;

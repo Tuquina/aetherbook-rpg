@@ -200,6 +200,26 @@ class ApplyStateDeltas {
         if (v is! String) return null;
         return c.copyWith(vars: {...c.vars, delta.key: v});
 
+      case StateDeltaType.vowStatus:
+        final v = delta.value;
+        if (v is! String ||
+            (v != 'sostenido' && v != 'puesto_a_prueba' && v != 'roto')) {
+          return null;
+        }
+        var next = c.copyWith(vars: {...c.vars, 'vow_status': v});
+        // The tested-count is engine-owned, not narrator-decided (CLAUDE.md
+        // rule #2) — it always increments alongside a `puesto_a_prueba`
+        // outcome, never as something the narrator proposes a number for.
+        if (v == 'puesto_a_prueba') {
+          next = next.copyWith(
+            meters: {
+              ...next.meters,
+              'vow_tested_count': next.meter('vow_tested_count') + 1,
+            },
+          );
+        }
+        return next;
+
       case StateDeltaType.unknown:
         return null;
     }

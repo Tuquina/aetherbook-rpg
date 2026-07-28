@@ -21,6 +21,15 @@ enum StateDeltaType {
   /// numeric (resource/meter) or a per-NPC score (relationship).
   varSet,
 
+  /// Records the outcome of the character's chargen vow/juramento (V2 design
+  /// prototype §6a) — `value` must be one of `'sostenido'`,
+  /// `'puesto_a_prueba'` or `'roto'`. The narrator may only ever propose
+  /// `'puesto_a_prueba'`/`'roto'` (prompt-instructed to judge when an action
+  /// visibly tests the vow at a real cost); `'sostenido'` is set only by the
+  /// engine itself, once, at story resolution (`GameController.chooseEnding`)
+  /// — see `ApplyStateDeltas`'s handling of this type.
+  vowStatus,
+
   unknown,
 }
 
@@ -65,6 +74,8 @@ class StateDelta {
         return StateDeltaType.listRemove;
       case 'var_set':
         return StateDeltaType.varSet;
+      case 'vow_status':
+        return StateDeltaType.vowStatus;
       default:
         return StateDeltaType.unknown;
     }
