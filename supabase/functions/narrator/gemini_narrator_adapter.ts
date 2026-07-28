@@ -41,10 +41,10 @@ const RESPONSE_SCHEMA = {
         properties: {
           type: {
             type: "STRING",
-            enum: ["flag", "exp", "resource", "meter", "relationship"],
+            enum: ["flag", "exp", "resource", "meter", "relationship", "vow_status"],
           },
           key: { type: "STRING" },
-          value: { anyOf: [{ type: "BOOLEAN" }, { type: "NUMBER" }] },
+          value: { anyOf: [{ type: "BOOLEAN" }, { type: "NUMBER" }, { type: "STRING" }] },
           operation: { type: "STRING", enum: ["increment"] },
           reason: { type: "STRING" },
         },
