@@ -686,6 +686,66 @@ Only proceed with a sub-stage once its blocking decision in
   confirmed). Not scheduled.
 - **6f — Publishing/UGC.** Decision B **deferred** (2026-07-27, user
   confirmed). Not scheduled.
+- **6g — Perfil, Ajustes, onboarding (V2 prototype §6a-e).** ✅ **Done
+  (2026-07-28)**, full scope on all three axes the user chose (real vow
+  tracking, functionally-wired Ajustes including world harshness/avoided
+  themes, account-synced settings):
+  - New backend: `user_settings` table (jsonb) + `reading_stats()` RPC
+    (both migrated and applied), `SettingsPort`/`Supabase`/`FakeSettingsAdapter`,
+    `AuthPort.signOut`/`accountCreatedAt`, `GameStateRepositoryPort.completeSession`/
+    `readingStats`.
+  - New engine: `StateDeltaType.vowStatus` (`sostenido`/`puesto_a_prueba`/`roto`,
+    narrator may only propose the latter two — `sostenido` is engine-set once,
+    at `chooseEnding`, unless already `roto`), `difficultyOffset` threaded
+    through `ResolvePlayerAction`/`ResolveStoryChoice` for `WorldHarshness`
+    (indulgente/justo/cruel, ±2). `VowReward` (the qi-restore/exp-grant
+    decision class) stays deliberately unwired — tracking outcome for Perfil
+    didn't need it.
+  - Narrator prompt: `vowText`/`avoidedThemes` reach `NarratorRequest`
+    (resolved client-side from `World.vows`/`UserSettings.avoidedThemeLabels`),
+    two new `prompt_builder.ts` instructions. Gemini's `RESPONSE_SCHEMA` enum
+    needed `"vow_status"` added (and `STRING` to the value `anyOf`) — caught
+    only once actually deploying, since Groq's free-text prompt has no schema
+    to enforce this and the deno tests don't exercise the Gemini schema
+    directly.
+  - New screens: `profile_screen.dart` (real tomos/turnos/terminadas,
+    per-world breakdown, juramentos list — nothing hardcoded), `settings_screen.dart`
+    (every control wired, not cosmetic), `widgets/avoided_themes_sheet.dart`
+    (a sheet, not a 6th screen), `widgets/step_dots.dart` (extracted from
+    `ChargenScreen` for reuse), `onboarding_screen.dart` (3 pages, reuses
+    `FateRoll` with a fixed resolution for the dice demo). `WorldSelectScreen`
+    gained a Perfil entry icon and an `autoOpenModule` param so onboarding's
+    last page can open the chosen module directly.
+  - `GameController` gained `auth`/`settingsPort` fields (a convenience
+    carrier so `WorldSelectScreen`/`ProfileScreen` can reach them without a
+    constructor param rippling through every intermediate screen) and
+    `settings`/`updateSettings`.
+  - `SplashScreen`'s `onAuthenticated` path now loads settings before
+    deciding whether to show onboarding — checked for both a freshly
+    signed-in account **and** an already-signed-in returning one, so an
+    account that signed up then closed the app mid-onboarding still gets
+    routed there on the next launch, not just one that finishes in the same
+    sitting. Caught and fixed a real bug here during testing: the "already
+    signed in, no `AccountScreen` push first" path replaces `SplashScreen`'s
+    own route, so a `_SplashScreenState` method closed over as `onDone` would
+    reach into an already-disposed `State`'s `context` — fixed by having
+    `OnboardingScreen`'s `pageBuilder` close over its own live `pageContext`
+    instead.
+  - Deliberately not built: actually *sending* reminder notifications (no
+    push infra exists, the setting value is still saved) and "exportar mis
+    tomos" (a real export feature, bigger than a settings row) — both flagged
+    explicitly rather than silently left inert.
+  - 686 Flutter tests passing (up from 588), `analyze` clean; 62 Deno tests
+    passing for the narrator function. Both new migrations applied and the
+    `narrator` Edge Function redeployed (v10) to the real Supabase project.
+  - **Not independently re-verified visually this session**: a live browser
+    smoke test was blocked by an unrelated, long-running Docker Desktop
+    process squatting on port 8080 (not something this session started) —
+    confidence rests on the test suite (which drives real widget trees
+    through `SplashScreen`/`OnboardingScreen`/`ProfileScreen`/`SettingsScreen`,
+    including the full sign-in → onboarding → world-select navigation chain)
+    and the backend deploy succeeding, not a screenshot. Recommend a manual
+    look once deployed.
 
 ---
 
@@ -775,5 +835,6 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 | 6d — Auth expansion | ✅ Code done (2026-07-27), revised same day to remove anonymous play entirely (your explicit instruction) — Google Cloud Console client reportedly configured by you; "Allow manual linking" no longer needed (`linkIdentity` → `signInWithOAuth`); not yet confirmed end-to-end (blocked on a browser-preview tooling issue, not the app) | — |
 | 6e — Story-graph editor | Deferred (2026-07-27) | — |
 | 6f — Publishing/UGC | Deferred (2026-07-27) | — |
+| 6g — Perfil, Ajustes, onboarding | ✅ Done and deployed (2026-07-28) — 2 migrations applied, Edge Function redeployed (v10); visual sign-off still recommended, see 6g notes | — |
 | 7 — Ending/account/offline/resilience polish | Not started | Stage 4, 6a |
 | 8 — Accessibility/responsiveness/performance/release | Not started | Stages 1-7 |
