@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../design/tokens.dart';
 import '../design/typography.dart';
+import '../design/world_theme.dart';
 
 /// The ambient backdrop: a deep ink field with a faint etheric glow bleeding
 /// from the top, a vignette that draws the eye inward, and a slow drift of
@@ -17,6 +18,7 @@ class AetherBackground extends StatefulWidget {
     this.particles = true,
     this.accent = AetherColors.gold,
     this.base = AetherColors.ink,
+    this.texture,
   });
 
   final Widget child;
@@ -36,6 +38,13 @@ class AetherBackground extends StatefulWidget {
   /// (every screen predating per-world theming) looks exactly as before —
   /// visible even with [particles] off, unlike [accent].
   final Color base;
+
+  /// Which per-world background treatment (V2 §4a, Stage T) to layer behind
+  /// [child] — `null` (the default, and what `radialWarm` itself also
+  /// resolves to) renders exactly the original warm radial gradient, so
+  /// every screen that predates this — and Isekai, whose declared texture
+  /// *is* `radialWarm` — looks byte-identical.
+  final WorldTextureKind? texture;
 
   @override
   State<AetherBackground> createState() => _AetherBackgroundState();
@@ -100,29 +109,26 @@ class _AetherBackgroundState extends State<AetherBackground>
     final reduceMotion = MediaQuery.of(context).disableAnimations;
     final c = _c;
     if (reduceMotion && c != null && c.isAnimating) c.stop();
+    final kind = widget.texture;
 
     return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: RadialGradient(
-          center: const Alignment(0, -1.1),
-          radius: 1.5,
-          // The warm top highlight leans slightly toward `accent` on top of
-          // `base` — for the default gold/ink pair this reproduces the
-          // original hardcoded `Color(0xFF201A13)` almost exactly; a
-          // themed world's own base/accent carry through instead. The
-          // deepest anchor (`void_`) stays constant across every world by
-          // design (V2 prototype §4a: "el resto del sistema... no se mueve").
-          colors: [
-            Color.lerp(widget.base, widget.accent, 0.12) ?? widget.base,
-            widget.base,
-            AetherColors.void_,
-          ],
-          stops: const [0.0, 0.45, 1.0],
-        ),
-      ),
+      decoration: _backgroundDecoration(kind, widget.base, widget.accent),
       child: Stack(
         fit: StackFit.expand,
         children: [
+          if (kind == WorldTextureKind.fog)
+            Positioned.fill(
+              child: IgnorePointer(child: CustomPaint(painter: _FogBandsPainter())),
+            ),
+          if (kind == WorldTextureKind.scanline)
+            Positioned.fill(
+              child: IgnorePointer(
+                  child: CustomPaint(painter: _ScanlinePainter(accent: widget.accent))),
+            ),
+          if (kind == WorldTextureKind.grain)
+            Positioned.fill(
+              child: IgnorePointer(child: CustomPaint(painter: const _GrainPainter())),
+            ),
           if (c != null && !reduceMotion)
             Positioned.fill(
               child: IgnorePointer(
@@ -138,6 +144,68 @@ class _AetherBackgroundState extends State<AetherBackground>
         ],
       ),
     );
+  }
+}
+
+/// The base gradient behind everything else — `null`/`radialWarm`/`fog` all
+/// share the app's original warm radial (fog layers its mist bands *on top*
+/// via [_FogBandsPainter] rather than replacing the base); `hardDiagonal`,
+/// `scanline` and `grain` swap in a plainer directional gradient the other
+/// overlays read better against (V2 §4a).
+BoxDecoration _backgroundDecoration(WorldTextureKind? kind, Color base, Color accent) {
+  switch (kind) {
+    case WorldTextureKind.hardDiagonal:
+      // ~160°, hard stops instead of a soft blend — Superhéroes reads like a
+      // comic-panel duotone rather than an atmospheric wash.
+      return BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          transform: GradientRotation(160 * math.pi / 180),
+          colors: [
+            Color.lerp(base, accent, 0.22) ?? base,
+            Color.lerp(base, accent, 0.22) ?? base,
+            base,
+            AetherColors.void_,
+          ],
+          stops: const [0.0, 0.4, 0.4, 1.0],
+        ),
+      );
+    case WorldTextureKind.scanline:
+    case WorldTextureKind.grain:
+      return BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color.lerp(base, accent, 0.12) ?? base,
+            base,
+            AetherColors.void_,
+          ],
+          stops: const [0.0, 0.45, 1.0],
+        ),
+      );
+    case WorldTextureKind.radialWarm:
+    case WorldTextureKind.fog:
+    case null:
+      return BoxDecoration(
+        gradient: RadialGradient(
+          center: const Alignment(0, -1.1),
+          radius: 1.5,
+          // The warm top highlight leans slightly toward `accent` on top of
+          // `base` — for the default gold/ink pair this reproduces the
+          // original hardcoded `Color(0xFF201A13)` almost exactly; a themed
+          // world's own base/accent carry through instead. The deepest
+          // anchor (`void_`) stays constant across every world by design
+          // (V2 prototype §4a: "el resto del sistema... no se mueve").
+          colors: [
+            Color.lerp(base, accent, 0.12) ?? base,
+            base,
+            AetherColors.void_,
+          ],
+          stops: const [0.0, 0.45, 1.0],
+        ),
+      );
   }
 }
 
@@ -165,6 +233,75 @@ class _Mote {
   final double sway;
   final double radius;
   final Color color;
+}
+
+/// Xianxia's `fog` texture (V2 §4a): a few faint, heavily-blurred pale bands
+/// layered over the base radial — static (no animation), reads as mist
+/// sitting at fixed heights rather than motion.
+class _FogBandsPainter extends CustomPainter {
+  const _FogBandsPainter();
+
+  static const _bandCenters = [0.28, 0.5, 0.74];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFE6E9DE).withValues(alpha: 0.05)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 46);
+    for (final center in _bandCenters) {
+      final y = size.height * center;
+      final band = Rect.fromLTWH(-40, y - size.height * 0.05, size.width + 80, size.height * 0.1);
+      canvas.drawRect(band, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _FogBandsPainter oldDelegate) => false;
+}
+
+/// Cyberpunk's `scanline` texture (V2 §4a): thin repeating horizontal lines
+/// in the world's accent color, low-alpha — there is no `BoxDecoration`
+/// equivalent of CSS's `repeating-linear-gradient`, so this paints them by
+/// hand instead.
+class _ScanlinePainter extends CustomPainter {
+  _ScanlinePainter({required this.accent});
+
+  final Color accent;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = accent.withValues(alpha: 0.05);
+    for (double y = 0; y < size.height; y += 3) {
+      canvas.drawRect(Rect.fromLTWH(0, y, size.width, 1), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ScanlinePainter oldDelegate) =>
+      oldDelegate.accent != accent;
+}
+
+/// Post-apocalíptico's `grain` texture (V2 §4a): scattered semi-transparent
+/// dots, fixed seed — static noise, no shine and no motion, unlike the
+/// drifting motes it shares the stack with.
+class _GrainPainter extends CustomPainter {
+  const _GrainPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rng = math.Random(11);
+    final paint = Paint();
+    for (var i = 0; i < 160; i++) {
+      final dx = rng.nextDouble() * size.width;
+      final dy = rng.nextDouble() * size.height;
+      final radius = 0.4 + rng.nextDouble() * 1.1;
+      paint.color = Colors.white.withValues(alpha: 0.03 + rng.nextDouble() * 0.04);
+      canvas.drawCircle(Offset(dx, dy), radius, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _GrainPainter oldDelegate) => false;
 }
 
 /// Paints a slow upward drift of soft glowing motes — embers rising off the

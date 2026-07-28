@@ -262,6 +262,7 @@ class _GameScreenState extends State<GameScreen> {
         particles: false,
         accent: theme?.accent ?? AetherColors.gold,
         base: theme?.base ?? AetherColors.ink,
+        texture: theme?.texture,
         child: ListenableBuilder(
           listenable: c,
           builder: (context, _) {
