@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/narrative/ending.dart';
 import '../core/narrative/story_choice.dart';
+import 'character_sheet_sheet.dart';
 import 'codex_screen.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
@@ -10,9 +11,11 @@ import 'game_controller.dart';
 import 'inventory_screen.dart';
 import 'widgets/atmosphere.dart';
 import 'widgets/choice_button.dart';
+import 'widgets/choice_card.dart';
 import 'widgets/confirm_sheet.dart';
 import 'widgets/fate_roll.dart';
 import 'widgets/status_bar.dart';
+import 'widgets/story_menu_sheet.dart';
 import 'world_select_screen.dart';
 
 /// The single play screen: an atmospheric backdrop, the status bar up top, the
@@ -62,6 +65,14 @@ class _GameScreenState extends State<GameScreen> {
   /// tap, once the player has actually finished and chooses to see options.
   bool _canRevealChoices = false;
 
+  /// 0 (top of the turn) to 1 (scrolled past [_headerCollapseDistance]) —
+  /// drives [StatusBar.collapse] directly off the scroll offset, no separate
+  /// animation clock (V2 design prototype §1a's two-state header). Reset to
+  /// 0 whenever a new turn scrolls back to the top.
+  double _headerCollapse = 0.0;
+
+  static const double _headerCollapseDistance = 90.0;
+
   @override
   void initState() {
     super.initState();
@@ -101,6 +112,7 @@ class _GameScreenState extends State<GameScreen> {
       setState(() {
         _choicesRevealed = false;
         _canRevealChoices = false;
+        _headerCollapse = 0.0;
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!_scroll.hasClients) return;
@@ -122,8 +134,14 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _onScroll() {
-    if (_canRevealChoices || !_scroll.hasClients) return;
+    if (!_scroll.hasClients) return;
     final position = _scroll.position;
+    final collapse =
+        (position.pixels / _headerCollapseDistance).clamp(0.0, 1.0);
+    if (collapse != _headerCollapse) {
+      setState(() => _headerCollapse = collapse);
+    }
+    if (_canRevealChoices) return;
     if (position.pixels >= position.maxScrollExtent - 24) {
       setState(() => _canRevealChoices = true);
     }
@@ -148,6 +166,35 @@ class _GameScreenState extends State<GameScreen> {
             FadeTransition(opacity: anim, child: child),
       ),
     );
+  }
+
+  /// Opens the story-menu sheet (V2 Stage 5) — the back arrow no longer
+  /// leaves the story on a single tap; it offers to keep reading, go back to
+  /// the library, or abandon this story outright.
+  void _openStoryMenu() {
+    showStoryMenuSheet(
+      context,
+      onBackToLibrary: _goToMenu,
+      onAbandon: _abandonActiveStory,
+    );
+  }
+
+  /// Confirms, then abandons the session currently in progress — reachable
+  /// from inside the story itself (unlike `WorldSelectScreen`'s abandon,
+  /// which operates on a `GameSessionSummary` from a list). Always leaves
+  /// for the library afterward: there's nothing left on this screen once the
+  /// session is gone.
+  Future<void> _abandonActiveStory() async {
+    final confirmed = await showConfirmSheet(
+      context,
+      title: '¿Abandonar esta historia?',
+      message: 'Se borra tu progreso en esta historia. No se puede deshacer.',
+      confirmLabel: 'Abandonar',
+    );
+    if (!confirmed) return;
+    await widget.controller.abandonActiveSession();
+    if (!mounted) return;
+    _goToMenu();
   }
 
   @override
@@ -188,11 +235,12 @@ class _GameScreenState extends State<GameScreen> {
                       character: c.character!,
                       onOpenCodex: () =>
                           Navigator.of(context).push(CodexScreen.route()),
-                      onOpenInventory: () => Navigator.of(context).push(
-                        InventoryScreen.route(
-                            world: c.world!, character: c.character!),
-                      ),
-                      onBack: _goToMenu,
+                      onOpenInventory: () =>
+                          showInventorySheet(context, world: c.world!, character: c.character!),
+                      onOpenCharacterSheet: () =>
+                          showCharacterSheet(context, world: c.world!, character: c.character!),
+                      onBack: _openStoryMenu,
+                      collapse: _headerCollapse,
                     ),
                     Expanded(
                       child: _NarrationView(controller: c, scroll: _scroll),
@@ -271,53 +319,67 @@ class _NarrationView extends StatelessWidget {
     return SingleChildScrollView(
       key: const Key('narrationScroll'),
       controller: scroll,
-      padding: const EdgeInsets.fromLTRB(
-          AetherSpace.xl, AetherSpace.xl, AetherSpace.xl, AetherSpace.lg),
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (resolution != null) ...[
-            FateRoll(
-              key: ValueKey(resolution),
-              resolution: resolution,
-              criticalMargin: controller.world!.criticalMargin,
-            ),
-            if (controller.lastLevelsGained > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: AetherSpace.md),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: LevelUpBanner(
-                      levelsGained: controller.lastLevelsGained,
-                      unitLabel: controller.world!.progression.unitLabel),
-                ),
-              ),
-            const SizedBox(height: AetherSpace.xl),
-          ],
+          // Edge-to-edge, unpadded — the scene "opens" the turn the way the
+          // V2 prototype's §1a hero art does, fading under the reading
+          // column via its own bottom gradient rather than sitting inside a
+          // bordered card. Renders nothing when there's no image (curated/
+          // AI-free worlds, or generation still pending with none loaded).
           _SceneImage(controller: controller),
-          AnimatedSwitcher(
-            duration: AetherMotion.slow,
-            switchInCurve: AetherMotion.standard,
-            transitionBuilder: (child, animation) => FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween(
-                        begin: const Offset(0, 0.03), end: Offset.zero)
-                    .animate(animation),
-                child: child,
-              ),
-            ),
-            child: Text(
-              controller.narration,
-              key: ValueKey(controller.narration),
-              style: AetherType.narration,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                AetherSpace.xl, AetherSpace.xl, AetherSpace.xl, AetherSpace.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (resolution != null) ...[
+                  FateRoll(
+                    key: ValueKey(resolution),
+                    resolution: resolution,
+                    criticalMargin: controller.world!.criticalMargin,
+                  ),
+                  if (controller.lastLevelsGained > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AetherSpace.md),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: LevelUpBanner(
+                            levelsGained: controller.lastLevelsGained,
+                            unitLabel: controller.world!.progression.unitLabel),
+                      ),
+                    ),
+                  const SizedBox(height: AetherSpace.xl),
+                ],
+                AnimatedSwitcher(
+                  duration: AetherMotion.slow,
+                  switchInCurve: AetherMotion.standard,
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween(
+                              begin: const Offset(0, 0.03), end: Offset.zero)
+                          .animate(animation),
+                      child: child,
+                    ),
+                  ),
+                  child: Text(
+                    controller.narration,
+                    key: ValueKey(controller.narration),
+                    style: AetherType.narration,
+                  ),
+                ),
+                if (controller.error != null) ...[
+                  const SizedBox(height: AetherSpace.lg),
+                  Text(controller.error!,
+                      style:
+                          AetherType.body.copyWith(color: AetherColors.failure)),
+                ],
+              ],
             ),
           ),
-          if (controller.error != null) ...[
-            const SizedBox(height: AetherSpace.lg),
-            Text(controller.error!,
-                style: AetherType.body.copyWith(color: AetherColors.failure)),
-          ],
         ],
       ),
     );
@@ -337,19 +399,20 @@ class _SceneImage extends StatelessWidget {
 
   final GameController controller;
 
+  static const double _height = 260;
+
   @override
   Widget build(BuildContext context) {
     final imageUrl = controller.imageUrl;
     final loading = controller.imageLoading;
     if (imageUrl == null && !loading) return const SizedBox.shrink();
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AetherSpace.xl),
-      child: ClipRRect(
-        borderRadius: AetherRadius.allLg,
-        child: AspectRatio(
-          aspectRatio: 4 / 3,
-          child: AnimatedSwitcher(
+    return SizedBox(
+      height: _height,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          AnimatedSwitcher(
             duration: AetherMotion.slow,
             switchInCurve: AetherMotion.standard,
             transitionBuilder: (child, animation) =>
@@ -363,7 +426,23 @@ class _SceneImage extends StatelessWidget {
                   )
                 : const _SceneImageShimmer(key: ValueKey('scene-image-shimmer')),
           ),
-        ),
+          // The bleed: the scene dissolves into the reading background
+          // instead of stopping at a hard card edge (V2 prototype §1a).
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0x00151210),
+                  Color(0xCC15120F),
+                  AetherColors.ink,
+                ],
+                stops: [0.0, 0.75, 1.0],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -597,6 +676,11 @@ class _ChoicesBar extends StatelessWidget {
         controller.availableStoryChoices.isEmpty &&
         controller.availableActivities.isEmpty &&
         controller.availableEndings.isEmpty;
+    // Roman-numeral position runs across every source in "Tu decisión" as one
+    // sequence (story choices, then hub activities, then endings) rather than
+    // restarting at I per source — the player reads them as a single list
+    // (V2 design prototype §1a's numbered `ChoiceCard`s).
+    var choiceIndex = 0;
     return Container(
       padding: const EdgeInsets.fromLTRB(
           AetherSpace.lg, AetherSpace.md, AetherSpace.lg, AetherSpace.lg),
@@ -641,7 +725,8 @@ class _ChoicesBar extends StatelessWidget {
                                     Padding(
                                       padding: const EdgeInsets.only(
                                           bottom: AetherSpace.md),
-                                      child: ChoiceButton(
+                                      child: ChoiceCard(
+                                        index: ++choiceIndex,
                                         label: choice.label,
                                         onTap: () => _tapStoryChoice(context, choice),
                                       ),
@@ -650,7 +735,8 @@ class _ChoicesBar extends StatelessWidget {
                                     Padding(
                                       padding: const EdgeInsets.only(
                                           bottom: AetherSpace.md),
-                                      child: ChoiceButton(
+                                      child: ChoiceCard(
+                                        index: ++choiceIndex,
                                         label: activity.label,
                                         onTap: () =>
                                             controller.chooseHubActivity(activity),
@@ -660,7 +746,8 @@ class _ChoicesBar extends StatelessWidget {
                                     Padding(
                                       padding: const EdgeInsets.only(
                                           bottom: AetherSpace.md),
-                                      child: ChoiceButton(
+                                      child: ChoiceCard(
+                                        index: ++choiceIndex,
                                         label: ending.visibleChoice,
                                         onTap: () => _tapEnding(context, ending),
                                       ),
@@ -670,7 +757,8 @@ class _ChoicesBar extends StatelessWidget {
                                     Padding(
                                       padding: const EdgeInsets.only(
                                           bottom: AetherSpace.md),
-                                      child: ChoiceButton(
+                                      child: ChoiceCard(
+                                        index: ++choiceIndex,
                                         label: choice,
                                         onTap: () => controller.choose(choice),
                                       ),

@@ -5,63 +5,32 @@ import '../core/world/item_definition.dart';
 import '../core/world/world.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
-import 'widgets/atmosphere.dart';
+import 'widgets/sheet_shell.dart';
 
 /// Shows what's in `character.lists['inventory']` — bare ids until now,
 /// this is the first place a player actually sees a name and a description
 /// for what they're carrying (CLAUDE.md §11 Fase 1: "inventario real").
-class InventoryScreen extends StatelessWidget {
-  const InventoryScreen({super.key, required this.world, required this.character});
-
-  final World world;
-  final Character character;
-
-  static Route<void> route({required World world, required Character character}) =>
-      MaterialPageRoute(
-        builder: (_) => InventoryScreen(world: world, character: character),
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    final itemIds = character.list('inventory');
-    return Scaffold(
-      body: AetherBackground(
-        child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 720),
-              child: Column(
-                children: [
-                  _header(context),
-                  Expanded(
-                    child: itemIds.isEmpty
-                        ? const _EmptyState()
-                        : _InventoryList(world: world, itemIds: itemIds),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _header(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(
-            AetherSpace.sm, AetherSpace.sm, AetherSpace.lg, AetherSpace.sm),
-        child: Row(
-          children: [
-            IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.arrow_back_rounded,
-                  color: AetherColors.goldSoft),
-            ),
-            const SizedBox(width: AetherSpace.xs),
-            Text('Inventario', style: AetherType.display.copyWith(fontSize: 22)),
-          ],
-        ),
-      );
+///
+/// A bottom sheet (V2 Stage 5), not a pushed screen — reachable without
+/// losing your place in the reading column underneath.
+Future<void> showInventorySheet(
+  BuildContext context, {
+  required World world,
+  required Character character,
+}) {
+  final itemIds = character.list('inventory');
+  return showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    barrierColor: AetherColors.void_.withValues(alpha: 0.72),
+    isScrollControlled: true,
+    builder: (_) => SheetShell(
+      title: 'Inventario',
+      child: itemIds.isEmpty
+          ? const _EmptyState()
+          : _InventoryList(world: world, itemIds: itemIds),
+    ),
+  );
 }
 
 class _EmptyState extends StatelessWidget {
@@ -69,22 +38,21 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AetherSpace.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.inventory_2_outlined,
-                size: 40, color: AetherColors.parchmentFaint),
-            const SizedBox(height: AetherSpace.md),
-            Text(
-              'Todavía no tienes nada.',
-              style: AetherType.body.copyWith(color: AetherColors.parchmentDim),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          AetherSpace.xl, AetherSpace.lg, AetherSpace.xl, AetherSpace.xxl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.inventory_2_outlined,
+              size: 40, color: AetherColors.parchmentFaint),
+          const SizedBox(height: AetherSpace.md),
+          Text(
+            'Todavía no tienes nada.',
+            style: AetherType.body.copyWith(color: AetherColors.parchmentDim),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
@@ -99,8 +67,9 @@ class _InventoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
+      shrinkWrap: true,
       padding: const EdgeInsets.fromLTRB(
-          AetherSpace.lg, AetherSpace.sm, AetherSpace.lg, AetherSpace.huge),
+          AetherSpace.xl, AetherSpace.md, AetherSpace.xl, AetherSpace.xl),
       itemCount: itemIds.length,
       separatorBuilder: (_, _) => const SizedBox(height: AetherSpace.md),
       itemBuilder: (context, i) => _ItemCard(
@@ -136,7 +105,7 @@ class _ItemCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AetherSpace.lg),
       decoration: BoxDecoration(
-        color: AetherColors.surface,
+        color: AetherColors.surfaceRaised,
         borderRadius: AetherRadius.allLg,
         border: Border.all(color: AetherColors.hairline),
       ),

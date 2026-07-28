@@ -39,9 +39,10 @@ String _toRoman(int number) {
 
 /// V2 reading-screen choice: same tactile press-and-brighten feel as
 /// [ChoiceButton], with a Roman numeral standing in for the plain accent
-/// rail — "las decisiones son un acto" (V2 design prototype §1a). Not yet
-/// wired into [GameScreen]; introduced here in isolation per V2
-/// Implementation Plan Stage 1.
+/// rail — "las decisiones son un acto" (V2 design prototype §1a). Wired into
+/// [GameScreen]'s `_ChoicesBar` (Stage 4) for every real decision point;
+/// [ChoiceButton] stays in use for single, non-enumerated actions ("Continuar",
+/// "Volver al menú").
 class ChoiceCard extends StatefulWidget {
   const ChoiceCard({
     super.key,

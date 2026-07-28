@@ -268,6 +268,16 @@ class World {
       );
 
   /// Non-throwing, like [originByIdOrNull] — [id] may be `null` (a world
+  /// with no chargen at all) or, in principle, stale.
+  Vow? vowByIdOrNull(String? id) {
+    if (id == null) return null;
+    for (final vow in vows) {
+      if (vow.id == id) return vow;
+    }
+    return null;
+  }
+
+  /// Non-throwing, like [originByIdOrNull] — [id] may be `null` (a world
   /// with no tone step) or, in principle, stale.
   ToneOption? toneByIdOrNull(String? id) {
     if (id == null) return null;

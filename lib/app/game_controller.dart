@@ -145,6 +145,13 @@ class GameController extends ChangeNotifier {
 
   World? get world => _world;
   Character? get character => _session?.character;
+
+  /// The active session's persisted id, or `null` for a session that only
+  /// exists in memory (no persistence adapter wired yet). Lets a screen that
+  /// is *inside* the active session (unlike `WorldSelectScreen`'s
+  /// by-`GameSessionSummary` abandon flow) abandon it without needing to
+  /// already know its own id.
+  String? get sessionId => _session?.id;
   List<String> get choices => _choices;
   String get narration => _narration;
   String get tone => _tone;
@@ -242,6 +249,30 @@ class GameController extends ChangeNotifier {
   /// persistence configured (nothing to abandon in memory-only mode).
   Future<void> abandonStory(String sessionId) async {
     await _persistence?.abandonSession(sessionId);
+  }
+
+  /// Abandons the session currently loaded in memory (V2 Stage 5's
+  /// "abandonar esta historia", reachable from inside `GameScreen` itself —
+  /// unlike [abandonStory], which operates on a `GameSessionSummary` the
+  /// player is looking at from a story list, not playing right now). Clears
+  /// [world]/[character]/[isReady] back to their pre-`start()` state, so a
+  /// screen the player lands on afterward (`WorldSelectScreen`'s "continue"
+  /// card) doesn't offer to resume a story that no longer exists.
+  ///
+  /// Deliberately does **not** call `notifyListeners()`: the caller is
+  /// always about to navigate away from whatever screen is showing this
+  /// controller (there's nothing left to show once the session is gone), and
+  /// that screen may still be mid-transition (e.g. `GameScreen`'s fade-out
+  /// `PageRouteBuilder`) with a `ListenableBuilder` that unconditionally
+  /// reads `world!`/`character!` — notifying here would crash it on a stray
+  /// rebuild before the navigation actually completes.
+  Future<void> abandonActiveSession() async {
+    final id = _session?.id;
+    if (id != null) {
+      await _persistence?.abandonSession(id);
+    }
+    _world = null;
+    _session = null;
   }
 
   /// Loads a world and sets up the opening scene — resumed from a persisted
