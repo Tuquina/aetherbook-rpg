@@ -4,10 +4,9 @@ import '../../ports/auth_port.dart';
 
 /// Wraps Supabase Auth (CLAUDE.md §4/§8: the only file that talks to
 /// `supabase_flutter`'s `auth` surface directly). Owns the whole identity
-/// lifecycle: the transparent anonymous bootstrap at launch
-/// ([ensureSignedIn]), and the player-initiated upgrade to a durable
-/// identity via Google or email+password (V2 — see `AuthPort`'s doc comment
-/// for why magic-link was discontinued).
+/// lifecycle — Google or email+password (V2 — see `AuthPort`'s doc comment
+/// for why magic-link was discontinued, and why there's no anonymous
+/// bootstrap here: a real account is required before any session exists).
 class SupabaseAuthAdapter implements AuthPort {
   SupabaseAuthAdapter(this._client, {this.emailRedirectTo});
 
@@ -30,30 +29,20 @@ class SupabaseAuthAdapter implements AuthPort {
   @override
   Stream<void> get onChange => _auth.onAuthStateChange;
 
-  /// Signs in anonymously if nothing is signed in yet — a no-op once *any*
-  /// session (anonymous or permanent) already exists, so it's safe to call
-  /// on every app launch. This replaces the inline `signInAnonymously` call
-  /// `main.dart` used to make directly against `Supabase.instance.client`.
-  Future<void> ensureSignedIn() async {
-    if (_auth.currentUser == null) {
-      await _auth.signInAnonymously();
-    }
-  }
-
   @override
   Future<void> signInWithGoogle() {
-    // linkIdentity (not signInWithOAuth) specifically so this attaches
-    // Google to the *current* anonymous session instead of switching to a
-    // separate one — requires "Enable Manual Linking" in the project's
-    // Auth settings, on top of the Google provider itself being configured.
-    return _auth.linkIdentity(OAuthProvider.google, redirectTo: emailRedirectTo);
+    // signInWithOAuth, not linkIdentity: there's no anonymous session to
+    // attach to anymore — this creates (or signs into) a real account
+    // directly.
+    return _auth.signInWithOAuth(OAuthProvider.google, redirectTo: emailRedirectTo);
   }
 
   @override
   Future<void> signUpWithPassword({required String email, required String password}) async {
     try {
-      await _auth.updateUser(
-        UserAttributes(email: email, password: password),
+      await _auth.signUp(
+        email: email,
+        password: password,
         emailRedirectTo: emailRedirectTo,
       );
     } on AuthApiException catch (e) {

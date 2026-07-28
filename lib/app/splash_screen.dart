@@ -12,12 +12,11 @@ import 'widgets/brand_mark.dart';
 import 'world_select_screen.dart';
 
 /// The entry screen: the brand symbol, the wordmark, and the way in. A moment
-/// of arrival before the world opens (GDD §9). Anonymous play happens
-/// transparently (CLAUDE.md-adjacent: no account required to start) — the
-/// account button opens [AccountScreen] to opt into attaching a durable
-/// email, so progress survives switching devices/browsers instead of
-/// staying tied to this one's local storage. "Comenzar" leads to
-/// [WorldSelectScreen], where the player picks which story to enter.
+/// of arrival before the world opens (GDD §9). "Comenzar" leads to
+/// [WorldSelectScreen] once the player has a real account — there is no
+/// anonymous/guest path anymore: without one, "Comenzar" routes to
+/// [AccountScreen] first (sign up or sign in, Google or email+password), and
+/// only continues on to [WorldSelectScreen] once that succeeds.
 ///
 /// V2 (design prototype §10a): the old animated tome painter is replaced by
 /// [BrandMark] (the same symbol every other screen uses), and three short
@@ -29,8 +28,9 @@ class SplashScreen extends StatefulWidget {
   final GameController controller;
 
   /// `null` when Supabase failed to initialize (degraded, in-memory-only
-  /// mode) — the account button is hidden in that case, since there would
-  /// be no session to attach an email to.
+  /// mode) — there's no account system to gate on in that case, so
+  /// "Comenzar" plays in-memory rather than stranding the player behind a
+  /// login screen that can't actually work.
   final AuthPort? auth;
 
   @override
@@ -50,7 +50,22 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
+  /// The one entry action: goes straight to [WorldSelectScreen] once there's
+  /// a real account (or in the degraded in-memory-only mode, where there's
+  /// no account system to gate on at all) — otherwise routes to
+  /// [AccountScreen] first, since there's no anonymous/guest path anymore.
   void _begin() {
+    final auth = widget.auth;
+    if (auth != null && auth.isAnonymous) {
+      Navigator.of(context).push(
+        AccountScreen.route(authPort: auth, onAuthenticated: _goToWorldSelect),
+      );
+    } else {
+      _goToWorldSelect();
+    }
+  }
+
+  void _goToWorldSelect() {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: AetherMotion.slow,
@@ -59,12 +74,6 @@ class _SplashScreenState extends State<SplashScreen>
             FadeTransition(opacity: anim, child: child),
       ),
     );
-  }
-
-  void _openAccount() {
-    final auth = widget.auth;
-    if (auth == null) return;
-    Navigator.of(context).push(AccountScreen.route(authPort: auth));
   }
 
   @override
@@ -121,19 +130,6 @@ class _SplashScreenState extends State<SplashScreen>
                             const _ExplainerLines(),
                             const SizedBox(height: AetherSpace.xl),
                             _PrimaryButton(label: 'Comenzar', onTap: _begin),
-                            const SizedBox(height: AetherSpace.md),
-                            if (widget.auth != null)
-                              TextButton(
-                                onPressed: _openAccount,
-                                child: Text(
-                                  widget.auth!.isAnonymous
-                                      ? 'Guardar tu progreso'
-                                      : 'Jugando como ${widget.auth!.email}',
-                                  style: AetherType.caption.copyWith(
-                                      color: AetherColors.parchmentFaint,
-                                      fontSize: 13),
-                                ),
-                              ),
                           ],
                         ),
                       ),

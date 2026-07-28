@@ -56,12 +56,13 @@ Future<void> main() async {
   runApp(AetherbookApp(controller: controller, auth: supabase?.auth));
 }
 
-/// Initializes Supabase, signs in anonymously (transparently — RLS needs a
-/// `user_id` to scope rows to before the player has ever made a choice) and
-/// wires up both Supabase-backed ports. Degrades gracefully to in-memory
-/// play and no account features (both `null`, same as Fase 0) if anything
-/// fails — e.g. anonymous sign-ins not enabled yet on the project — instead
-/// of crashing the app at startup.
+/// Initializes Supabase and wires up both Supabase-backed ports. A real
+/// account (Google or email+password, via `AuthPort`) is required before any
+/// session exists — there's no anonymous bootstrap: `SplashScreen` gates
+/// "Comenzar" on `auth.isAnonymous` and routes to `AccountScreen` first.
+/// Degrades gracefully to in-memory play with no account features (both
+/// `null`, same as Fase 0) if Supabase itself fails to initialize, instead of
+/// crashing the app at startup.
 Future<({GameStateRepositoryPort persistence, AuthPort auth})?> _tryInitSupabase() async {
   try {
     await Supabase.initialize(
@@ -69,9 +70,10 @@ Future<({GameStateRepositoryPort persistence, AuthPort auth})?> _tryInitSupabase
       publishableKey: _supabasePublishableKey,
     );
     final client = Supabase.instance.client;
-    final auth = SupabaseAuthAdapter(client);
-    await auth.ensureSignedIn();
-    return (persistence: SupabaseGameStateAdapter(client), auth: auth);
+    return (
+      persistence: SupabaseGameStateAdapter(client),
+      auth: SupabaseAuthAdapter(client),
+    );
   } catch (e) {
     debugPrint('Persistencia no disponible, se juega solo en memoria: $e');
     return null;

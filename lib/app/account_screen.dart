@@ -7,24 +7,38 @@ import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'widgets/atmosphere.dart';
 import 'widgets/brand_mark.dart';
+import 'widgets/google_logo.dart';
 
-/// Lets the player attach a durable identity (Google, or email+password) to
-/// their (until now anonymous) session. Reached from [SplashScreen]'s
-/// account button — purely opt-in, the game plays exactly the same if this
-/// screen is never opened. The heavy lifting (which Supabase call to make)
-/// lives entirely behind [AuthPort]; this widget only renders whichever
-/// state it's in.
+/// Where the player creates or signs into the real account required to play
+/// at all (V2: no anonymous/guest path — `SplashScreen` reaches this screen
+/// whenever [AuthPort.isAnonymous] is still true, and [onAuthenticated] is
+/// how this screen hands control back once that stops being the case). The
+/// heavy lifting (which Supabase call to make) lives entirely behind
+/// [AuthPort]; this widget only renders whichever state it's in.
 ///
-/// V2 (`V2_PRODUCT_DECISIONS.md` Decision D): replaces the single
-/// email-magic-link form with Google + email/password, discontinuing the
-/// magic link entirely, per the user's explicit choice.
+/// V2 (`V2_PRODUCT_DECISIONS.md` Decision D, later revised): replaces the
+/// single email-magic-link form with Google + email/password, discontinuing
+/// the magic link entirely, and — per the user's later explicit instruction
+/// — this screen is no longer skippable: there's no "seguir sin cuenta".
 class AccountScreen extends StatefulWidget {
-  const AccountScreen({super.key, required this.authPort});
+  const AccountScreen({super.key, required this.authPort, required this.onAuthenticated});
 
   final AuthPort authPort;
 
-  static Route<void> route({required AuthPort authPort}) => MaterialPageRoute(
-        builder: (_) => AccountScreen(authPort: authPort),
+  /// Called once [authPort] reports a real (non-anonymous) identity — right
+  /// after a synchronous sign-in success, or later via [AuthPort.onChange]
+  /// for Google's asynchronous consent-screen round trip. The caller owns
+  /// what happens next (`SplashScreen` replaces this screen with
+  /// `WorldSelectScreen`); this widget never navigates on its own beyond
+  /// that.
+  final VoidCallback onAuthenticated;
+
+  static Route<void> route({
+    required AuthPort authPort,
+    required VoidCallback onAuthenticated,
+  }) =>
+      MaterialPageRoute(
+        builder: (_) => AccountScreen(authPort: authPort, onAuthenticated: onAuthenticated),
       );
 
   @override
@@ -53,13 +67,23 @@ class _AccountScreenState extends State<AccountScreen> {
   @override
   void initState() {
     super.initState();
-    // Google's linkIdentity() only launches the consent screen; actual
+    // Google's signInWithOAuth() only launches the consent screen; actual
     // completion arrives later via onChange once the player comes back from
     // it (AuthPort.signInWithGoogle's doc comment) — this is the only way
     // this screen finds out.
     _authSub = widget.authPort.onChange.listen((_) {
-      if (mounted) setState(() {});
+      if (mounted && !widget.authPort.isAnonymous) widget.onAuthenticated();
     });
+    // Defensive: if this screen somehow opened while already authenticated
+    // (shouldn't happen given SplashScreen's own gating, but nothing here
+    // should assume its caller got that right), hand control back
+    // immediately instead of showing a sign-up form for no reason. Deferred
+    // a frame since navigating during initState/build is unsafe.
+    if (!widget.authPort.isAnonymous) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onAuthenticated();
+      });
+    }
   }
 
   @override
@@ -148,6 +172,10 @@ class _AccountScreenState extends State<AccountScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+      // Not calling widget.onAuthenticated() here directly: signing in also
+      // fires AuthPort.onChange (same as Google's), which the listener in
+      // initState already handles — calling it from both places would fire
+      // it twice.
       if (!mounted) return;
       setState(() => _submitting = false);
     } catch (_) {
@@ -184,7 +212,6 @@ class _AccountScreenState extends State<AccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final alreadyLinked = !widget.authPort.isAnonymous;
     return Scaffold(
       body: AetherBackground(
         child: SafeArea(
@@ -209,9 +236,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   const SizedBox(height: AetherSpace.lg),
                   const BrandMark(size: 44),
                   const SizedBox(height: AetherSpace.lg),
-                  if (alreadyLinked)
-                    ..._linkedContent(widget.authPort.email!)
-                  else if (_mode == _Mode.forgotPassword)
+                  if (_mode == _Mode.forgotPassword)
                     ..._forgotPasswordContent()
                   else if (_signUpSent)
                     ..._signUpSentContent()
@@ -237,16 +262,6 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  List<Widget> _linkedContent(String email) => [
-        Text('Ya estás guardando tu progreso', style: AetherType.display.copyWith(fontSize: 22)),
-        const SizedBox(height: AetherSpace.md),
-        Text(
-          'Estás jugando con $email. Entra con esta misma cuenta desde cualquier '
-          'otro dispositivo o navegador para seguir donde lo dejaste.',
-          style: AetherType.body,
-        ),
-      ];
-
   List<Widget> _googleContent() => [
         _GoogleButton(
           enabled: !_submitting,
@@ -256,12 +271,12 @@ class _AccountScreenState extends State<AccountScreen> {
       ];
 
   List<Widget> _signUpContent() => [
-        Text('Guarda tu progreso', style: AetherType.display.copyWith(fontSize: 22)),
+        Text('Crea tu cuenta', style: AetherType.display.copyWith(fontSize: 22)),
         const SizedBox(height: AetherSpace.md),
         Text(
-          'Hoy tu partida vive solo en este dispositivo. Crea una cuenta y tu '
-          'progreso queda ligado a ella — vas a poder seguir jugando desde '
-          'cualquier otro dispositivo sin perder nada.',
+          'Tu historia se guarda en la nube, ligada a tu cuenta — hace falta '
+          'una para jugar. Con Google es un toque; con correo y contraseña, '
+          'unos segundos más.',
           style: AetherType.body,
         ),
         const SizedBox(height: AetherSpace.xl),
@@ -300,13 +315,10 @@ class _AccountScreenState extends State<AccountScreen> {
       ];
 
   List<Widget> _signInContent() => [
-        Text('Llévate tus tomos a cualquier sitio',
-            style: AetherType.display.copyWith(fontSize: 22)),
+        Text('Entra a tu cuenta', style: AetherType.display.copyWith(fontSize: 22)),
         const SizedBox(height: AetherSpace.md),
         Text(
-          'Ya estás jugando sin cuenta, pero todo vive solo en este dispositivo. '
-          'Al entrar, lo que jugaste aquí sin cuenta se queda atrás — hay que '
-          'decirlo antes, no después.',
+          'Entra con tu cuenta para seguir tu historia donde la dejaste.',
           style: AetherType.body,
         ),
         const SizedBox(height: AetherSpace.xl),
@@ -405,9 +417,8 @@ class _AccountScreenState extends State<AccountScreen> {
         const SizedBox(height: AetherSpace.md),
         Text(
           'Te mandamos un enlace a ${_emailController.text.trim()}. Al '
-          'confirmarlo, tu progreso de ahora en más queda guardado en esa '
-          'cuenta — vas a poder entrar con este mismo email y contraseña '
-          'desde cualquier otro dispositivo.',
+          'confirmarlo, ya puedes entrar y empezar a jugar con esta cuenta '
+          'desde cualquier dispositivo.',
           style: AetherType.body,
         ),
       ];
@@ -513,6 +524,8 @@ class _EmailField extends StatelessWidget {
         hintText: 'tu@email.com',
         hintStyle:
             AetherType.caption.copyWith(color: AetherColors.parchmentFaint, fontSize: 15),
+        prefixIcon: const Icon(Icons.mail_outline_rounded,
+            size: 18, color: AetherColors.parchmentFaint),
         filled: true,
         fillColor: AetherColors.void_,
         enabledBorder: const OutlineInputBorder(
@@ -566,6 +579,8 @@ class _PasswordFieldState extends State<_PasswordField> {
         hintText: 'Contraseña',
         hintStyle:
             AetherType.caption.copyWith(color: AetherColors.parchmentFaint, fontSize: 15),
+        prefixIcon:
+            const Icon(Icons.key_rounded, size: 18, color: AetherColors.parchmentFaint),
         filled: true,
         fillColor: AetherColors.void_,
         suffixIcon: IconButton(
@@ -617,7 +632,7 @@ class _GoogleButton extends StatelessWidget {
               : Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.g_mobiledata_rounded, size: 26, color: AetherColors.ink),
+                    const GoogleLogo(size: 20),
                     const SizedBox(width: AetherSpace.sm),
                     Text(
                       'Continuar con Google',

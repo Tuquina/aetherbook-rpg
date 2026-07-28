@@ -14,12 +14,23 @@ import 'package:flutter_test/flutter_test.dart';
 // builds elements near its viewport, so the submit button and password
 // field may not exist in the tree at all at the default 800x600 test
 // surface (same gotcha chargen_screen_test.dart hit and fixed).
-Future<void> _pumpAccountScreen(WidgetTester tester, AuthPort auth) async {
+/// Counts calls to `onAuthenticated` so a test can assert on it after the
+/// fact — a plain closure over a local `var` can't be read back once pumped.
+class _AuthGateSpy {
+  int calls = 0;
+  void call() => calls++;
+}
+
+Future<_AuthGateSpy> _pumpAccountScreen(WidgetTester tester, AuthPort auth) async {
   tester.view.physicalSize = const Size(900, 2000);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
-  await tester.pumpWidget(MaterialApp(home: AccountScreen(authPort: auth)));
+  final spy = _AuthGateSpy();
+  await tester.pumpWidget(MaterialApp(
+    home: AccountScreen(authPort: auth, onAuthenticated: spy.call),
+  ));
   await tester.pump();
+  return spy;
 }
 
 Future<void> _enterEmailAndPassword(
@@ -39,22 +50,18 @@ void main() {
     testWidgets('shows Google + email/password form while anonymous', (tester) async {
       await _pumpAccountScreen(tester, FakeAuthAdapter());
 
-      expect(find.text('Guarda tu progreso'), findsOneWidget);
+      expect(find.text('Crea tu cuenta'), findsOneWidget);
       expect(find.text('Continuar con Google'), findsOneWidget);
       expect(find.text('Crear cuenta'), findsOneWidget);
       expect(find.text('¿Ya tienes cuenta? Entrar'), findsOneWidget);
     });
 
-    testWidgets('shows the linked state directly when already signed in',
+    testWidgets('there is no way to continue without an account — no skip link exists',
         (tester) async {
-      await _pumpAccountScreen(
-        tester,
-        FakeAuthAdapter(anonymous: false, email: 'vieja@aetherbook.dev'),
-      );
+      await _pumpAccountScreen(tester, FakeAuthAdapter());
 
-      expect(find.text('Ya estás guardando tu progreso'), findsOneWidget);
-      expect(find.textContaining('vieja@aetherbook.dev'), findsOneWidget);
-      expect(find.text('Continuar con Google'), findsNothing);
+      expect(find.textContaining('sin cuenta'), findsNothing);
+      expect(find.textContaining('Seguir sin cuenta'), findsNothing);
     });
 
     testWidgets('the submit button stays disabled for an invalid email or short password',
@@ -117,7 +124,7 @@ void main() {
       await tester.tap(find.text('Entrar con ese email'));
       await tester.pump();
 
-      expect(find.text('Llévate tus tomos a cualquier sitio'), findsOneWidget);
+      expect(find.text('Entra a tu cuenta'), findsOneWidget);
       expect(find.text('Entrar'), findsOneWidget);
     });
 
@@ -136,6 +143,22 @@ void main() {
     });
   });
 
+  group('AccountScreen — already authenticated', () {
+    testWidgets('calls onAuthenticated immediately if it somehow opens while already signed in',
+        (tester) async {
+      var calls = 0;
+      await tester.pumpWidget(MaterialApp(
+        home: AccountScreen(
+          authPort: FakeAuthAdapter(anonymous: false, email: 'vieja@aetherbook.dev'),
+          onAuthenticated: () => calls++,
+        ),
+      ));
+      await tester.pump();
+
+      expect(calls, 1);
+    });
+  });
+
   group('AccountScreen — Google', () {
     testWidgets('tapping the Google button links the current session', (tester) async {
       final auth = FakeAuthAdapter();
@@ -147,15 +170,15 @@ void main() {
       expect(auth.signInWithGoogleCalls, hasLength(1));
     });
 
-    testWidgets('once onChange fires (link completed), the screen shows the linked state',
+    testWidgets('once onChange fires (link completed), onAuthenticated is called',
         (tester) async {
       final auth = FakeAuthAdapter();
-      await _pumpAccountScreen(tester, auth);
+      final spy = await _pumpAccountScreen(tester, auth);
 
       await tester.tap(find.text('Continuar con Google'));
       await tester.pump();
 
-      expect(find.text('Ya estás guardando tu progreso'), findsOneWidget);
+      expect(spy.calls, 1);
       expect(auth.isAnonymous, isFalse);
     });
 
@@ -177,9 +200,11 @@ void main() {
       await tester.pump();
     }
 
-    testWidgets('a successful sign-in switches to the linked state', (tester) async {
+    testWidgets('a successful sign-in calls onAuthenticated', (tester) async {
       final auth = FakeAuthAdapter();
-      await goToSignIn(tester, auth);
+      final spy = await _pumpAccountScreen(tester, auth);
+      await tester.tap(find.text('¿Ya tienes cuenta? Entrar'));
+      await tester.pump();
 
       await _enterEmailAndPassword(
           tester, email: 'vieja@aetherbook.dev', password: 'contrasena123');
@@ -189,7 +214,7 @@ void main() {
       expect(auth.signInWithPasswordCalls, [
         (email: 'vieja@aetherbook.dev', password: 'contrasena123'),
       ]);
-      expect(find.text('Ya estás guardando tu progreso'), findsOneWidget);
+      expect(spy.calls, 1);
     });
 
     testWidgets('a failed sign-in never reveals whether the email or the password was wrong',

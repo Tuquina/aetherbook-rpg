@@ -104,7 +104,8 @@ class SupabaseGameStateAdapter implements GameStateRepositoryPort {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
       throw StateError(
-        'createSession requires a signed-in user (call signInAnonymously first)',
+        'createSession requires a signed-in user (AuthPort.signInWithGoogle/'
+        'signUpWithPassword/signInWithPassword first)',
       );
     }
 

@@ -37,6 +37,12 @@ dependencies:
   http: ^1.6.0
   supabase_flutter: ^2.16.0
 
+  # The real, brand-correct Google "G" mark on AccountScreen's Google button
+  # (V2 design prototype §10b ships it as an inline 4-color SVG) — rendering
+  # it from the exact SVG string is more reliable than hand-transcribing its
+  # Bezier paths into a CustomPainter.
+  flutter_svg: ^2.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

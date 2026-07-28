@@ -167,14 +167,44 @@ complete alone, still outstanding:**
 Email/password (sign-up/sign-in/reset) needs no dashboard changes beyond
 what magic-link already had — it's ready as soon as this code deploys.
 
+**Revision (2026-07-27, later the same day): anonymous play removed
+entirely.** The user's explicit instruction — "Ya NO se debe poder seguir
+sin cuenta ni hacer un ingreso anónimo" — goes further than this decision's
+own original scope (which still assumed CLAUDE.md's anonymous-first
+bootstrap underneath the new auth methods). A real account is now required
+before any session exists at all:
+- `main.dart` no longer calls `signInAnonymously()`/`ensureSignedIn()` at
+  launch — removed entirely, along with the method itself.
+- `SplashScreen`'s "Comenzar" now gates on `AuthPort.isAnonymous`: routes to
+  `AccountScreen` first when there's no real account yet, and only
+  continues to `WorldSelectScreen` once there is (directly, or via the
+  degraded in-memory mode when Supabase itself failed to initialize — there
+  being no account system to gate on at all in that case). The old
+  "Guardar tu progreso" secondary link (an *opt-in* upgrade affordance) is
+  gone — there's only one entry action now.
+- `SupabaseAuthAdapter.signInWithGoogle`/`signUpWithPassword` switched from
+  `linkIdentity`/`updateUser` (which both require an existing anonymous
+  session to attach to) to `signInWithOAuth`/`signUp` (which create a real
+  account directly) — the "Allow manual linking" dashboard setting this
+  decision originally required is **no longer needed** for that reason.
+- `AccountScreen` gained a required `onAuthenticated` callback and no longer
+  has a persistent "ya estás guardando tu progreso" resting view — it's a
+  one-shot gate now, not an opt-in settings screen, so it hands control back
+  to the caller (`SplashScreen`, replacing itself with `WorldSelectScreen`)
+  the moment `AuthPort` reports a real identity.
+- The Google button's icon was also fixed to Google's real 4-color mark
+  (`flutter_svg` + the prototype's own inline SVG), replacing a generic
+  single-color Material icon that was never a real brand element.
+
 **Context.** Sections `10b`/`10d` assume Google OAuth and email/password
 sign-in/sign-up/reset exist. The prototype's own annotation on `10d` admits:
 *"Nada de esto existe todavía: hoy AuthPort sólo expone continueWithEmail por
 enlace."*
 
-**Current behavior.** Anonymous session by default (CLAUDE.md's documented
-model); **opt-in** magic-link email continuation
-(`AuthPort.continueWithEmail`) is the only account-linking path that exists.
+**Current behavior (superseded by the 2026-07-27 revision above).**
+Anonymous session by default (CLAUDE.md's documented model); **opt-in**
+magic-link email continuation (`AuthPort.continueWithEmail`) is the only
+account-linking path that exists.
 
 **Prototype behavior.** Google OAuth + password signup/signin/reset,
 *discontinuing* the magic link entirely.

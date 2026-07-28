@@ -611,16 +611,48 @@ Only proceed with a sub-stage once its blocking decision in
     .dart` did — fixed the same way (taller test viewport). 631/631 passing,
     `analyze` clean.
 
-  **Not live yet — two things need your action in the Supabase/Google
-  dashboards before Google sign-in actually works for a player:**
-  1. Configure a Google Cloud Console OAuth client (ID + secret) and enable
-     Google as a provider in Supabase's Auth settings.
-  2. Enable **"Allow manual linking"** in Supabase's Auth settings —
-     `linkIdentity` requires it, and without it every Google attempt fails.
+  **Revision (2026-07-27, later the same day) — anonymous play removed
+  entirely, per your explicit instruction ("Ya NO se debe poder seguir sin
+  cuenta ni hacer un ingreso anónimo"):** see
+  `V2_PRODUCT_DECISIONS.md`'s Decision D for full detail. Summary of what
+  changed on top of everything above:
+  - `main.dart` no longer signs in anonymously at launch — `ensureSignedIn()`
+    is gone. `SplashScreen`'s "Comenzar" now gates on `isAnonymous`, routing
+    to `AccountScreen` first (and only there) when there's no real account.
+  - `SupabaseAuthAdapter.signInWithGoogle`/`signUpWithPassword` switched from
+    `linkIdentity`/`updateUser` to `signInWithOAuth`/`signUp` — there's no
+    anonymous session left to attach to, so these create a real account
+    directly. **"Allow manual linking" is no longer required** for this
+    reason — the two dashboard steps below are now down to one.
+  - `AccountScreen` gained a required `onAuthenticated` callback, dropped its
+    persistent "linked" resting view, and now hands control back to
+    `SplashScreen` immediately once a real identity exists — it's a one-shot
+    gate, not an opt-in settings screen anymore.
+  - The Google button's icon is now Google's real 4-color mark (new
+    `lib/app/widgets/google_logo.dart`, `flutter_svg` dependency added) —
+    was a generic single-color Material icon before.
+  - `test/app/account_screen_test.dart` rewritten again for the new
+    `onAuthenticated`-callback shape (15 cases); new
+    `test/app/splash_screen_test.dart` (5 cases) covers the gating itself —
+    no test existed for `SplashScreen` before this. 648/648 Flutter tests
+    passing, `analyze` clean.
 
-  Email/password (sign-up, sign-in, reset) needs no extra dashboard
-  configuration beyond what magic-link already had — it works as soon as
-  this code is deployed.
+  **Still needed in the Google/Supabase dashboards** — down to one item now:
+  configure a Google Cloud Console OAuth client (ID + secret) and enable
+  Google as a provider in Supabase's Auth settings. You reported this is
+  already done. Email/password (sign-up, sign-in, reset) needs no dashboard
+  configuration at all.
+
+  **Not independently re-verified visually this session:** the browser
+  preview's screenshot tool hit the same "Browser pane is not displayed"
+  environment issue from earlier sessions and never recovered despite
+  several retries — could not confirm pixel rendering of the new Google
+  logo (a new dependency, `flutter_svg`, rendering on Flutter *Web*
+  specifically) or the gated splash flow visually. Confidence here rests on
+  `analyze`/the test suite (which does drive the real widget tree through
+  `AccountScreen`/`SplashScreen`, including tapping the real "Continuar con
+  Google" button), not a screenshot. Recommend a manual look once deployed,
+  same caveat as Stage 1's typography change.
 - **6e — Story-graph editor.** Decision A **deferred** (2026-07-27, user
   confirmed). Not scheduled.
 - **6f — Publishing/UGC.** Decision B **deferred** (2026-07-27, user
@@ -711,7 +743,7 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 | 6a — Ending-discovery counter | ✅ Done (2026-07-27) | — |
 | 6b — Per-world visual theming | ✅ Done (2026-07-27) | — |
 | 6c — Player-selectable tone | ✅ Done and deployed (2026-07-27) — Edge Function redeployed (v9) and migration applied to the live Supabase project | — |
-| 6d — Auth expansion | ✅ Code done (2026-07-27); Google Cloud Console client + "Allow manual linking" reportedly configured by you, not yet confirmed end-to-end (blocked on a browser-preview tooling issue, not the app) | — |
+| 6d — Auth expansion | ✅ Code done (2026-07-27), revised same day to remove anonymous play entirely (your explicit instruction) — Google Cloud Console client reportedly configured by you; "Allow manual linking" no longer needed (`linkIdentity` → `signInWithOAuth`); not yet confirmed end-to-end (blocked on a browser-preview tooling issue, not the app) | — |
 | 6e — Story-graph editor | Deferred (2026-07-27) | — |
 | 6f — Publishing/UGC | Deferred (2026-07-27) | — |
 | 7 — Ending/account/offline/resilience polish | Not started | Stage 4, 6a |
