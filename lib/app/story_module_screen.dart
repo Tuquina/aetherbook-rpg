@@ -74,6 +74,7 @@ class StoryModuleScreen extends StatelessWidget {
                             child: StoryCard(
                               world: world,
                               accent: style.accent,
+                              icon: style.icon,
                               onTap: () => onTap(world),
                               onRestart: () => onRestart(world),
                             ),
@@ -172,6 +173,7 @@ class StoryCard extends StatelessWidget {
     required this.accent,
     required this.onTap,
     this.onRestart,
+    this.icon = Icons.auto_stories_rounded,
   });
 
   final World world;
@@ -182,6 +184,12 @@ class StoryCard extends StatelessWidget {
   /// freeform module's genre cards always create a new story rather than
   /// restarting one, so there's nothing to reset.
   final VoidCallback? onRestart;
+
+  /// The parent module's icon (V2 design prototype §2b's story-list rows
+  /// each carry a small identity mark) — there's no per-campaign artwork in
+  /// the content schema, so every card in a module shares its module's icon
+  /// rather than inventing one per world.
+  final IconData icon;
 
   String get _themeLabel => themeLabelFor(world.theme);
 
@@ -206,13 +214,14 @@ class StoryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              margin: const EdgeInsets.only(top: 3),
-              width: 3,
-              height: 46,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: accent,
-                borderRadius: AetherRadius.allPill,
+                color: accent.withValues(alpha: 0.16),
+                shape: BoxShape.circle,
+                border: Border.all(color: accent.withValues(alpha: 0.5)),
               ),
+              child: Icon(icon, color: accent, size: 20),
             ),
             const SizedBox(width: AetherSpace.md),
             Expanded(

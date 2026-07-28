@@ -5,10 +5,23 @@ import '../core/world/world.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'game_controller.dart';
-import 'story_module_screen.dart' show Pressable, StoryCard;
+import 'story_module_screen.dart' show Pressable;
 import 'widgets/atmosphere.dart';
 import 'world_select_screen.dart'
     show StoryModule, StoryModuleStyle, storyModuleStyle;
+
+/// Purely presentational icon per freeform genre (V2 design prototype §2b's
+/// "Mundos por abrir" grid) — keyed by `World.slug`, not `theme`, since these
+/// 5 slugs are the freeform genres themselves. Falls back to a generic icon
+/// for any future genre this map hasn't been updated for yet; never blocks a
+/// world from being playable.
+const _genreIcons = {
+  'isekai': Icons.meeting_room_rounded,
+  'xianxia': Icons.self_improvement_rounded,
+  'superheroes': Icons.bolt_rounded,
+  'cyberpunk': Icons.memory_rounded,
+  'postapoc': Icons.terrain_rounded,
+};
 
 /// The freeform "crea tu propia historia" module's own screen — replaces
 /// [StoryModuleScreen] for `StoryModule.aiNarrator` specifically (the other
@@ -126,15 +139,23 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                         ),
                         Text('Empezar una historia nueva', style: AetherType.overline),
                         const SizedBox(height: AetherSpace.sm),
-                        for (final world in widget.worlds)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: AetherSpace.md),
-                            child: StoryCard(
-                              world: world,
-                              accent: style.accent,
-                              onTap: () => widget.onSelectGenre(world),
-                            ),
-                          ),
+                        GridView.count(
+                          crossAxisCount: 2,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          mainAxisSpacing: AetherSpace.md,
+                          crossAxisSpacing: AetherSpace.md,
+                          childAspectRatio: 1.15,
+                          children: [
+                            for (final world in widget.worlds)
+                              _GenreGridCard(
+                                world: world,
+                                icon: _genreIcons[world.slug] ?? Icons.auto_awesome_rounded,
+                                accent: style.accent,
+                                onTap: () => widget.onSelectGenre(world),
+                              ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -220,6 +241,59 @@ class _ModuleBanner extends StatelessWidget {
   }
 }
 
+/// One freeform genre, in the 2-column "Mundos por abrir" grid (V2 design
+/// prototype §2b) — icon, name, and the world's own one-line `tone` as a
+/// blurb. Always starts a brand-new story (never resumes); [CreateStoryScreen]
+/// wires [onTap] to [CreateStoryScreen.onSelectGenre] for that reason.
+class _GenreGridCard extends StatelessWidget {
+  const _GenreGridCard({
+    required this.world,
+    required this.icon,
+    required this.accent,
+    required this.onTap,
+  });
+
+  final World world;
+  final IconData icon;
+  final Color accent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      onTap: onTap,
+      child: (pressed) => AnimatedContainer(
+        duration: AetherMotion.fast,
+        padding: const EdgeInsets.all(AetherSpace.md),
+        decoration: BoxDecoration(
+          color: pressed ? AetherColors.surfaceRaised : AetherColors.surface,
+          borderRadius: AetherRadius.allMd,
+          border: Border.all(
+            color: accent.withValues(alpha: pressed ? 0.7 : 0.3),
+          ),
+          boxShadow: pressed ? AetherShadow.glow(accent, strength: 0.16) : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: accent, size: 22),
+            const SizedBox(height: AetherSpace.sm),
+            Text(world.name, style: AetherType.title.copyWith(fontSize: 17)),
+            const SizedBox(height: 4),
+            Text(
+              world.tone,
+              style: AetherType.caption,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// One saved story: character name, genre label, and how long ago it was
 /// last played. Tapping resumes it; the trash icon abandons it (with the
 /// confirmation the caller's [CreateStoryScreen.onAbandonStory] provides).
@@ -273,13 +347,14 @@ class _SavedStoryCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              margin: const EdgeInsets.only(top: 3),
-              width: 3,
-              height: 40,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: accent,
-                borderRadius: AetherRadius.allPill,
+                color: accent.withValues(alpha: 0.16),
+                shape: BoxShape.circle,
+                border: Border.all(color: accent.withValues(alpha: 0.5)),
               ),
+              child: Icon(Icons.play_arrow_rounded, color: accent, size: 22),
             ),
             const SizedBox(width: AetherSpace.md),
             Expanded(

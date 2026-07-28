@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/state/character.dart';
 import '../core/state/game_session.dart';
 import '../core/world/world.dart';
 import 'chargen_screen.dart';
@@ -7,6 +8,7 @@ import 'codex_screen.dart';
 import 'create_story_screen.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
+import 'design/world_theme.dart';
 import 'game_controller.dart';
 import 'game_screen.dart';
 import 'story_module_screen.dart';
@@ -281,8 +283,16 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
 
   void _openCodex() => Navigator.of(context).push(CodexScreen.route());
 
+  /// The story left open in memory, if any — the same one the back arrow
+  /// already resumes (`_select`'s already-active-session branch). Read once,
+  /// synchronously: nothing async changes it while this screen is on top, so
+  /// there's no need to listen to [GameController] here just to show it.
+  World? get _continuing =>
+      widget.controller.isReady ? widget.controller.world : null;
+
   @override
   Widget build(BuildContext context) {
+    final continuing = _continuing;
     return Scaffold(
       body: AetherBackground(
         child: SafeArea(
@@ -300,6 +310,18 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
                         style: AetherType.body
                             .copyWith(color: AetherColors.parchmentDim, fontSize: 15)),
                     const SizedBox(height: AetherSpace.lg),
+                    // "Retomar es la acción principal, no un botón más" (V2
+                    // design prototype §2a) — when a story is already open in
+                    // memory, it gets top billing above the module picker
+                    // instead of waiting to be found again inside its module.
+                    if (continuing != null) ...[
+                      _ContinueHero(
+                        world: continuing,
+                        character: widget.controller.character!,
+                        onTap: () => _goToGame(continuing.slug),
+                      ),
+                      const SizedBox(height: AetherSpace.lg),
+                    ],
                     _HowToPlayButton(onTap: _openCodex),
                     const SizedBox(height: AetherSpace.xl),
                     Expanded(
@@ -349,6 +371,83 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Dejaste el tomo abierto" (V2 design prototype §2a) — the story left open
+/// in memory, given top billing above the module picker instead of making
+/// the player re-find it inside its own module. Carries the world's own
+/// per-world accent (Stage 6b) rather than a module accent, since at this
+/// point it's one specific story, not a category of them.
+class _ContinueHero extends StatelessWidget {
+  const _ContinueHero({
+    required this.world,
+    required this.character,
+    required this.onTap,
+  });
+
+  final World world;
+  final Character character;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = WorldTheme.forWorld(world);
+    final prog = world.progression;
+    return Pressable(
+      onTap: onTap,
+      child: (pressed) => AnimatedContainer(
+        duration: AetherMotion.fast,
+        padding: const EdgeInsets.all(AetherSpace.lg),
+        decoration: BoxDecoration(
+          borderRadius: AetherRadius.allLg,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [theme.accent.withValues(alpha: 0.18), AetherColors.surface],
+          ),
+          border: Border.all(
+            color: theme.accent.withValues(alpha: pressed ? 0.75 : 0.5),
+          ),
+          boxShadow: pressed ? AetherShadow.glow(theme.accent, strength: 0.2) : null,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: theme.accent.withValues(alpha: 0.18),
+                shape: BoxShape.circle,
+                border: Border.all(color: theme.accent.withValues(alpha: 0.5)),
+              ),
+              child: Icon(Icons.play_arrow_rounded, color: theme.accent, size: 24),
+            ),
+            const SizedBox(width: AetherSpace.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Dejaste el tomo abierto',
+                      style: AetherType.overline.copyWith(color: theme.accent)),
+                  const SizedBox(height: 4),
+                  Text(character.name, style: AetherType.title),
+                  const SizedBox(height: 2),
+                  Text(
+                    prog.enabled
+                        ? '${world.name} · ${prog.unitLabelCapitalized} ${character.level}'
+                        : world.name,
+                    style: AetherType.caption,
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: theme.accent),
+          ],
         ),
       ),
     );
