@@ -14,6 +14,8 @@ El documento de diseño completo es `GDD-RPG-Narrativo-IA.md`. Este archivo es l
 
 Toda narración (el prompt del narrador, el `system_prompt` de cada mundo, y el contenido curado/híbrido escrito a mano) sigue la guía de voz en `NARRATIVE_VOICE.md` — léelo antes de tocar cualquier narración. Regla central: español neutro con tuteo, nunca voseo rioplatense.
 
+El rediseño visual V2 (en curso) se planifica en `docs/v2/` — `V2_PRODUCT_DECISIONS.md` (decisiones que necesitan tu visto bueno), `V2_IMPLEMENTATION_PLAN.md` (plan por etapas y su estado) y `V2_DESIGN_SYSTEM.md` (decisiones concretas de layout ya implementadas, con lo que se dejó afuera a propósito y por qué). Leelos antes de tocar cualquier pantalla que ya haya pasado por el rediseño.
+
 ---
 
 ## 2. Reglas de oro (no negociables)

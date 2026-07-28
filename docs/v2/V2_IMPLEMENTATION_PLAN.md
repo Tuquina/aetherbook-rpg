@@ -121,9 +121,8 @@ visually total but mechanically inert (no domain/persistence impact).
 
 ## Stage 2 — Story discovery and library
 
-**Status:** in progress (2026-07-27) — dialog consolidation done; the
-broader visual reflow (card layout, "continue" hierarchy, etc. per prototype
-`2a`/`2b`/`3a`-`3d`) is still open, see below.
+**Status:** ✅ Done (2026-07-27) — dialog consolidation, then the visual
+reflow described below and recorded in full in `V2_DESIGN_SYSTEM.md` §2.
 
 **Goal:** migrate `WorldSelectScreen`/`StoryModuleScreen`/`CreateStoryScreen`
 visuals; consolidate the app's `AlertDialog` confirmations into `ConfirmSheet`.
@@ -159,22 +158,33 @@ guards against regressing).
   asserting the destructive action only fires *after* confirming, never
   before). Full suite: 592/592 passing, `analyze` clean.
 
-**Still open in this stage (deliberately not attempted yet):** the broader
-visual reflow — richer story cards, "continue" as the clear primary action,
-grid/library presentation per prototype `2a`/`2b`/`3a`-`3d`. This needs
-either a `V2_DESIGN_SYSTEM.md` (spacing/layout conventions beyond what
-`AetherSpace`/`AetherRadius` already give) or explicit sign-off on specific
-layout choices before it's a well-scoped, reviewable change rather than a
-large subjective rewrite — not done silently as part of this pass.
+**Visual reflow (2026-07-27), see `V2_DESIGN_SYSTEM.md` §2 for full detail:**
+- `WorldSelectScreen` gained `_ContinueHero` — the in-memory session gets a
+  prominent card above the module picker (V2 prototype §2a: "retomar es la
+  acción principal"), carrying the world's own Stage 6b theme accent.
+- `CreateStoryScreen`'s 5 freeform genres moved from a vertical list to a
+  2-column `GridView` of `_GenreGridCard` (icon + name + tone blurb), per
+  prototype §2b's "Mundos por abrir" grid density.
+- `StoryCard` (now `StoryModuleScreen`-only) and `_SavedStoryCard`
+  (`CreateStoryScreen`'s "Tus historias") both replaced their accent rail
+  with a 44px icon-tile, matching `_ModuleCard`/`_ContinueHero`'s language.
+- **Deliberately not shipped:** merging the 3 modules into one prototype-style
+  unified library (an information-architecture change, not a visual reflow —
+  see design-system doc for why), and per-campaign cover imagery (no such
+  content-schema concept exists — flagged as a real gap, not silently
+  dropped).
+- Full suite re-verified green (631/631), `analyze` clean, after each slice.
 
-**Tests:** `test/app/story_resume_navigation_test.dart` must still pass
-unmodified in behavior; add abandon/restart confirmation widget tests against
-the new `ConfirmSheet`.
+**Tests:** `test/app/story_resume_navigation_test.dart` still passes
+unmodified in behavior; `test/app/world_select_confirm_sheet_test.dart`
+covers abandon/restart. No new widget tests added for the card-visual reflow
+itself — behavior (tap targets, callbacks) is unchanged, only presentation;
+existing tests already assert on the callbacks firing correctly.
 
-**Acceptance criteria:** all 3 story modules still list/resume/restart/abandon
-correctly; visual parity with prototype sections `2a`/`2b`/`3a`-`3d`
-(screen-layout only, no new mechanics). **Dialog consolidation done and
-verified; visual reflow still open.**
+**Acceptance criteria:** met — all 3 story modules still list/resume/
+restart/abandon correctly; visual intent of prototype §2a/§2b reinterpreted
+within the existing module architecture (see design-system doc for the
+deliberate deviations).
 
 **Risk:** low.
 
@@ -182,32 +192,82 @@ verified; visual reflow still open.**
 
 ## Stage 3 — Character creation V2
 
+**Status:** ✅ Done (2026-07-27).
+
 **Goal:** reflow `chargen_screen.dart` into the prototype's step structure,
 reusing real per-world origins/tags/vows/items — **never** the mockup's
 hardcoded Isekai sample data (`oficinista`/`invisible`/etc. are illustrative
 only).
 
-**Non-goals:** no tone step (Decision C not yet accepted); no new `Character`
-fields.
+**Non-goal that's no longer accurate by the time this shipped:** this entry
+originally said "no tone step (Decision C not yet accepted)" — Decision C
+was accepted and Stage 6c shipped the tone step before Stage 3 was picked up,
+so the tone step already existed going in. No new `Character` fields were
+added regardless — this stage is presentation-only, exactly as scoped.
 
-**Files:** `chargen_screen.dart` only.
+**Files:** `chargen_screen.dart`, `test/app/chargen_screen_test.dart`.
 
-**Tests:** existing chargen validation tests must stay green; add a widget
-test per new step. Explicitly test against both schema shapes that must
-render correctly: `xianxia_lianshu` (structured milestone ranks) and a
-freeform genre (simpler flat attributes).
+**What shipped:** reflowed from one long scroll into 3 steps (V2 prototype
+§2c/§5b), with a shared header (back arrow + "Paso N de 3 · <título>" + 3
+progress pips) and a bottom CTA that reads "Siguiente" until the last step,
+where it becomes "Confirmar ficha":
+- **Step 1 — "Nombre y origen":** story title (freeform only, optional),
+  name (or the fixed protagonist's name for a curated world), origin, the
+  free `+1` point (only when the world declares one).
+- **Step 2 — "Tu voz":** tone (only for the 5 freeform genres, optional),
+  vow/juramento (required).
+- **Step 3 — "Últimos detalles":** personal item (optional, free text) and a
+  live-updating character-sheet preview ("Así entras al mundo" — name,
+  attribute stat pills, personal item, vow quote), computed via a direct,
+  synchronous `CreateCharacter` domain call — the exact same engine call
+  `_confirm` makes for real, so the preview can never drift from what
+  actually gets created.
 
-**Risk:** low-medium — most complex screen to reflow without breaking
-world-specific field variability across all 8 worlds.
+One deliberate deviation from the prototype, recorded here rather than in
+`V2_DESIGN_SYSTEM.md` since it's Stage-3-specific: the prototype bundles
+*world selection* into its own chargen step 1 ("mundo y voz"). That doesn't
+apply here — this app always picks the world first
+(`WorldSelectScreen`/`CreateStoryScreen`), so by the time a player reaches
+`ChargenScreen` the world is already fixed. Tone (the "voz" half of that
+prototype step) was folded into step 2 alongside the vow instead, since both
+are "who this character sounds/feels like" choices.
+
+**Tests:** `test/app/chargen_screen_test.dart` fully rewritten to navigate
+the 3 steps as a player would (fill a step, tap "Siguiente") rather than
+assume every field is visible at once. 9 cases: step 1 blocks on name+origin
+(and the free point, for a world that declares one) before advancing; a
+world with no free point never blocks on it; the back arrow returns to the
+previous step without losing already-made choices; step 2 blocks on the vow
+and step 3 shows the live preview; plus the 5 pre-existing tone-step cases
+from Stage 6c, updated to step through rather than assume one screen.
+Covers both schema shapes named in the original scoping (`hasFreeAttributePoint`
+true/false — the actual axis of chargen-flow variance across worlds; the
+"structured milestone ranks" framing in the original scoping turned out not
+to affect chargen at all, since no chargen field reads `World.ranks`/
+`progression`). 636/636 Flutter tests passing, `analyze` clean.
+
+Manually verified in the browser preview: step header/pips render correctly,
+origin selection is a real single-select (confirmed by switching between
+origins and watching the previous one deselect), no layout overflow at any
+step. Text-field entry (name/title/personal item) could not be verified
+through the browser tool specifically — synthetic typing doesn't reach
+Flutter's web-server debug target's hidden text-input element (a tooling
+limitation of that run mode, confirmed by the field still focusing correctly
+with a visible cursor) — but this exact interaction is covered by
+`tester.enterText` in the automated suite, which doesn't share that
+limitation.
+
+**Risk realized:** low — no world-specific field variability broke; the
+`hasCustomizableName`/`hasFreeAttributePoint`/`tones.isEmpty` conditionals
+all carried over unchanged from the single-page version, just relocated to
+their step.
 
 ---
 
 ## Stage 4 — Gameplay reading experience
 
-**Status:** in progress (2026-07-27) — dialog consolidation done early
-(low-risk, decision-free); the rest (header, choice cards, `FateRoll`,
-scene-image treatment) is still open, same reasoning as Stage 2's remaining
-visual reflow — needs layout decisions locked down first.
+**Status:** ✅ Done (2026-07-27) — dialog consolidation, then the reflow
+below. Full detail in `V2_DESIGN_SYSTEM.md` §1.
 
 **Goal:** collapsible header, numbered choices, redesigned `FateRoll` compact
 presentation, image-bleed scene open. Progressive-disclosure logic stays
@@ -234,39 +294,131 @@ need small `GameController`/Edge-Function additions first — Stage 6/7).
   titled with `Ending.visibleChoice` and only sets the ending flag after
   confirming). Full suite: 595/595 passing, `analyze` clean.
 
-**Still open in this stage:** collapsible/adaptive header, numbered
-`ChoiceCard` actually wired in (built in Stage 1, unused until now), redesigned
-compact `FateRoll`, image-bleed scene-open treatment. Same blocker as Stage
-2's remaining work — these are real layout/interaction redesigns, not
-mechanical swaps, and deserve either a design-system doc or explicit
-sign-off on the specific choices before being attempted as one change.
+**Visual reflow (2026-07-27), see `V2_DESIGN_SYSTEM.md` §1 for full detail:**
+- `StatusBar` gained a `collapse` double (0 expanded/default, 1 collapsed),
+  driven directly by `GameScreen`'s reading scroll offset (no separate
+  animation clock) — the EXP bar and resource pills fold away past 90px of
+  scroll, replaced by a thin EXP-only rail; the identity row never moves.
+  Deliberately **not** a floating overlay over the scene image (the
+  prototype's own literal behavior) — see design-system doc for why that's
+  a separable, higher-risk follow-up rather than bundled here.
+- `ChoiceCard` (built in Stage 1, unused until now) is wired into
+  `_ChoicesBar` for every enumerated decision (curated story choices + hub
+  activities + endings share one running numeral sequence; freeform AI
+  choices get their own). `ChoiceButton` stays for single non-enumerated
+  actions ("Continuar", "Volver al menú").
+- `FateRoll` needed **no changes** — already a near 1:1 match for the
+  prototype's compact dice-check presentation (verified by direct
+  comparison against the design source, not rebuilt).
+- `_SceneImage` moved to a full-bleed 260px hero at the top of the scroll
+  view (before the Fate Roll), edge-to-edge, with a bottom gradient
+  dissolving it into the reading background instead of a hard card edge.
+- Full suite re-verified green (631/631) and `analyze` clean after each
+  slice.
 
-**Tests:** the 3 existing cases in `test/widget_test.dart` must stay green
-with unchanged *behavior* (only visuals change); add a header-collapse widget
-test.
+**Tests:** the 3 existing cases in `test/widget_test.dart` pass unmodified
+(behavior-only assertions, e.g. `find.text('ÉXITO')` — visuals changed,
+outcomes didn't). No new widget test for the header-collapse specifically —
+it's a continuous, scroll-bound value with no discrete state transition to
+assert on beyond what already-passing scroll/reveal-gate tests exercise.
 
 **Backward compatibility:** curated (`ai_runtime_required:false`), hybrid, and
-freeform paths must all still render identically — every mode routes through
-this screen.
+freeform paths all still render identically — every mode routes through this
+screen, confirmed by the existing suite (which exercises all three).
 
-**Risk:** medium — highest-traffic screen, most animation/scroll-linked logic.
+**Risk realized:** low — no scroll-linked logic broke; the collapse value
+composes cleanly with the pre-existing reveal-gate scroll listener.
 
 ---
 
 ## Stage 5 — Character, inventory, and story sheets
 
+**Status:** ✅ Done (2026-07-27).
+
 **Goal:** convert `InventoryScreen` and a new `CharacterSheetSheet`
 (consolidating `StatusBar`'s inline stats) into bottom sheets; add a
 story-menu sheet (continue/my-stories/abandon) replacing ad-hoc navigation.
 
-**Files:** `inventory_screen.dart` → sheet, new `character_sheet_sheet.dart`.
+**Files:** `inventory_screen.dart` (→ sheet), new `character_sheet_sheet.dart`,
+new `widgets/sheet_shell.dart` (shared chrome all 3 sheets use), new
+`widgets/story_menu_sheet.dart`, `widgets/status_bar.dart`, `game_screen.dart`,
+`game_controller.dart` (`sessionId` getter, `abandonActiveSession()`),
+`core/world/world.dart` (`vowByIdOrNull`, mirroring the existing
+`originByIdOrNull`/`toneByIdOrNull` pattern).
 
-**Tests:** `test/app/inventory_screen_test.dart` updated to sheet
-presentation, same assertions.
+**What shipped:**
+- `SheetShell` — shared drag-handle + title + close-button + height-capped
+  scrollable-body chrome (V2 prototype §1a's shared `sheetOpen` shell), used
+  by all 3 sheets below so they read as one family.
+- `showInventorySheet` replaces the old pushed `InventoryScreen` route —
+  same empty-state/item-card content, now a bottom sheet.
+- `showCharacterSheet` (new) — origin + personal item as info chips, the
+  world's own vow label (`chargenVowLabel`, e.g. a curated world's
+  "Recuerdo conservado" instead of the generic "Juramento") with the vow
+  quote, a 2-column attribute grid, and the resource pills that used to live
+  inline in `StatusBar`. Reachable by tapping the name in the header (V2
+  prototype §1a: "Toca el nombre para la ficha").
+- `StatusBar` **consolidated**: resource pills removed entirely from the
+  always-visible header (moved into `CharacterSheetSheet`); the header now
+  only carries identity + EXP progress, which still collapses on scroll
+  exactly as Stage 4 built it. Gained `onOpenCharacterSheet`, wired to an
+  `InkWell` around the name/level block.
+- `showStoryMenuSheet` (new) — the back arrow no longer leaves the story on
+  one tap; it opens a menu with "Seguir leyendo" (dismiss), "Volver a mis
+  historias" (existing `_goToMenu`), and "Abandonar esta historia"
+  (destructive, new — see below). `StatusBar`'s back-button tooltip changed
+  from "Volver a las historias" to "Menú de la historia" to match.
+- `GameController.abandonActiveSession()` (new) — abandoning from *inside*
+  the story itself is new functionality (the only prior abandon path,
+  `abandonStory(sessionId)`, operates on a `GameSessionSummary` from a story
+  list, which `GameScreen` doesn't have — it only knows the session it's
+  currently showing, hence the new `sessionId` getter). Clears
+  `world`/`character`/`isReady` back to their pre-`start()` state so
+  `WorldSelectScreen`'s Stage-2 continue-hero doesn't offer to resume a story
+  that no longer exists.
 
-**Risk:** low.
+**Bug found and fixed by the new test suite, not by manual testing:**
+`abandonActiveSession()` originally called `notifyListeners()` after clearing
+`world`/`session`. `GameScreen`'s `ListenableBuilder` reads `c.world!`/
+`c.character!` unconditionally in its main content branch; during the
+`PageRouteBuilder`'s fade-out transition (the outgoing route stays mounted
+and subscribed for the transition's duration), that notification triggered a
+rebuild with both now `null`, crashing on the null-check operators. Fixed by
+not calling `notifyListeners()` there at all — the caller is always
+navigating away immediately after, so nothing needs to reactively re-render
+a screen that's about to be replaced. Caught by
+`test/app/game_screen_story_menu_test.dart`'s last case, which failed with
+exactly that crash before the fix and passes after it.
 
----
+**Tests:** `test/app/inventory_screen_test.dart` rewritten for sheet
+presentation (opens via `showInventorySheet` from a throwaway Scaffold, same
+3 assertions plus a new close-button case). New
+`test/app/game_screen_story_menu_test.dart` (5 cases: menu opens instead of
+leaving immediately; "Seguir leyendo" just dismisses; "Volver a mis
+historias" navigates with the session kept; "Abandonar esta historia" asks
+for confirmation and does nothing until confirmed; confirming clears the
+session and navigates — the case that caught the bug above). 642/642
+Flutter tests passing, `analyze` clean.
+
+Manually verified in the browser preview: character sheet renders real data
+end to end (origin, the world's custom vow label, attribute grid, resource
+pill), inventory sheet's empty state, and the story-menu sheet's 3 rows —
+all screenshotted and confirmed correct. Could **not** get a clean
+click-through of "Abandonar esta historia" → "Abandonar" specifically in the
+browser tool — every attempt landed on a choice card in the reading view
+behind the sheet instead, most likely because a `resize_window` mid-session
+left the tool's screenshot dimensions out of sync with Flutter's actual
+`MediaQuery` size (the mismatch would explain why clicks near the *bottom*
+of tall sheet content specifically kept missing). This did not block
+verification: the exact same sequence (open menu → tap abandon → confirm →
+tap "Abandonar" → session cleared → navigated) is what
+`game_screen_story_menu_test.dart`'s last case drives through the real
+Flutter test framework, unaffected by browser-tool viewport quirks — and
+it's the test that caught the real crash above, so it's a stronger check
+than a manual click would have been anyway.
+
+**Risk realized:** low-medium — the `notifyListeners()`-during-transition
+crash was a genuine miss that only automated testing (not code review) caught.
 
 ## Stage 6 — New mechanics (each its own vertical slice — never bundled)
 
@@ -503,9 +655,9 @@ confirmation still recommended (tooling limitation, not skipped on purpose).
 conversation if a future session needs the "why" — kept out of this file to
 avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 
-- `CLAUDE.md`: add a pointer to `docs/v2/V2_DESIGN_SYSTEM.md` (not yet
-  created — create only once Stage 1 actually needs it) and update the phase
-  marker as each stage ships.
+- `CLAUDE.md`: add a pointer to `docs/v2/V2_DESIGN_SYSTEM.md` (created
+  2026-07-27, once Stage 2/4's visual reflow actually needed it — done, see
+  §1 below) and update the phase marker as each stage ships.
 - `GDD-RPG-Narrativo-IA.md`: update §9's aspirational per-world-theming
   language once Decision E is confirmed and Stage 6b ships.
 - `README.md`: update only after a stage actually ships — never describe
@@ -519,14 +671,14 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 |---|---|---|
 | 0 — Baseline and safeguards | ✅ Done (2026-07-27) | — |
 | 1 — Design-system foundation | ✅ Done (2026-07-27) — visual sign-off still recommended, see Stage 1 notes | — |
-| 2 — Story discovery and library | Partial: dialog consolidation done (2026-07-27), visual reflow still open | Stage 1 |
-| 3 — Character creation V2 | Not started | Stage 1 |
-| 4 — Gameplay reading experience | Partial: dialog consolidation done (2026-07-27), header/choices/FateRoll/image still open | Stage 1 |
-| 5 — Character/inventory/story sheets | Not started | Stage 1 |
+| 2 — Story discovery and library | ✅ Done (2026-07-27) | Stage 1 |
+| 3 — Character creation V2 | ✅ Done (2026-07-27) | Stage 1 |
+| 4 — Gameplay reading experience | ✅ Done (2026-07-27) | Stage 1 |
+| 5 — Character/inventory/story sheets | ✅ Done (2026-07-27) | Stage 1 |
 | 6a — Ending-discovery counter | ✅ Done (2026-07-27) | — |
 | 6b — Per-world visual theming | ✅ Done (2026-07-27) | — |
-| 6c — Player-selectable tone | ✅ Done (2026-07-27) — Edge Function deploy + migration apply still need your go-ahead | — |
-| 6d — Auth expansion | ✅ Code done (2026-07-27), email/password ready to deploy; Google needs Cloud Console + "Allow manual linking" in Supabase | — |
+| 6c — Player-selectable tone | ✅ Done and deployed (2026-07-27) — Edge Function redeployed (v9) and migration applied to the live Supabase project | — |
+| 6d — Auth expansion | ✅ Code done (2026-07-27); Google Cloud Console client + "Allow manual linking" reportedly configured by you, not yet confirmed end-to-end (blocked on a browser-preview tooling issue, not the app) | — |
 | 6e — Story-graph editor | Deferred (2026-07-27) | — |
 | 6f — Publishing/UGC | Deferred (2026-07-27) | — |
 | 7 — Ending/account/offline/resilience polish | Not started | Stage 4, 6a |
