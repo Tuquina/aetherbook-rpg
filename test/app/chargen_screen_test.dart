@@ -264,4 +264,42 @@ void main() {
       expect(controller.character!.chosenTone, isNull);
     });
   });
+
+  group('ChargenScreen responsive layout (V2 §1c pattern)', () {
+    testWidgets('mobile (< 700px): no step checklist side panel', (tester) async {
+      tester.view.physicalSize = const Size(600, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      final controller = GameController(
+        worldRepository: _FakeWorldRepository(_worldWith()),
+        narrator: const FakeNarratorAdapter(latency: Duration.zero),
+        dice: const FixedDice(10),
+      );
+      await tester.pumpWidget(MaterialApp(
+        home: ChargenScreen(controller: controller, worldSlug: 'isekai', world: _worldWith()),
+      ));
+      await tester.pump();
+
+      // World name appears once (the step-1 heading) -- no side panel yet.
+      expect(find.text('Isekai'), findsOneWidget);
+    });
+
+    testWidgets(
+        'wide (>= 700px): a side panel shows the world name and step '
+        'checklist, and the live preview appears there instead of being '
+        'duplicated inside step 3', (tester) async {
+      await _pumpChargen(tester, _worldWith()); // 900px-wide tall viewport
+      await _completeStepOne(tester);
+      await _completeStepTwo(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Paso 3 de 3 · Últimos detalles'), findsOneWidget);
+      // World name: once in the side panel, once as the step-1 heading is
+      // gone by now (step 3 doesn't repeat it) -- so exactly one match.
+      expect(find.text('Isekai'), findsOneWidget);
+      // The live preview shows exactly once (in the side panel), not
+      // duplicated inside step 3's own content.
+      expect(find.text('Así entras al mundo'), findsOneWidget);
+    });
+  });
 }

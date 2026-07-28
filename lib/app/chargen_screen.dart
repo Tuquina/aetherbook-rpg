@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/engine/create_character.dart';
 import '../core/state/character.dart';
 import '../core/world/world.dart';
+import 'design/breakpoints.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'game_controller.dart';
@@ -186,80 +187,175 @@ class _ChargenScreenState extends State<ChargenScreen> {
     );
   }
 
+  Widget _stepContent(BuildContext context, {required bool wide}) {
+    return AnimatedSwitcher(
+      duration: AetherMotion.base,
+      switchInCurve: AetherMotion.standard,
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: SlideTransition(
+          position:
+              Tween(begin: const Offset(0, 0.03), end: Offset.zero).animate(animation),
+          child: child,
+        ),
+      ),
+      child: SingleChildScrollView(
+        key: ValueKey(_step),
+        padding: const EdgeInsets.fromLTRB(
+            AetherSpace.xl, AetherSpace.lg, AetherSpace.xl, AetherSpace.xl),
+        child: switch (_step) {
+          0 => _StepOne(
+              world: widget.world,
+              alwaysCreateNew: widget.alwaysCreateNew,
+              titleController: _titleController,
+              nameController: _nameController,
+              originId: _originId,
+              freeAttributePoint: _freeAttributePoint,
+              onOriginTap: (id) => setState(() => _originId = id),
+              onFreePointTap: (attr) => setState(() => _freeAttributePoint = attr),
+              onFieldChanged: () => setState(() {}),
+            ),
+          1 => _StepTwo(
+              world: widget.world,
+              vowId: _vowId,
+              chosenTone: _chosenTone,
+              onVowTap: (id) => setState(() => _vowId = id),
+              onToneTap: (id) =>
+                  setState(() => _chosenTone = _chosenTone == id ? null : id),
+            ),
+          _ => _StepThree(
+              personalItemController: _personalItemController,
+              // The wide layout's `_SidePanel` already shows the live
+              // preview alongside every step -- showing it a second time
+              // inline here would just duplicate it.
+              preview: wide ? null : _preview,
+              world: widget.world,
+              onFieldChanged: () => setState(() {}),
+              error: _error,
+            ),
+        },
+      ),
+    );
+  }
+
+  Widget _cta() => Padding(
+        padding: const EdgeInsets.all(AetherSpace.xl),
+        child: _StepCta(
+          enabled: _canAdvance,
+          busy: _submitting,
+          label: _step < _stepCount - 1 ? 'Siguiente' : 'Confirmar ficha',
+          onTap: _advance,
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: AetherBackground(
         child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _StepHeader(step: _step, onBack: _goBack),
-                  Expanded(
-                    child: AnimatedSwitcher(
-                      duration: AetherMotion.base,
-                      switchInCurve: AetherMotion.standard,
-                      transitionBuilder: (child, animation) => FadeTransition(
-                        opacity: animation,
-                        child: SlideTransition(
-                          position: Tween(begin: const Offset(0, 0.03), end: Offset.zero)
-                              .animate(animation),
-                          child: child,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth >= AetherBreakpoints.tablet;
+              return Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: wide ? 980 : 560),
+                  child: wide
+                      ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              flex: 4,
+                              child: _SidePanel(
+                                world: widget.world,
+                                step: _step,
+                                preview: _preview,
+                              ),
+                            ),
+                            const SizedBox(width: AetherSpace.xl),
+                            Expanded(
+                              flex: 6,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _StepHeader(step: _step, onBack: _goBack),
+                                  Expanded(child: _stepContent(context, wide: true)),
+                                  _cta(),
+                                ],
+                              ),
+                            ),
+                          ],
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _StepHeader(step: _step, onBack: _goBack),
+                            Expanded(child: _stepContent(context, wide: false)),
+                            _cta(),
+                          ],
                         ),
-                      ),
-                      child: SingleChildScrollView(
-                        key: ValueKey(_step),
-                        padding: const EdgeInsets.fromLTRB(
-                            AetherSpace.xl, AetherSpace.lg, AetherSpace.xl, AetherSpace.xl),
-                        child: switch (_step) {
-                          0 => _StepOne(
-                              world: widget.world,
-                              alwaysCreateNew: widget.alwaysCreateNew,
-                              titleController: _titleController,
-                              nameController: _nameController,
-                              originId: _originId,
-                              freeAttributePoint: _freeAttributePoint,
-                              onOriginTap: (id) => setState(() => _originId = id),
-                              onFreePointTap: (attr) =>
-                                  setState(() => _freeAttributePoint = attr),
-                              onFieldChanged: () => setState(() {}),
-                            ),
-                          1 => _StepTwo(
-                              world: widget.world,
-                              vowId: _vowId,
-                              chosenTone: _chosenTone,
-                              onVowTap: (id) => setState(() => _vowId = id),
-                              onToneTap: (id) => setState(
-                                  () => _chosenTone = _chosenTone == id ? null : id),
-                            ),
-                          _ => _StepThree(
-                              personalItemController: _personalItemController,
-                              preview: _preview,
-                              world: widget.world,
-                              onFieldChanged: () => setState(() {}),
-                              error: _error,
-                            ),
-                        },
-                      ),
-                    ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The wide-layout companion column (V2 §1c's general pattern: wide screens
+/// get more context, not more steps) — the world's name, a checklist of the
+/// 3 steps so progress stays visible while the right column swaps content,
+/// and — once there's enough chosen to build one — the same live
+/// `_CharacterPreview` step 3 already showed, surfaced earlier instead of
+/// only at the end.
+class _SidePanel extends StatelessWidget {
+  const _SidePanel({required this.world, required this.step, required this.preview});
+
+  final World world;
+  final int step;
+  final Character? preview;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(0, AetherSpace.xl, 0, AetherSpace.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(world.name, style: AetherType.display.copyWith(fontSize: 22)),
+          const SizedBox(height: AetherSpace.xl),
+          for (var i = 0; i < _stepCount; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AetherSpace.md),
+              child: Row(
+                children: [
+                  Icon(
+                    i < step
+                        ? Icons.check_circle_rounded
+                        : (i == step
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_unchecked),
+                    size: 18,
+                    color: i <= step ? AetherColors.gold : AetherColors.parchmentFaint,
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(AetherSpace.xl),
-                    child: _StepCta(
-                      enabled: _canAdvance,
-                      busy: _submitting,
-                      label: _step < _stepCount - 1 ? 'Siguiente' : 'Confirmar ficha',
-                      onTap: _advance,
+                  const SizedBox(width: AetherSpace.sm),
+                  Text(
+                    _stepTitles[i],
+                    style: AetherType.label.copyWith(
+                      color: i == step
+                          ? AetherColors.goldBright
+                          : (i < step ? AetherColors.parchment : AetherColors.parchmentFaint),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        ),
+          if (preview != null) ...[
+            const SizedBox(height: AetherSpace.lg),
+            _CharacterPreview(world: world, character: preview!),
+          ],
+        ],
       ),
     );
   }
