@@ -260,6 +260,22 @@ void main() {
       expect(world.places, isEmpty);
       expect(world.terms, isEmpty);
     });
+
+    test('parses character_tags (V2 §4c flag-derived tags)', () {
+      final json = baseWorldJson()
+        ..['character_tags'] = [
+          {'flag': 'knows_name_is_missing', 'label': 'Sin nombre propio'},
+        ];
+      final world = World.fromJson(json);
+      expect(world.characterTags, hasLength(1));
+      expect(world.characterTags.single.flagKey, 'knows_name_is_missing');
+      expect(world.characterTags.single.label, 'Sin nombre propio');
+    });
+
+    test('character_tags defaults to empty when undeclared', () {
+      final world = World.fromJson(baseWorldJson());
+      expect(world.characterTags, isEmpty);
+    });
   });
 
   group('World opponents', () {

@@ -54,6 +54,7 @@ class _CharacterSheetBody extends StatelessWidget {
     final vow = world.vowByIdOrNull(character.vowId);
     final personalItem = character.personalItem ?? '';
     final theme = WorldTheme.forWorld(world);
+    final activeTags = world.characterTags.where((t) => character.flag(t.flagKey)).toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
@@ -65,7 +66,7 @@ class _CharacterSheetBody extends StatelessWidget {
           Text('${world.name} · ${moduleFor(world).title} · turno $turnCount',
               style: AetherType.caption.copyWith(color: AetherColors.parchmentDim)),
           const SizedBox(height: AetherSpace.lg),
-          if (origin != null || personalItem.isNotEmpty) ...[
+          if (origin != null || personalItem.isNotEmpty || activeTags.isNotEmpty) ...[
             Wrap(
               spacing: AetherSpace.sm,
               runSpacing: AetherSpace.sm,
@@ -80,6 +81,16 @@ class _CharacterSheetBody extends StatelessWidget {
                       icon: Icons.auto_stories_rounded,
                       label: personalItem,
                       accent: theme.accent),
+                // Flag-derived narrative tags (V2 §4c's "MARCA: DEUDA
+                // IMPAGA") always read in `theme.secondary`, never
+                // `theme.accent` — the mockup's own token table already
+                // names that role "alerta"/"peligro" per world, so this
+                // needs no color field of its own (see CharacterTagRule).
+                for (final tag in activeTags)
+                  _InfoChip(
+                      icon: Icons.local_offer_outlined,
+                      label: tag.label,
+                      accent: theme.secondary),
               ],
             ),
             const SizedBox(height: AetherSpace.lg),

@@ -365,6 +365,10 @@
     }
   ],
 
+  "character_tags": [
+    {"flag": "knows_name_is_missing", "label": "Sin nombre propio"}
+  ],
+
   "graph": {
     "start_node": "p1_barca_funeraria",
     "nodes": {

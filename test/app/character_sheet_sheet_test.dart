@@ -1,5 +1,6 @@
 import 'package:aetherbook/app/character_sheet_sheet.dart';
 import 'package:aetherbook/app/design/tokens.dart';
+import 'package:aetherbook/core/state/character.dart';
 import 'package:aetherbook/core/world/world.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,15 +18,21 @@ void main() {
         },
       };
 
-  Future<void> openSheet(WidgetTester tester, World world, {int turnCount = 1}) async {
+  Future<void> openSheet(
+    WidgetTester tester,
+    World world, {
+    int turnCount = 1,
+    Character? character,
+  }) async {
     // `personal_item` isn't world-declarative JSON (§7 of CLAUDE.md) — it's
     // set during chargen, so it's added here via copyWith instead.
-    final character = world.startingCharacter.copyWith(personalItem: 'Un amuleto roto');
+    final resolvedCharacter =
+        character ?? world.startingCharacter.copyWith(personalItem: 'Un amuleto roto');
     await tester.pumpWidget(MaterialApp(
       home: Builder(
         builder: (context) => ElevatedButton(
           onPressed: () => showCharacterSheet(
-              context, world: world, character: character, turnCount: turnCount),
+              context, world: world, character: resolvedCharacter, turnCount: turnCount),
           child: const Text('open'),
         ),
       ),
@@ -66,5 +73,32 @@ void main() {
     await openSheet(tester, world, turnCount: 12);
 
     expect(find.text('Mundo de prueba · Crea tu propia historia · turno 12'), findsOneWidget);
+  });
+
+  group('flag-derived narrative tags (V2 §4c)', () {
+    testWidgets('shows a tag when its flag is set, tinted with theme.secondary',
+        (tester) async {
+      final world = World.fromJson(baseWorldJson()
+        ..['theme_secondary'] = '#FF4FA3'
+        ..['character_tags'] = [
+          {'flag': 'deuda_impaga', 'label': 'Marca: deuda impaga'},
+        ]);
+      final character = world.startingCharacter.copyWith(flags: {'deuda_impaga': true});
+      await openSheet(tester, world, character: character);
+
+      expect(find.text('Marca: deuda impaga'), findsOneWidget);
+      final icon = tester.widget<Icon>(find.byIcon(Icons.local_offer_outlined));
+      expect(icon.color, const Color(0xFFFF4FA3));
+    });
+
+    testWidgets('hides the tag when its flag is false or unset', (tester) async {
+      final world = World.fromJson(baseWorldJson()
+        ..['character_tags'] = [
+          {'flag': 'deuda_impaga', 'label': 'Marca: deuda impaga'},
+        ]);
+      await openSheet(tester, world); // startingCharacter has no flags set
+
+      expect(find.text('Marca: deuda impaga'), findsNothing);
+    });
   });
 }

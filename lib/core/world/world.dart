@@ -2,6 +2,7 @@ import '../narrative/abstract_opponent.dart';
 import '../narrative/story_graph.dart';
 import '../state/character.dart';
 import 'character_origin.dart';
+import 'character_tag_rule.dart';
 import 'codex_place.dart';
 import 'codex_term.dart';
 import 'item_definition.dart';
@@ -47,6 +48,7 @@ class World {
     this.items = const [],
     this.places = const [],
     this.terms = const [],
+    this.characterTags = const [],
     this.storyGraph,
     required this.startingCharacter,
     required this.seedNarration,
@@ -179,6 +181,12 @@ class World {
   /// Terms/concepts worth remembering in the Códice's per-story glossary,
   /// same reveal mechanism as [places].
   final List<CodexTerm> terms;
+
+  /// Rules turning one of the character's own boolean flags into a visible
+  /// tag on `CharacterSheetSheet` (V2 §4c) — evaluated live against
+  /// whichever flags are currently set, not tied to a specific node like
+  /// [places]/[terms] are. Empty for a world that declares none.
+  final List<CharacterTagRule> characterTags;
 
   /// The hybrid-campaign node graph (§9), or `null` for freeform worlds with
   /// no curated/hybrid content (Fase 0 style).
@@ -419,6 +427,7 @@ class World {
       items: _itemsFromJson(json['items']),
       places: _placesFromJson(json['places']),
       terms: _termsFromJson(json['terms']),
+      characterTags: _characterTagsFromJson(json['character_tags']),
       storyGraph: json['graph'] is Map
           ? StoryGraph.fromJson((json['graph'] as Map).cast<String, dynamic>())
           : null,
@@ -627,6 +636,16 @@ class World {
       return [
         for (final item in value)
           CodexTerm.fromJson((item as Map).cast<String, dynamic>()),
+      ];
+    }
+    return const [];
+  }
+
+  static List<CharacterTagRule> _characterTagsFromJson(Object? value) {
+    if (value is List) {
+      return [
+        for (final item in value)
+          CharacterTagRule.fromJson((item as Map).cast<String, dynamic>()),
       ];
     }
     return const [];
