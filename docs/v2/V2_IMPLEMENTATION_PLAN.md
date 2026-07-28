@@ -1015,6 +1015,52 @@ Only proceed with a sub-stage once its blocking decision in
     caveat as every stage above. Recommend a manual look once deployed —
     especially the 5 worlds' distinct title/texture treatments side by side,
     and `MyStoriesScreen`'s grid at tablet/desktop widths.
+- **6l — Home dashboard: hero real + miniaturas parejas.** ✅ **Code done
+  (2026-07-28)**. You compared the real mockup (§8a web 1280px, §8b tablet
+  834px) against screenshots of the deployed app and flagged that
+  `_ContinueHero` was still a compact icon+text pill from an earlier stage —
+  never rebuilt into the mockup's actual hero (background scene image, big
+  title, an italic quote from the narration, and two explicit actions)
+  even though the rest of the home dashboard had moved on.
+  - **`story_library()` extended again**: now also returns the most recent
+    turn's `narration`/`image_url` via a `left join lateral` (simpler than
+    growing the `group by` a third time — `turn_count` became a plain
+    scalar subquery in the same move). New migration
+    `20260729_story_library_last_turn.sql`, same drop-then-create pattern as
+    the two prior migrations on this function (return shape changed).
+    `SessionLibraryEntry` gained `lastNarration`/`imageUrl`.
+  - **`_ContinueHero` rebuilt**: scene image background (falls back to the
+    accent-tinted gradient it always used, when there isn't an image yet —
+    your call) with a scrim, a big title, a 2-line quote, and two explicit
+    buttons — "Retomar el turno N" and "Empezar una historia nueva" — in
+    place of one ambient tap-anywhere card. New `_StartHero`: the exact same
+    container/format shown instead when the account has no active session
+    at all, single "Empezar una historia" CTA. Both "start something new"
+    buttons open the same place — the **Historia completa** module, your
+    explicit call, matching what Onboarding already marks "Sugerido".
+  - **Consistency audit (explicitly requested)**: confirmed the per-world
+    *accent* was already correctly applied everywhere in the library (no
+    gap there) — the real gap was that `MyStoriesScreen._LibraryCard`'s
+    thumbnail+progress-bar polish (Stage V) never made it to
+    `WorldSelectScreen._LibraryListTile`, the equivalent tile on the other
+    screen. New shared `LibraryThumbnail` widget (`widgets/`) — a scene
+    image or an accent gradient fallback (your call: no placeholder icon)
+    — now used by both. `MyStoriesScreen` also stopped duplicating its own
+    relative-time formatting, reusing a new `relativeTimeLabel()` in
+    `library_rows.dart` instead.
+  - **Mobile**: `_buildMobile` now uses the same rebuilt hero/empty-state
+    instead of a third, poorer treatment for that width — the specific
+    "make mobile look more professional" ask.
+  - Title-treatment/texture (Stage S/T) deliberately still don't reach
+    `WorldSelectScreen`/`MyStoriesScreen` — confirmed this remains correct
+    per the mockup's own §4d ("biblioteca sin tema propio"), not an
+    oversight.
+  - 770 Flutter tests passing (up from 756), `analyze` clean. New
+    `LibraryThumbnail` + hero-specific test files.
+  - **Not independently re-verified visually this session**: same
+    recurring caveat. Recommend a manual look once deployed — especially
+    the hero's background-image/fallback-gradient split and the empty
+    state.
 
 ---
 
@@ -1108,6 +1154,7 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 | 6h — Home dashboard, responsive | ✅ Done and deployed (2026-07-28), migration applied; visual sign-off still recommended, see 6h notes | — |
 | 6i — Game screen states + wide layout | ✅ Done (2026-07-28), no backend changes; visual sign-off still recommended, see 6i notes | — |
 | 6j — The 4 lost gaps (FreeActionField, Codex, chargen wide layout, app icon) | ✅ Done (2026-07-28), no backend changes; visual sign-off still recommended, see 6j notes | — |
-| 6k — Theming por mundo (títulos, textura, ficha) + arreglos de MyStoriesScreen | ✅ Code done (2026-07-28); migration `20260729_story_library_current_node_id.sql` not yet applied to the live project; visual sign-off still recommended, see 6k notes | — |
+| 6k — Theming por mundo (títulos, textura, ficha) + arreglos de MyStoriesScreen | ✅ Done and deployed (2026-07-28) — `story_library_current_node_id` migration applied, `get_advisors` clean; visual sign-off still recommended, see 6k notes | — |
+| 6l — Home dashboard: hero real (imagen/cita/2 botones) + miniaturas parejas | ✅ Code done (2026-07-28); migration `20260729_story_library_last_turn.sql` not yet applied to the live project; visual sign-off still recommended, see 6l notes | — |
 | 7 — Ending/account/offline/resilience polish | Not started | Stage 4, 6a |
 | 8 — Accessibility/responsiveness/performance/release | Not started | Stages 1-7 |
