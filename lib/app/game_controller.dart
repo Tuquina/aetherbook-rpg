@@ -141,6 +141,15 @@ class GameController extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  /// Replays whichever public method last attempted a turn (`choose`,
+  /// `continueStory`, `chooseStoryChoice`/`chooseHubActivity`, `chooseEnding`)
+  /// — set at the top of each, right where `_error` is cleared. Backs
+  /// [retryLastAction] (V2 design prototype §1b's "Reintentar"): safe to
+  /// call again as-is because `_resolveTurn` never commits anything to
+  /// `_session`/`_error` until it either succeeds or hits its `catch`, so a
+  /// failed attempt leaves no partial state a retry would need to undo.
+  Future<void> Function()? _lastAction;
+
   /// The ending the player just chose at a `ResolutionNode`'s climax, as its
   /// 1-based position among that node's [ResolutionNode.endings] (not a
   /// ranking — authored order only) and the total the campaign declares.
@@ -178,8 +187,29 @@ class GameController extends ChangeNotifier {
   int get lastLevelsGained => _lastLevelsGained;
   int? get achievedEndingOrdinal => _achievedEndingOrdinal;
   int? get achievedEndingsTotal => _achievedEndingsTotal;
+
+  /// How many turns this session has recorded so far — the "Turnos" stat on
+  /// the ending-reveal overlay (V2 §1b).
+  int get turnCount => _session?.turns.length ?? 0;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  /// Re-attempts whatever action last failed (V2 §1b's "Reintentar") — a
+  /// no-op if nothing has been attempted yet or nothing is currently
+  /// failing.
+  Future<void> retryLastAction() async {
+    final action = _lastAction;
+    if (action != null) await action();
+  }
+
+  /// Dismisses the current narrator error without retrying (V2 §1b's
+  /// "Elegir otra vez") — the player's choices/free-text field are already
+  /// untouched underneath, since a failed attempt never mutated them.
+  void clearError() {
+    if (_error == null) return;
+    _error = null;
+    notifyListeners();
+  }
   bool get isReady => _world != null && _session != null;
   String? get imageUrl => _imageUrl;
   bool get imageLoading => _imageLoading;
@@ -595,6 +625,7 @@ class GameController extends ChangeNotifier {
 
     _isLoading = true;
     _error = null;
+    _lastAction = () => choose(action);
     notifyListeners();
 
     final resolution = _resolve(
@@ -641,6 +672,7 @@ class GameController extends ChangeNotifier {
 
     _isLoading = true;
     _error = null;
+    _lastAction = continueStory;
     notifyListeners();
 
     await _resolveTurn(
@@ -703,6 +735,7 @@ class GameController extends ChangeNotifier {
 
     _isLoading = true;
     _error = null;
+    _lastAction = () => chooseEnding(ending);
     notifyListeners();
 
     final resolution = _resolve(
@@ -799,6 +832,7 @@ class GameController extends ChangeNotifier {
 
     _isLoading = true;
     _error = null;
+    _lastAction = () => _chooseOption(choice);
     notifyListeners();
 
     final extendedConflict = node is FixedAnchorNode ? node.extendedConflict : null;

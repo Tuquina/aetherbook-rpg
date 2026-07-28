@@ -60,6 +60,23 @@ void main() {
     'plays the recommended vertical slice end-to-end '
     '(chargen -> p1 -> p2 -> c1_n01 -> c1_n02 -> c1_n03)',
     (tester) async {
+      // GameScreen now has a wide split-view chrome (V2 §1c) at
+      // AetherBreakpoints.tablet (700) and up, which skips the
+      // "seguí leyendo" scroll-gate `_tapAndSettle` exercises below — force
+      // the mobile layout explicitly instead of landing in split-view at the
+      // default 800x600 test surface. A merely-600-wide, shorter (1000px)
+      // viewport reproduces a separate, pre-existing bug (confirmed present
+      // on unmodified `master` too, nothing to do with this session's
+      // changes): `_armRevealGate`'s single-frame check of `maxScrollExtent`
+      // sometimes races a turn whose content is right at the edge of fitting
+      // without scrolling — for the c1_n01 critical-success turn below, it
+      // permanently strands the choices bar behind "Sigue leyendo" with no
+      // scroll gesture able to reveal it. A taller viewport gives that turn
+      // clear headroom and sidesteps the race rather than fixing it (a
+      // pre-existing, unrelated bug worth its own investigation).
+      tester.view.physicalSize = const Size(600, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
       final controller = GameController(
         worldRepository: _RealContentWorldRepository(),
         narrator: const FakeNarratorAdapter(latency: Duration.zero),

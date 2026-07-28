@@ -4,6 +4,7 @@ import '../core/narrative/ending.dart';
 import '../core/narrative/story_choice.dart';
 import 'character_sheet_sheet.dart';
 import 'codex_screen.dart';
+import 'design/breakpoints.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'design/world_theme.dart';
@@ -73,6 +74,17 @@ class _GameScreenState extends State<GameScreen> {
 
   static const double _headerCollapseDistance = 90.0;
 
+  /// The [Ending] just confirmed via `_ChoicesBar.onEndingChosen`, still
+  /// awaiting its `_EndingRevealOverlay` (V2 §1b) — cleared once the player
+  /// taps "Leer el epílogo". `null` means no overlay is showing.
+  Ending? _pendingEnding;
+
+  /// Which `achievedEndingOrdinal` has already had its overlay shown and
+  /// dismissed, so `_onControllerChange` doesn't re-trigger it on later
+  /// rebuilds (the controller's ending state stays set for the rest of the
+  /// session, unlike `_lastNarration`).
+  int? _endingRevealedFor;
+
   @override
   void initState() {
     super.initState();
@@ -114,6 +126,13 @@ class _GameScreenState extends State<GameScreen> {
         _canRevealChoices = false;
         _headerCollapse = 0.0;
       });
+      final ordinal = widget.controller.achievedEndingOrdinal;
+      if (ordinal != null && ordinal != _endingRevealedFor) {
+        // The epilogue narration just arrived, but the reader hasn't seen
+        // "final descubierto" yet — `_dismissEndingReveal` does the
+        // scroll-to-top once the overlay is closed instead of here.
+        return;
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!_scroll.hasClients) return;
         _scroll.animateTo(0,
@@ -121,6 +140,23 @@ class _GameScreenState extends State<GameScreen> {
         _armRevealGate();
       });
     }
+  }
+
+  void _onEndingChosen(Ending ending) => setState(() => _pendingEnding = ending);
+
+  /// Closes `_EndingRevealOverlay` and reveals the epilogue text underneath
+  /// (already fully resolved by `GameController.chooseEnding` — this is
+  /// purely a UI dismissal, no new async work).
+  void _dismissEndingReveal() {
+    setState(() {
+      _endingRevealedFor = widget.controller.achievedEndingOrdinal;
+      _pendingEnding = null;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scroll.hasClients) return;
+      _scroll.animateTo(0, duration: AetherMotion.slow, curve: AetherMotion.standard);
+      _armRevealGate();
+    });
   }
 
   /// Reveals the choices immediately when the current narration doesn't
@@ -225,41 +261,78 @@ class _GameScreenState extends State<GameScreen> {
                 ),
               );
             }
-            return _ReadingFrame(
-              child: SafeArea(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    StatusBar(
-                      world: c.world!,
-                      character: c.character!,
-                      onOpenCodex: () =>
-                          Navigator.of(context).push(CodexScreen.route()),
-                      onOpenInventory: () =>
-                          showInventorySheet(context, world: c.world!, character: c.character!),
-                      onOpenCharacterSheet: () =>
-                          showCharacterSheet(context, world: c.world!, character: c.character!),
-                      onBack: _openStoryMenu,
-                      collapse: _headerCollapse,
-                    ),
-                    Expanded(
-                      child: _NarrationView(controller: c, scroll: _scroll),
-                    ),
-                    if (c.isLoading || _choicesRevealed)
-                      _ChoicesBar(
-                        controller: c,
-                        freeAction: _freeAction,
-                        onSubmitFree: _submitFreeAction,
-                        onFinishStory: _goToMenu,
-                      )
-                    else
-                      _KeepReadingHint(
-                        ready: _canRevealChoices,
-                        onReveal: _revealChoices,
+            final pendingEnding = _pendingEnding;
+            return Stack(
+              children: [
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final wide = constraints.maxWidth >= AetherBreakpoints.tablet;
+                    return _ReadingFrame(
+                      wide: wide,
+                      child: SafeArea(
+                        child: wide
+                            ? _SplitView(
+                                controller: c,
+                                theme: theme!,
+                                scroll: _scroll,
+                                freeAction: _freeAction,
+                                onSubmitFree: _submitFreeAction,
+                                onFinishStory: _goToMenu,
+                                onEndingChosen: _onEndingChosen,
+                                onBack: _openStoryMenu,
+                              )
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  StatusBar(
+                                    world: c.world!,
+                                    character: c.character!,
+                                    onOpenCodex: () =>
+                                        Navigator.of(context).push(CodexScreen.route()),
+                                    onOpenInventory: () => showInventorySheet(context,
+                                        world: c.world!, character: c.character!),
+                                    onOpenCharacterSheet: () => showCharacterSheet(context,
+                                        world: c.world!, character: c.character!),
+                                    onBack: _openStoryMenu,
+                                    collapse: _headerCollapse,
+                                  ),
+                                  Expanded(
+                                    child: _NarrationView(controller: c, scroll: _scroll),
+                                  ),
+                                  if (c.isLoading || _choicesRevealed)
+                                    _ChoicesBar(
+                                      controller: c,
+                                      freeAction: _freeAction,
+                                      onSubmitFree: _submitFreeAction,
+                                      onFinishStory: _goToMenu,
+                                      onEndingChosen: _onEndingChosen,
+                                    )
+                                  else
+                                    _KeepReadingHint(
+                                      ready: _canRevealChoices,
+                                      onReveal: _revealChoices,
+                                    ),
+                                ],
+                              ),
                       ),
-                  ],
+                    );
+                  },
                 ),
-              ),
+                if (pendingEnding != null)
+                  _EndingRevealOverlay(
+                    ending: pendingEnding,
+                    ordinal: c.achievedEndingOrdinal!,
+                    total: c.achievedEndingsTotal!,
+                    turnCount: c.turnCount,
+                    level: c.character!.level,
+                    vowText: c.character!.vowId == null
+                        ? null
+                        : c.world!.vowByIdOrNull(c.character!.vowId)?.text,
+                    vowStatus: c.character!.varValue('vow_status'),
+                    vowTestedCount: c.character!.meter('vow_tested_count'),
+                    onDismiss: _dismissEndingReveal,
+                  ),
+              ],
             );
           },
         ),
@@ -268,28 +341,34 @@ class _GameScreenState extends State<GameScreen> {
   }
 }
 
-/// Keeps the game a comfortable reading width on any screen. On phones it's
-/// edge-to-edge as designed; on wide screens (web/desktop) the same layout is
-/// centered in a framed "codex page" so it reads like an open tome instead of
-/// stretching across the whole window — the mobile design is never altered,
-/// only bounded and framed.
+/// Keeps the game a comfortable reading width on any screen. Below
+/// [AetherBreakpoints.tablet] it's edge-to-edge as designed (mobile,
+/// unaffected by [wide]); at or above it, [wide] tells it which layout is
+/// inside ([_SplitView] instead of the mobile column, V2 §1c) and therefore
+/// how wide a "codex page" to frame it at once the viewport outgrows even
+/// that — so it reads like an open tome instead of stretching across the
+/// whole window, same idea as before, just two different frame widths for
+/// two different children.
 class _ReadingFrame extends StatelessWidget {
-  const _ReadingFrame({required this.child});
+  const _ReadingFrame({required this.child, required this.wide});
 
   final Widget child;
+  final bool wide;
 
-  static const double _maxWidth = 720;
+  static const double _mobileMaxWidth = 720;
+  static const double _wideMaxWidth = 1040;
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    if (width <= _maxWidth) return child;
+    final maxWidth = wide ? _wideMaxWidth : _mobileMaxWidth;
+    if (width <= maxWidth) return child;
 
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AetherSpace.xl),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: _maxWidth),
+          constraints: BoxConstraints(maxWidth: maxWidth),
           child: DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: AetherRadius.allLg,
@@ -308,10 +387,18 @@ class _ReadingFrame extends StatelessWidget {
 }
 
 class _NarrationView extends StatelessWidget {
-  const _NarrationView({required this.controller, required this.scroll});
+  const _NarrationView({
+    required this.controller,
+    required this.scroll,
+    this.showSceneImage = true,
+  });
 
   final GameController controller;
   final ScrollController scroll;
+
+  /// `false` in [_SplitView] (V2 §1c): the scene already renders in
+  /// `_ScenePanel`, to the left, so showing it again here would duplicate it.
+  final bool showSceneImage;
 
   @override
   Widget build(BuildContext context) {
@@ -328,7 +415,7 @@ class _NarrationView extends StatelessWidget {
           // column via its own bottom gradient rather than sitting inside a
           // bordered card. Renders nothing when there's no image (curated/
           // AI-free worlds, or generation still pending with none loaded).
-          _SceneImage(controller: controller),
+          if (showSceneImage) _SceneImage(controller: controller),
           Padding(
             padding: const EdgeInsets.fromLTRB(
                 AetherSpace.xl, AetherSpace.xl, AetherSpace.xl, AetherSpace.lg),
@@ -357,31 +444,160 @@ class _NarrationView extends StatelessWidget {
                     ),
                   const SizedBox(height: AetherSpace.xl),
                 ],
-                AnimatedSwitcher(
-                  duration: AetherMotion.slow,
-                  switchInCurve: AetherMotion.standard,
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: Tween(
-                              begin: const Offset(0, 0.03), end: Offset.zero)
-                          .animate(animation),
-                      child: child,
+                AnimatedOpacity(
+                  duration: AetherMotion.base,
+                  // The last successful narration dims while a fresh attempt
+                  // is failing (V2 §1b) — a quiet "this is stale" cue; the
+                  // actual error surfaces in `_NarratorErrorPanel`, not here.
+                  opacity: controller.error != null ? 0.4 : 1,
+                  child: AnimatedSwitcher(
+                    duration: AetherMotion.slow,
+                    switchInCurve: AetherMotion.standard,
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween(
+                                begin: const Offset(0, 0.03), end: Offset.zero)
+                            .animate(animation),
+                        child: child,
+                      ),
+                    ),
+                    child: Text(
+                      controller.narration,
+                      key: ValueKey(controller.narration),
+                      style: AetherType.narration,
                     ),
                   ),
-                  child: Text(
-                    controller.narration,
-                    key: ValueKey(controller.narration),
-                    style: AetherType.narration,
-                  ),
                 ),
-                if (controller.error != null) ...[
-                  const SizedBox(height: AetherSpace.lg),
-                  Text(controller.error!,
-                      style:
-                          AetherType.body.copyWith(color: AetherColors.failure)),
-                ],
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The web/tablet layout (V2 design prototype §1c): a fixed scene panel to
+/// the left, the reading column to the right — the same content
+/// (`StatusBar`, roll, prose, choices) `GameScreen`'s mobile column always
+/// had, just laid out side by side instead of stacked, with the header
+/// pinned (`collapse: 0`, always expanded) and the choices bar always
+/// visible instead of gated behind `_KeepReadingHint` — there's plenty of
+/// vertical room, and the mockup doesn't scroll-gate here either.
+class _SplitView extends StatelessWidget {
+  const _SplitView({
+    required this.controller,
+    required this.theme,
+    required this.scroll,
+    required this.freeAction,
+    required this.onSubmitFree,
+    required this.onFinishStory,
+    required this.onEndingChosen,
+    required this.onBack,
+  });
+
+  final GameController controller;
+  final WorldTheme theme;
+  final ScrollController scroll;
+  final TextEditingController freeAction;
+  final VoidCallback onSubmitFree;
+  final VoidCallback onFinishStory;
+  final ValueChanged<Ending> onEndingChosen;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(flex: 4, child: _ScenePanel(controller: controller, theme: theme)),
+        Expanded(
+          flex: 6,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              StatusBar(
+                world: controller.world!,
+                character: controller.character!,
+                onOpenCodex: () => Navigator.of(context).push(CodexScreen.route()),
+                onOpenInventory: () => showInventorySheet(context,
+                    world: controller.world!, character: controller.character!),
+                onOpenCharacterSheet: () => showCharacterSheet(context,
+                    world: controller.world!, character: controller.character!),
+                onBack: onBack,
+                collapse: 0,
+              ),
+              Expanded(
+                child: _NarrationView(
+                    controller: controller, scroll: scroll, showSceneImage: false),
+              ),
+              _ChoicesBar(
+                controller: controller,
+                freeAction: freeAction,
+                onSubmitFree: onSubmitFree,
+                onFinishStory: onFinishStory,
+                onEndingChosen: onEndingChosen,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The left-hand scene panel in [_SplitView] — unlike [_SceneImage] (which
+/// collapses to nothing when there's no image, appropriate for a stacked
+/// mobile column), this always occupies its full column, falling back to
+/// the world's own theme tint when there's no illustration to show.
+class _ScenePanel extends StatelessWidget {
+  const _ScenePanel({required this.controller, required this.theme});
+
+  final GameController controller;
+  final WorldTheme theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = controller.imageUrl;
+    final loading = controller.imageLoading;
+    return ColoredBox(
+      color: theme.base,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (imageUrl != null)
+            AnimatedSwitcher(
+              duration: AetherMotion.slow,
+              switchInCurve: AetherMotion.standard,
+              transitionBuilder: (child, animation) =>
+                  FadeTransition(opacity: animation, child: child),
+              child: Image.network(
+                imageUrl,
+                key: ValueKey(imageUrl),
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+            )
+          else if (loading)
+            const _SceneImageShimmer(key: ValueKey('scene-panel-shimmer')),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, theme.base.withValues(alpha: 0.85)],
+                stops: const [0.55, 1.0],
+              ),
+            ),
+          ),
+          Positioned(
+            left: AetherSpace.lg,
+            right: AetherSpace.lg,
+            bottom: AetherSpace.lg,
+            child: Text(
+              controller.world!.name.toUpperCase(),
+              style: AetherType.overline.copyWith(color: theme.accent),
             ),
           ),
         ],
@@ -491,6 +707,287 @@ class _SceneImageShimmerState extends State<_SceneImageShimmer>
           AetherColors.surfaceRaised,
           _controller.value,
         )!,
+      ),
+    );
+  }
+}
+
+/// Sits where the choice buttons would be while `controller.error != null`
+/// (V2 design prototype §1b) — the last attempt failed before anything
+/// committed (see `GameController._resolveTurn`'s catch block), so this
+/// always shows a fixed, reassuring message rather than the raw exception
+/// text `controller.error` carries, which is meant for logs/debugging, not
+/// the player. No attempt counter or auto-retry countdown: the mockup shows
+/// one, but nothing in the client or the narrator Edge Function tracks
+/// attempts today, and inventing that machinery just for this panel would
+/// be scope well beyond a visual pass — "Reintentar" simply re-runs the
+/// exact same last action on tap.
+class _NarratorErrorPanel extends StatelessWidget {
+  const _NarratorErrorPanel({required this.onRetry, required this.onChooseAgain});
+
+  final VoidCallback onRetry;
+  final VoidCallback onChooseAgain;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AetherSpace.lg),
+      decoration: BoxDecoration(
+        color: AetherColors.failure.withValues(alpha: 0.07),
+        borderRadius: AetherRadius.allLg,
+        border: Border.all(color: AetherColors.failure.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.cloud_off_rounded, color: AetherColors.failure, size: 20),
+              const SizedBox(width: AetherSpace.sm),
+              Text('EL NARRADOR NO RESPONDE',
+                  style: AetherType.overline.copyWith(color: AetherColors.failure)),
+            ],
+          ),
+          const SizedBox(height: AetherSpace.md),
+          Text(
+            'Tu decisión quedó guardada — nada se perdió. El mundo tarda en '
+            'contestar; puede ser la conexión.',
+            style: AetherType.body,
+          ),
+          const SizedBox(height: AetherSpace.lg),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onRetry,
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: AetherColors.gold.withValues(alpha: 0.16),
+                    side: BorderSide(color: AetherColors.gold.withValues(alpha: 0.6)),
+                    foregroundColor: AetherColors.goldBright,
+                    padding: const EdgeInsets.symmetric(vertical: AetherSpace.md),
+                    shape: RoundedRectangleBorder(borderRadius: AetherRadius.allMd),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.refresh_rounded, size: 18),
+                      const SizedBox(width: AetherSpace.xs),
+                      Text('Reintentar',
+                          style: AetherType.label.copyWith(color: AetherColors.goldBright)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: AetherSpace.sm),
+              OutlinedButton(
+                onPressed: onChooseAgain,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AetherColors.hairlineStrong),
+                  foregroundColor: AetherColors.parchmentDim,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AetherSpace.md, vertical: AetherSpace.md),
+                  shape: RoundedRectangleBorder(borderRadius: AetherRadius.allMd),
+                ),
+                child: Text('Elegir otra vez', style: AetherType.label),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Full-screen "final descubierto" interstitial (V2 design prototype §1b),
+/// shown once between confirming an [Ending] and reading its epilogue —
+/// `GameController.chooseEnding` already resolved and narrated everything by
+/// the time this appears, so dismissing it is purely a UI reveal, not a new
+/// action. Deliberately the *lightweight* version confirmed for this pass:
+/// there's no separate ending title/summary-quote content field on [Ending]
+/// today, so the headline reuses [Ending.visibleChoice] (the option text the
+/// player tapped) instead of inventing new authored copy across 3 worlds'
+/// worth of endings.
+class _EndingRevealOverlay extends StatelessWidget {
+  const _EndingRevealOverlay({
+    required this.ending,
+    required this.ordinal,
+    required this.total,
+    required this.turnCount,
+    required this.level,
+    required this.vowText,
+    required this.vowStatus,
+    required this.vowTestedCount,
+    required this.onDismiss,
+  });
+
+  final Ending ending;
+  final int ordinal;
+  final int total;
+  final int turnCount;
+  final int level;
+
+  /// `null` when the character has no `vowId` at all — the juramento row is
+  /// only shown when there's an actual vow to report on.
+  final String? vowText;
+  final String? vowStatus;
+  final int vowTestedCount;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: ColoredBox(
+        color: AetherColors.void_.withValues(alpha: 0.86),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AetherSpace.xl),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 440),
+                padding: const EdgeInsets.all(AetherSpace.xl),
+                decoration: BoxDecoration(
+                  color: AetherColors.surfaceRaised,
+                  borderRadius: AetherRadius.allLg,
+                  border: Border.all(color: AetherColors.gold.withValues(alpha: 0.4)),
+                  boxShadow: AetherShadow.panel,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text('FINAL DESCUBIERTO · $ordinal DE $total',
+                        style: AetherType.overline.copyWith(color: AetherColors.gold)),
+                    const SizedBox(height: AetherSpace.md),
+                    Text(
+                      ending.visibleChoice,
+                      style: AetherType.display.copyWith(fontSize: 26),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AetherSpace.xl),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _EndingStat(label: 'Turnos', value: '$turnCount'),
+                        ),
+                        const SizedBox(width: AetherSpace.sm),
+                        Expanded(
+                          child: _EndingStat(label: 'Nivel final', value: '$level'),
+                        ),
+                      ],
+                    ),
+                    if (vowText != null) ...[
+                      const SizedBox(height: AetherSpace.sm),
+                      _EndingVowStat(
+                        vowText: vowText!,
+                        status: vowStatus,
+                        testedCount: vowTestedCount,
+                      ),
+                    ],
+                    const SizedBox(height: AetherSpace.xl),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: onDismiss,
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: AetherColors.gold,
+                          foregroundColor: AetherColors.ink,
+                          padding: const EdgeInsets.symmetric(vertical: AetherSpace.md),
+                          shape: RoundedRectangleBorder(borderRadius: AetherRadius.allMd),
+                        ),
+                        child: Text('Leer el epílogo',
+                            style: AetherType.label.copyWith(color: AetherColors.ink)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EndingStat extends StatelessWidget {
+  const _EndingStat({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AetherSpace.md, vertical: AetherSpace.sm),
+      decoration: BoxDecoration(
+        color: AetherColors.surface,
+        borderRadius: AetherRadius.allMd,
+        border: Border.all(color: AetherColors.hairline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label.toUpperCase(),
+              style: AetherType.overline.copyWith(color: AetherColors.parchmentFaint, fontSize: 9)),
+          const SizedBox(height: 4),
+          Text(value, style: AetherType.title.copyWith(fontSize: 19)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Same wording as `ProfileScreen`'s `_VowCard`, reused verbatim so a vow's
+/// status reads identically whether the player sees it here or on Perfil.
+class _EndingVowStat extends StatelessWidget {
+  const _EndingVowStat({
+    required this.vowText,
+    required this.status,
+    required this.testedCount,
+  });
+
+  final String vowText;
+  final String? status;
+  final int testedCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final (color, icon, label) = switch (status) {
+      'roto' => (AetherColors.failure, Icons.warning_rounded, 'Roto'),
+      'sostenido' => (AetherColors.success, Icons.check_circle_rounded, 'Sostenido hasta el final'),
+      _ => (
+          AetherColors.failure,
+          Icons.warning_rounded,
+          'Puesto a prueba ${testedCount == 1 ? "una vez" : "$testedCount veces"}',
+        ),
+    };
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AetherSpace.md),
+      decoration: BoxDecoration(
+        color: AetherColors.surface,
+        borderRadius: AetherRadius.allMd,
+        border: Border.all(color: AetherColors.hairline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('TU JURAMENTO',
+              style: AetherType.overline.copyWith(color: AetherColors.parchmentFaint, fontSize: 9)),
+          const SizedBox(height: 6),
+          Text('«$vowText»',
+              style: AetherType.body.copyWith(fontStyle: FontStyle.italic)),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Icon(icon, size: 15, color: color),
+              const SizedBox(width: 6),
+              Text(label, style: AetherType.caption.copyWith(color: color)),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -611,6 +1108,7 @@ class _ChoicesBar extends StatelessWidget {
     required this.freeAction,
     required this.onSubmitFree,
     required this.onFinishStory,
+    required this.onEndingChosen,
   });
 
   final GameController controller;
@@ -621,6 +1119,12 @@ class _ChoicesBar extends StatelessWidget {
   /// nothing left to do at all (an unreachable dead end, shouldn't happen)
   /// and, deliberately, as the only affordance once the epilogue is reached.
   final VoidCallback onFinishStory;
+
+  /// Tells `_GameScreenState` which [Ending] was just confirmed, so it can
+  /// show `_EndingRevealOverlay` once `controller.chooseEnding` finishes and
+  /// the epilogue narration arrives (V2 §1b) — `achievedEndingOrdinal` alone
+  /// is just an index, not the `Ending` itself.
+  final ValueChanged<Ending> onEndingChosen;
 
   /// Resolves a tapped [StoryChoice], first asking for confirmation when it's
   /// marked irreversible (campaign-bible §20.3/§26.4) — a curated author's
@@ -655,6 +1159,7 @@ class _ChoicesBar extends StatelessWidget {
       confirmLabel: 'Confirmar',
     );
     if (confirmed) {
+      onEndingChosen(ending);
       controller.chooseEnding(ending);
     }
   }
@@ -700,11 +1205,26 @@ class _ChoicesBar extends StatelessWidget {
           curve: AetherMotion.standard,
           alignment: Alignment.bottomCenter,
           child: busy
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(vertical: AetherSpace.lg),
-                  child: DestinyWriting(),
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AetherSpace.lg),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const DestinyWriting(),
+                      const SizedBox(height: AetherSpace.sm),
+                      Text(
+                        'Puedes seguir leyendo el turno anterior',
+                        style: AetherType.caption.copyWith(color: AetherColors.parchmentFaint),
+                      ),
+                    ],
+                  ),
                 )
-              : atEpilogue
+              : controller.error != null
+                  ? _NarratorErrorPanel(
+                      onRetry: controller.retryLastAction,
+                      onChooseAgain: controller.clearError,
+                    )
+                  : atEpilogue
                   ? _EndOfStory(
                       onFinishStory: onFinishStory,
                       endingOrdinal: controller.achievedEndingOrdinal,

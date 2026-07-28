@@ -490,10 +490,16 @@ class _OutcomeLabel extends StatelessWidget {
           ),
         ),
         const SizedBox(width: AetherSpace.md),
-        Text('vs dificultad ${resolution.difficulty}',
-            style: AetherType.caption),
+        Expanded(
+          child: Text(
+            'vs dificultad ${resolution.difficulty}',
+            style: AetherType.caption,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
         if (natNote != null) ...[
-          const Spacer(),
+          const SizedBox(width: AetherSpace.sm),
           Text(natNote,
               style: AetherType.caption
                   .copyWith(color: color, fontWeight: FontWeight.w700)),
