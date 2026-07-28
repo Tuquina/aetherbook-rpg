@@ -7,6 +7,7 @@ import 'package:aetherbook/core/narrative/extended_conflict.dart';
 import 'package:aetherbook/core/narrative/story_choice.dart';
 import 'package:aetherbook/core/narrative/story_graph.dart';
 import 'package:aetherbook/core/narrative/story_node.dart';
+import 'package:aetherbook/core/settings/user_settings.dart';
 import 'package:aetherbook/core/state/character.dart';
 import 'package:aetherbook/core/state/game_session.dart';
 import 'package:aetherbook/core/world/character_origin.dart';
@@ -942,6 +943,117 @@ void main() {
         expect(controller.imageUrl, 'https://cdn.example/already-cached.jpg');
         expect(controller.imageLoading, isFalse);
         expect(imageGenerator.prompts, isEmpty);
+      });
+    });
+
+    group('character portrait (V2 §4c)', () {
+      test('avatarLoading is true immediately after start(), before the '
+          'generator has answered', () async {
+        final imageGenerator = _CapturingImageGenerator();
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          imageGenerator: imageGenerator,
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('xianxia');
+
+        expect(controller.avatarLoading, isTrue);
+      });
+
+      test('a brand-new session\'s character gets a generated avatarUrl once '
+          'the generator answers, and it gets persisted', () async {
+        final persistence = _FakeGameStateRepository();
+        final imageGenerator = _CapturingImageGenerator();
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          persistence: persistence,
+          imageGenerator: imageGenerator,
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('xianxia');
+        await Future<void>.delayed(Duration.zero);
+
+        expect(controller.avatarLoading, isFalse);
+        expect(controller.character!.avatarUrl, 'https://cdn.example/scene.jpg');
+        expect(persistence.savedCharacterAvatars, [
+          ('new-session', 'https://cdn.example/scene.jpg'),
+        ]);
+      });
+
+      test('resuming an existing session never generates a new avatar', () async {
+        final imageGenerator = _CapturingImageGenerator();
+        final persistence = _FakeGameStateRepository()
+          ..seeded = GameSession(
+            id: 'existing-session',
+            worldSlug: 'xianxia',
+            character: _character.copyWith(avatarUrl: 'https://cdn.example/already-there.jpg'),
+          );
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          persistence: persistence,
+          imageGenerator: imageGenerator,
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('xianxia');
+        await Future<void>.delayed(Duration.zero);
+
+        expect(controller.avatarLoading, isFalse);
+        expect(controller.character!.avatarUrl, 'https://cdn.example/already-there.jpg');
+        expect(imageGenerator.prompts, isEmpty);
+      });
+
+      test('respects illustrateScenes: false — no attempt at all', () async {
+        final imageGenerator = _CapturingImageGenerator();
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          imageGenerator: imageGenerator,
+          dice: const FixedDice(10),
+        );
+        controller.updateSettings(const UserSettings(illustrateScenes: false));
+
+        await controller.start('xianxia');
+        await Future<void>.delayed(Duration.zero);
+
+        expect(controller.avatarLoading, isFalse);
+        expect(imageGenerator.prompts, isEmpty);
+      });
+
+      test('a null result (generator failed) never blocks anything', () async {
+        final imageGenerator = _CapturingImageGenerator()..nextUrl = null;
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          imageGenerator: imageGenerator,
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('xianxia');
+        await Future<void>.delayed(Duration.zero);
+
+        expect(controller.avatarLoading, isFalse);
+        expect(controller.character!.avatarUrl, isNull);
+      });
+
+      test('no imageGenerator configured: nothing breaks, no avatar ever appears',
+          () async {
+        final controller = GameController(
+          worldRepository: _FakeWorldRepository(),
+          narrator: const FakeNarratorAdapter(latency: Duration.zero),
+          dice: const FixedDice(10),
+        );
+
+        await controller.start('xianxia');
+        await Future<void>.delayed(Duration.zero);
+
+        expect(controller.avatarLoading, isFalse);
+        expect(controller.character!.avatarUrl, isNull);
       });
     });
   });
