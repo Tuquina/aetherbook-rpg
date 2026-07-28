@@ -244,12 +244,14 @@ real `Color`s falling back to the existing global palette, and
 `AetherBackground` gained a `base` parameter so the per-world tint shows in
 the backdrop gradient even with `particles: false` (as on `GameScreen`) —
 `accent`-only wiring would have been invisible there. All 8 world JSON files
-now declare the table below. **Not yet done:** the title-treatment
-(font-tracking per world) and background-texture (fog/scanline/grain
-`CustomPainter`s) dimensions from the original prototype, and wiring the
-per-world accent into story-library cards/chargen (currently still
-module-accent-colored, which is a separate, pre-existing system) — left
-for a follow-up pass, not silently dropped.
+now declare the table below. **Title-treatment and background-texture closed
+in Stage 6k (2026-07-28)**: `World` gained `themeTitleFont/Weight/Tracking/
+Uppercase/Color` + `themeTexture`, applied via `WorldTheme.titleStyle` and
+`AetherBackground`'s new `texture` param, on the same two "in-world" screens
+the mockup itself scopes them to (the scene, the character sheet) — the
+per-world accent into story-library cards/chargen turned out to already be
+wired (confirmed by direct grep before starting 6k; `V2_DESIGN_SYSTEM.md`
+was stale on that point, saying only `_ContinueHero` used it).
 
 **Context.** Section `4a` proposes 5 named token sets (accent / base /
 secondary / title-treatment / background-texture), one per world family. This

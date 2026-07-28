@@ -961,6 +961,60 @@ Only proceed with a sub-stage once its blocking decision in
     recurring caveat as every stage in this section — the browser preview
     tooling issue hasn't been fixed. Recommend a manual look once deployed,
     especially for the new Códice tabs/glossary and the chargen side panel.
+- **6k — Theming por mundo + `MyStoriesScreen` fixes.** ✅ **Code done
+  (2026-07-28)**. Decision E (Stage 6b) had explicitly deferred title
+  treatment and background texture per world — this closes that, plus
+  `MyStoriesScreen`'s remaining gaps against the mockup, both driven by exact
+  values/behavior extracted from the design handoff folder you left
+  permanently in the repo (`Aetherbook Mobile Redesign-handoff/` —
+  established this session as the standing design reference, see
+  `project_v2_design_handoff_folder.md` in memory).
+  - **Title treatment** (`World.themeTitleFont/Weight/Tracking/Uppercase/Color`,
+    `WorldTheme.titleStyle`): the 5 freeform worlds + the 3 that inherit
+    their family's theme (`xianxia_lianshu`, both curated worlds) declare the
+    mockup's §4a values. Applied only where the mockup itself keeps it — the
+    character name in `StatusBar` and `CharacterSheetSheet`'s title — never
+    in `MyStoriesScreen`/`WorldSelectScreen` (§4d: "biblioteca sin tema
+    propio, se mantiene neutra").
+  - **Background texture** (`World.themeTexture`, `WorldTextureKind`,
+    `AetherBackground`'s new `texture` param): `radialWarm`/`fog` share the
+    original radial (fog adds static mist bands on top); `hardDiagonal`
+    swaps to a ~160° hard-stop `LinearGradient`; `scanline`/`grain` swap to a
+    plain vertical gradient plus a hand-painted `CustomPainter` overlay (thin
+    accent-colored lines / scattered dots — Flutter has no
+    `repeating-linear-gradient` equivalent). Wired into `GameScreen` only,
+    same "in-world screens only" scope as title treatment.
+  - **`CharacterSheetSheet` stopped being theme-agnostic**: the vow box,
+    `_InfoChip` borders/icons and a new decorative per-attribute progress bar
+    (capped at 5, purely visual — the number above it is still what the
+    engine resolves checks with) all read `WorldTheme.forWorld(world).accent`
+    instead of a hardcoded gold.
+  - **`MyStoriesScreen`**: header gains a total "N tomos" count; filter chips
+    gain their own count ("Todas · 6") only at/above `AetherBreakpoints.tablet`
+    (mobile chips stay label-only, per §4d); below `tablet` the list is
+    unchanged, at/above it a `GridView` (`SliverGridDelegateWithMaxCrossAxisExtent`,
+    no hardcoded column count) replaces it. Cards with an active session gain
+    a progress bar: **real** chapter-based (current/total, both derived by
+    regex from the world's own `c<N>_...` node-id convention — no new
+    authoring) for a curated, AI-free world with a known graph position (your
+    explicit call: real progress is exclusive to "Historias completas");
+    everywhere else, a `turnCount` heuristic against a soft ceiling of 30,
+    deliberately framed as general advancement, never "how much is left"
+    (your other explicit call). A completed session always shows a full bar.
+    Needed `story_library()` to also select `current_node_id`
+    (`20260729_story_library_current_node_id.sql`) and
+    `SessionLibraryEntry.currentNodeId` — **migration written, not yet
+    applied to the live project.**
+  - 752 Flutter tests passing (up from 732), `analyze` clean throughout.
+    Fixed two overflow bugs the new responsive/count logic exposed in
+    `MyStoriesScreen`'s header and filter row (both existed before this
+    stage — this app's phone-width layout had apparently never actually been
+    tested at a real phone width, only at the incidentally-wide 900px the
+    existing widget tests happened to use).
+  - **Not independently re-verified visually this session**: same recurring
+    caveat as every stage above. Recommend a manual look once deployed —
+    especially the 5 worlds' distinct title/texture treatments side by side,
+    and `MyStoriesScreen`'s grid at tablet/desktop widths.
 
 ---
 
@@ -1054,5 +1108,6 @@ avoid duplicating `V2_GAP_ANALYSIS.md`/`V2_PRODUCT_DECISIONS.md`)
 | 6h — Home dashboard, responsive | ✅ Done and deployed (2026-07-28), migration applied; visual sign-off still recommended, see 6h notes | — |
 | 6i — Game screen states + wide layout | ✅ Done (2026-07-28), no backend changes; visual sign-off still recommended, see 6i notes | — |
 | 6j — The 4 lost gaps (FreeActionField, Codex, chargen wide layout, app icon) | ✅ Done (2026-07-28), no backend changes; visual sign-off still recommended, see 6j notes | — |
+| 6k — Theming por mundo (títulos, textura, ficha) + arreglos de MyStoriesScreen | ✅ Code done (2026-07-28); migration `20260729_story_library_current_node_id.sql` not yet applied to the live project; visual sign-off still recommended, see 6k notes | — |
 | 7 — Ending/account/offline/resilience polish | Not started | Stage 4, 6a |
 | 8 — Accessibility/responsiveness/performance/release | Not started | Stages 1-7 |
