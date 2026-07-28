@@ -3,16 +3,15 @@ import 'package:flutter/material.dart';
 import '../core/state/character.dart';
 import '../core/state/game_session.dart';
 import '../core/world/world.dart';
-import 'chargen_screen.dart';
 import 'codex_screen.dart';
 import 'create_story_screen.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'design/world_theme.dart';
 import 'game_controller.dart';
-import 'game_screen.dart';
 import 'profile_screen.dart';
 import 'story_module_screen.dart';
+import 'story_navigation.dart';
 import 'widgets/atmosphere.dart';
 import 'widgets/confirm_sheet.dart';
 
@@ -159,42 +158,12 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
   /// await it.
   Future<void> _select(World world) async {
     if (!_moduleFor(world).enabled) return;
-    final controller = widget.controller;
-    // Already the active session in memory (e.g. the player used the back
-    // arrow mid-story) — resume it instead of restarting chargen.
-    if (controller.isReady && controller.world?.slug == world.slug) {
-      _goToGame(world.slug);
-      return;
-    }
-    // A world with chargen origins only actually needs the chargen form when
-    // there's no session to resume yet — otherwise `start()` would discard
-    // whatever the player just filled in and load the existing session
-    // anyway, so asking them to fill it out is just noise.
-    final needsChargen = world.origins.isNotEmpty &&
-        !await controller.hasPersistedSession(world.slug);
-    if (!mounted) return;
-    if (needsChargen) {
-      _goToChargen(world);
-    } else {
-      _goToGame(world.slug);
-    }
+    await StoryNavigation.open(context, widget.controller, world);
   }
 
   void _goToChargen(World world, {bool forceNew = false, bool alwaysCreateNew = false}) {
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: AetherMotion.slow,
-        pageBuilder: (_, _, _) => ChargenScreen(
-          controller: widget.controller,
-          worldSlug: world.slug,
-          world: world,
-          forceNew: forceNew,
-          alwaysCreateNew: alwaysCreateNew,
-        ),
-        transitionsBuilder: (_, anim, _, child) =>
-            FadeTransition(opacity: anim, child: child),
-      ),
-    );
+    StoryNavigation.goToChargen(context, widget.controller, world,
+        forceNew: forceNew, alwaysCreateNew: alwaysCreateNew);
   }
 
   /// Picking a genre on [CreateStoryScreen] always starts a brand-new story
@@ -209,21 +178,8 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
   /// character already exists) and never guesses "the latest" (there can be
   /// several; this one is the one the player tapped).
   Future<void> _resumeStory(GameSessionSummary summary) async {
-    final controller = widget.controller;
-    await controller.start(summary.worldSlug, sessionId: summary.id);
-    if (!mounted) return;
-    if (controller.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AetherColors.surfaceRaised,
-          content: Text(controller.error!,
-              style: const TextStyle(color: AetherColors.parchment)),
-        ),
-      );
-      return;
-    }
-    _goToGame(summary.worldSlug);
+    await StoryNavigation.resume(context, widget.controller,
+        worldSlug: summary.worldSlug, sessionId: summary.id);
   }
 
   /// Confirms and abandons one saved story — [CreateStoryScreen] awaits this
@@ -263,15 +219,7 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
   }
 
   void _goToGame(String worldSlug) {
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: AetherMotion.slow,
-        pageBuilder: (_, _, _) =>
-            GameScreen(controller: widget.controller, worldSlug: worldSlug),
-        transitionsBuilder: (_, anim, _, child) =>
-            FadeTransition(opacity: anim, child: child),
-      ),
-    );
+    StoryNavigation.goToGame(context, widget.controller, worldSlug);
   }
 
   void _openModule(StoryModule module, List<World> worlds) {
