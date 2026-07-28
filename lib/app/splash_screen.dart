@@ -129,61 +129,89 @@ class _SplashScreenState extends State<SplashScreen>
           // A fixed-height brand block + pitch/CTA block never fits every
           // viewport this same code runs on (phone/tablet/web, CLAUDE.md §3)
           // — a short window (landscape phone, a resized desktop browser)
-          // needs this to scroll instead of overflowing. `Spacer`/`Expanded`
-          // can't live inside a `SingleChildScrollView` (unbounded main
-          // axis) to distribute the gap between the two blocks, so the gap
-          // is sized as an explicit fraction of `viewport.maxHeight`
-          // (V2 design prototype §10a: the brand sits near the top, the
-          // pitch + "Comenzar" sit near the bottom, not one centered block)
-          // — `ConstrainedBox(minHeight)` + `Align(topCenter)` still lets a
-          // short viewport scroll instead of clipping.
+          // needs this to scroll instead of overflowing. The gap between the
+          // two blocks is *not* a `Spacer`/`Expanded` (those can't live
+          // inside a `SingleChildScrollView`'s unbounded main axis — the
+          // exact bug this replaced: on any phone tall enough that both
+          // blocks' actual content was shorter than the two hand-picked
+          // `viewport.maxHeight` fractions, `Align(topCenter)` still left
+          // the CTA block floating mid-screen with dead space below it,
+          // instead of pinned to the bottom edge as V2 §10a shows it).
+          // `Column(mainAxisAlignment: spaceBetween)` needs no Flexible
+          // child to do this: fed `BoxConstraints(minHeight: viewport,
+          // maxHeight: infinity)` by the `ConstrainedBox`, a `Column` with
+          // no flex children sizes itself to `max(childrenHeight,
+          // minHeight)` and only then distributes *actual* leftover space
+          // between its children — which is exactly "brand block at the
+          // top, CTA block at the bottom, gap absorbs whatever's left" on
+          // any viewport, and still just grows (and scrolls) past
+          // `minHeight` if the content itself is taller. This is why the
+          // 440-wide reading measure now lives on each *block* individually
+          // (`ConstrainedBox(maxWidth: 440)`, centered by the outer
+          // `Column`'s own default `crossAxisAlignment.center`) instead of
+          // wrapping the whole thing in an outer `Center`/`Align` — either
+          // of those shrink-wraps to its child's natural height under an
+          // unbounded incoming `maxHeight`, silently undoing the stretch
+          // this fix depends on.
           child: LayoutBuilder(
             builder: (context, viewport) => SingleChildScrollView(
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: viewport.maxHeight),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 440),
-                    child: Padding(
-                      padding: const EdgeInsets.all(AetherSpace.xl),
-                      child: _EntranceFade(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(height: viewport.maxHeight * 0.10),
-                            AnimatedBuilder(
-                              animation: _c,
-                              builder: (context, _) =>
-                                  BrandMark(size: 66, filled: false, glow: _c.value),
-                            ),
-                            const SizedBox(height: AetherSpace.xl),
-                            AnimatedBuilder(
-                              animation: _c,
-                              builder: (context, _) => _Wordmark(shimmer: _c.value),
-                            ),
-                            const SizedBox(height: AetherSpace.lg),
-                            const _OrnamentDivider(),
-                            const SizedBox(height: AetherSpace.lg),
-                            Text(
-                              'Un multiverso que se escribe contigo.',
-                              textAlign: TextAlign.center,
-                              style: AetherType.body.copyWith(
-                                  color: AetherColors.parchmentDim,
-                                  fontSize: 15,
-                                  fontStyle: FontStyle.italic),
-                            ),
-                            SizedBox(height: viewport.maxHeight * 0.18),
-                            const _ExplainerLines(),
-                            const SizedBox(height: AetherSpace.xl),
-                            _PrimaryButton(
-                              label: 'Comenzar',
-                              busy: _checkingOnboarding,
-                              onTap: _checkingOnboarding ? null : _begin,
-                            ),
-                          ],
+                child: Padding(
+                  padding: const EdgeInsets.all(AetherSpace.xl),
+                  child: _EntranceFade(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 440),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AnimatedBuilder(
+                                animation: _c,
+                                builder: (context, _) =>
+                                    BrandMark(size: 66, filled: false, glow: _c.value),
+                              ),
+                              const SizedBox(height: AetherSpace.xl),
+                              AnimatedBuilder(
+                                animation: _c,
+                                builder: (context, _) => _Wordmark(shimmer: _c.value),
+                              ),
+                              const SizedBox(height: AetherSpace.lg),
+                              const _OrnamentDivider(),
+                              const SizedBox(height: AetherSpace.lg),
+                              Text(
+                                'Un multiverso que se escribe contigo.',
+                                textAlign: TextAlign.center,
+                                style: AetherType.body.copyWith(
+                                    color: AetherColors.parchmentDim,
+                                    fontSize: 15,
+                                    fontStyle: FontStyle.italic),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 440),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const _ExplainerLines(),
+                              const SizedBox(height: AetherSpace.xl),
+                              _PrimaryButton(
+                                label: 'Comenzar',
+                                busy: _checkingOnboarding,
+                                onTap: _checkingOnboarding ? null : _begin,
+                              ),
+                              if (widget.auth != null) ...[
+                                const SizedBox(height: AetherSpace.md),
+                                const _SaveProgressCaption(),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -428,6 +456,32 @@ class _PrimaryButtonState extends State<_PrimaryButton> {
                 ),
         ),
       ),
+    );
+  }
+}
+
+// ── Save-progress caption ───────────────────────────────────────────────────
+
+/// The small reassurance under "Comenzar" (V2 §10a: "Guardar tu progreso con
+/// tu correo") — only shown when there's a real account system to back it
+/// ([SplashScreen.auth] non-null; the degraded in-memory-only mode has
+/// nothing to save to, so claiming this would be actively wrong there).
+class _SaveProgressCaption extends StatelessWidget {
+  const _SaveProgressCaption();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.cloud_outlined, size: 14, color: AetherColors.parchmentFaint),
+        const SizedBox(width: 6),
+        Text(
+          'Guardar tu progreso con tu correo',
+          style: AetherType.caption.copyWith(color: AetherColors.parchmentFaint, fontSize: 12),
+        ),
+      ],
     );
   }
 }

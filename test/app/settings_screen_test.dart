@@ -2,6 +2,7 @@ import 'package:aetherbook/adapters/auth/fake_auth_adapter.dart';
 import 'package:aetherbook/adapters/narrator/fake_narrator_adapter.dart';
 import 'package:aetherbook/adapters/settings/fake_settings_adapter.dart';
 import 'package:aetherbook/app/game_controller.dart';
+import 'package:aetherbook/app/onboarding_screen.dart';
 import 'package:aetherbook/app/settings_screen.dart';
 import 'package:aetherbook/core/settings/user_settings.dart';
 import 'package:aetherbook/core/state/character.dart';
@@ -66,8 +67,28 @@ void main() {
       expect(find.text('Temas que el narrador evita'), findsOneWidget);
       expect(find.text('Recordarme un tomo abierto'), findsOneWidget);
       expect(find.text('Volver a ver cómo se juega'), findsOneWidget);
+      expect(find.text('Ver la introducción otra vez'), findsOneWidget);
       expect(find.text('Exportar mis tomos'), findsOneWidget);
       expect(find.text('Cerrar sesión'), findsOneWidget);
+    });
+
+    testWidgets(
+        '"Ver la introducción otra vez" replays onboarding and pops back to Ajustes when done, '
+        'even though hasSeenOnboarding is already true', (tester) async {
+      await _pumpSettings(tester);
+
+      await tester.tap(find.text('Ver la introducción otra vez'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.byType(OnboardingScreen), findsOneWidget);
+      expect(find.byType(SettingsScreen), findsNothing); // covered by the pushed route
+
+      await tester.tap(find.text('Saltar'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(OnboardingScreen), findsNothing);
+      expect(find.byType(SettingsScreen), findsOneWidget);
     });
 
     testWidgets('toggling "Ilustrar las escenas" updates the controller and saves',

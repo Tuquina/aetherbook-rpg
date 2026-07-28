@@ -7,6 +7,7 @@ import 'codex_screen.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'game_controller.dart';
+import 'onboarding_screen.dart';
 import 'widgets/atmosphere.dart';
 import 'widgets/avoided_themes_sheet.dart';
 import 'widgets/sheet_shell.dart';
@@ -174,6 +175,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: Icons.menu_book_outlined,
                     label: 'Volver a ver cómo se juega',
                     onTap: () => Navigator.of(context).push(CodexScreen.route()),
+                  ),
+                  _PlainRow(
+                    icon: Icons.play_circle_outline_rounded,
+                    label: 'Ver la introducción otra vez',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => OnboardingScreen(
+                          controller: widget.controller,
+                          settingsPort: widget.settingsPort,
+                          // A replay, not a first run: just close it and
+                          // land back on Ajustes, whether the player
+                          // finishes, skips, or picks a start card on the
+                          // last page — there's no `WorldSelectScreen` to
+                          // route to since it wasn't opened from Splash.
+                          onDone: (_) => Navigator.of(context).pop(),
+                        ),
+                      ),
+                    ),
                   ),
                   _PlainRow(
                     icon: Icons.download_outlined,

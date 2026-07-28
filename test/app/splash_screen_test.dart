@@ -69,6 +69,37 @@ void main() {
     expect(find.textContaining('sin cuenta'), findsNothing);
   });
 
+  group('layout (V2 §10a: brand block near the top, CTA block pinned to the bottom)', () {
+    testWidgets('shows the "guardar tu progreso" caption when there is a real account system',
+        (tester) async {
+      await _pumpSplash(tester, controller: _newController(), auth: FakeAuthAdapter());
+
+      expect(find.text('Guardar tu progreso con tu correo'), findsOneWidget);
+    });
+
+    testWidgets('hides the caption in degraded (no account system) mode', (tester) async {
+      await _pumpSplash(tester, controller: _newController(), auth: null);
+
+      expect(find.text('Guardar tu progreso con tu correo'), findsNothing);
+    });
+
+    testWidgets('the "Comenzar" button sits at the bottom of the viewport, not floating '
+        'mid-screen with dead space below it', (tester) async {
+      await _pumpSplash(tester, controller: _newController(), auth: FakeAuthAdapter());
+
+      final buttonBottom = tester.getBottomLeft(find.text('Comenzar')).dy;
+      final captionBottom = tester.getBottomLeft(find.text('Guardar tu progreso con tu correo')).dy;
+      final viewportHeight = tester.view.physicalSize.height / tester.view.devicePixelRatio;
+
+      // Both should land in the bottom fifth of the screen (leaving room only
+      // for their own padding/SafeArea inset) — not stranded around the
+      // middle the way the old fixed-fraction-gap layout could leave them on
+      // a tall phone.
+      expect(buttonBottom, greaterThan(viewportHeight * 0.8));
+      expect(captionBottom, greaterThan(viewportHeight * 0.8));
+    });
+  });
+
   testWidgets('"Comenzar" routes to AccountScreen when there is no account yet',
       (tester) async {
     await _pumpSplash(tester, controller: _newController(), auth: FakeAuthAdapter());

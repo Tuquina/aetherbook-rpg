@@ -14,9 +14,14 @@ import 'world_select_screen.dart';
 /// The 3-page first-run flow (V2 design prototype §6c-e) — no feature tour,
 /// no menu of settings: a promise ("no vas to elegir entre A y B"), a live
 /// demo of the one mechanic every world shares (the dice check), and the
-/// first real choice (how to start). Runs exactly once per account —
-/// `SplashScreen` gates it on `UserSettings.hasSeenOnboarding`, and this
-/// screen is what flips that flag, whether the player finishes it or skips.
+/// first real choice (how to start). Gated exactly once per account by
+/// default — `SplashScreen` only routes here on `!UserSettings.hasSeenOnboarding`,
+/// and this screen is what flips that flag, whether the player finishes it
+/// or skips — but it's also reachable on demand, any number of times, from
+/// `SettingsScreen`'s "Ver la introducción otra vez" (your explicit request:
+/// a one-time flow shouldn't mean a one-time-*ever* flow). [onDone] is what
+/// tells these two call sites apart: `SplashScreen` uses it to move on to
+/// `WorldSelectScreen`; a replay from Settings just pops back.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({
     super.key,
