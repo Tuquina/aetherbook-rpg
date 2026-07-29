@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/authoring/campaign_draft.dart';
+import '../../core/world/world.dart';
 import '../../ports/campaign_draft_repository_port.dart';
 import 'campaign_draft_mappers.dart';
 
@@ -49,6 +50,44 @@ class SupabaseCampaignDraftAdapter implements CampaignDraftRepositoryPort {
         .eq('id', id)
         .maybeSingle();
     if (row == null) return null;
+    return campaignDraftFromRow(row);
+  }
+
+  @override
+  Future<CampaignDraft?> loadOfficialBySlug(String slug) async {
+    final row = await _client
+        .from('campaign_drafts')
+        .select()
+        .eq('slug', slug)
+        .not('official_module', 'is', null)
+        .maybeSingle();
+    if (row == null) return null;
+    return campaignDraftFromRow(row);
+  }
+
+  @override
+  Future<CampaignDraft> createOfficialDraft({
+    required World customWorld,
+    required CampaignOfficialModule officialModule,
+  }) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('createOfficialDraft requires a signed-in user');
+    }
+
+    final slug = await _uniqueSlug(slugify(customWorld.name));
+    final row = await _client
+        .from('campaign_drafts')
+        .insert({
+          'author_id': userId,
+          'slug': slug,
+          'title': customWorld.name,
+          'custom_world': campaignDraftCustomWorldRow(customWorld),
+          'ai_runtime_required': customWorld.aiRuntimeRequired,
+          'official_module': officialModule.toString(),
+        })
+        .select()
+        .single();
     return campaignDraftFromRow(row);
   }
 

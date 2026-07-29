@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import '../core/authoring/campaign_draft.dart';
+import '../core/world/world.dart';
 
 /// Persists and loads player-authored campaigns (V2 design prototype
 /// §9a-9j). Mirrors [GameStateRepositoryPort]'s shape: the domain never
@@ -27,12 +28,33 @@ abstract class CampaignDraftRepositoryPort {
   /// isn't this user's — RLS handles that transparently).
   Future<CampaignDraft?> loadDraft(String id);
 
+  /// One *official* draft by [slug] (`CampaignDraft.officialModule != null`),
+  /// graph included, or `null` if there isn't one — used by
+  /// `CompositeWorldRepository` to resolve a world slug the bundled assets
+  /// don't recognize. Relies on RLS the same way [listOfficial] does: a
+  /// published campaign resolves for anyone, an unpublished one only for an
+  /// admin.
+  Future<CampaignDraft?> loadOfficialBySlug(String slug);
+
   /// Creates a new, empty draft based on [baseWorldSlug] and returns it
   /// (with its persisted `id`/`slug` set). [title] seeds both the display
   /// title and (via [slugify]) the initial slug.
   Future<CampaignDraft> createDraft({
     required String baseWorldSlug,
     required String title,
+  });
+
+  /// Creates a new, empty *official* draft (Admin Stage 3) declaring its own
+  /// [customWorld] from scratch (World Builder) instead of borrowing
+  /// `baseWorldSlug` from a bundled world — only ever reachable from
+  /// admin-gated UI; RLS additionally requires [isAdminEmail] on the write
+  /// itself (`20260730_campaign_drafts_admin_official.sql`). [customWorld]'s
+  /// own `name` seeds both the display title and (via [slugify]) the initial
+  /// slug, and its `aiRuntimeRequired` seeds the draft's own flag — mirroring
+  /// what [createDraft] does implicitly via the bundled world's defaults.
+  Future<CampaignDraft> createOfficialDraft({
+    required World customWorld,
+    required CampaignOfficialModule officialModule,
   });
 
   /// Persists every field of [draft] — the editor's autosave, called after

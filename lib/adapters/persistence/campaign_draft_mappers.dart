@@ -14,7 +14,7 @@ Map<String, Object?> campaignDraftToRow(CampaignDraft draft) {
     'title': draft.title,
     'synopsis': draft.synopsis,
     'base_world_slug': draft.baseWorldSlug,
-    'custom_world': _customWorldToRow(draft.customWorld),
+    'custom_world': campaignDraftCustomWorldRow(draft.customWorld),
     'status': draft.status.toString(),
     'content_warnings': draft.contentWarnings,
     'cover_image_url': draft.coverImageUrl,
@@ -73,8 +73,10 @@ CampaignDraftSummary campaignDraftSummaryFromRow(Map<String, dynamic> row) {
 /// `World.toJson()` is a generic serializer and includes `'graph'` — stripped
 /// here because the graph lives in its own `campaign_drafts.graph` column
 /// (`CampaignDraft.graph` is the single source of truth for it; a custom
-/// world's own `storyGraph` is always ignored).
-Map<String, dynamic>? _customWorldToRow(World? world) {
+/// world's own `storyGraph` is always ignored). Public — also used directly
+/// by `SupabaseCampaignDraftAdapter.createOfficialDraft`, which inserts a
+/// `custom_world` value before a full [CampaignDraft] exists to map from.
+Map<String, dynamic>? campaignDraftCustomWorldRow(World? world) {
   if (world == null) return null;
   final json = world.toJson();
   json.remove('graph');

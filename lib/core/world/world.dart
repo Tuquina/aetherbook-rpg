@@ -389,6 +389,75 @@ class World {
     return definition.resolve(character, key);
   }
 
+  /// A targeted copy — only the fields an official campaign_drafts row
+  /// (`core/authoring/campaign_materializer.dart`) actually needs to
+  /// override on top of a base/custom world, not a full 40-field copy.
+  World copyWith({
+    String? slug,
+    String? name,
+    String? catalogDescription,
+    int? estimatedDurationMinutes,
+    String? contentWarning,
+    StoryGraph? storyGraph,
+    bool? aiRuntimeRequired,
+  }) =>
+      World(
+        slug: slug ?? this.slug,
+        name: name ?? this.name,
+        theme: theme,
+        tone: tone,
+        systemPrompt: systemPrompt,
+        imageStyleSuffix: imageStyleSuffix,
+        defaultDifficulty: defaultDifficulty,
+        criticalMargin: criticalMargin,
+        primaryAttribute: primaryAttribute,
+        attributeKeywords: attributeKeywords,
+        intentKeywords: intentKeywords,
+        riskKeywords: riskKeywords,
+        selfGrantPatterns: selfGrantPatterns,
+        progression: progression,
+        resourceFormulas: resourceFormulas,
+        meterDefinitions: meterDefinitions,
+        attributeKeys: attributeKeys,
+        origins: origins,
+        vows: vows,
+        tones: tones,
+        ranks: ranks,
+        opponents: opponents,
+        npcs: npcs,
+        techniques: techniques,
+        items: items,
+        places: places,
+        terms: terms,
+        characterTags: characterTags,
+        storyGraph: storyGraph ?? this.storyGraph,
+        startingCharacter: startingCharacter,
+        seedNarration: seedNarration,
+        seedChoices: seedChoices,
+        personalItemSeedHook: personalItemSeedHook,
+        aiRuntimeRequired: aiRuntimeRequired ?? this.aiRuntimeRequired,
+        allowFreeText: allowFreeText,
+        catalogDescription: catalogDescription ?? this.catalogDescription,
+        estimatedDurationMinutes:
+            estimatedDurationMinutes ?? this.estimatedDurationMinutes,
+        contentWarning: contentWarning ?? this.contentWarning,
+        relationshipMagnitudeCap: relationshipMagnitudeCap,
+        relationshipMin: relationshipMin,
+        relationshipMax: relationshipMax,
+        hasFreeAttributePoint: hasFreeAttributePoint,
+        chargenVowLabel: chargenVowLabel,
+        hasCustomizableName: hasCustomizableName,
+        themeAccentHex: themeAccentHex,
+        themeBaseHex: themeBaseHex,
+        themeSecondaryHex: themeSecondaryHex,
+        themeTitleFontFamily: themeTitleFontFamily,
+        themeTitleFontWeight: themeTitleFontWeight,
+        themeTitleLetterSpacing: themeTitleLetterSpacing,
+        themeTitleUppercase: themeTitleUppercase,
+        themeTitleColorHex: themeTitleColorHex,
+        themeTexture: themeTexture,
+      );
+
   /// Mirrors [World.fromJson] key-for-key. Includes `'graph'` for a generic,
   /// correct round trip — callers that store the graph in a separate column
   /// (e.g. `campaign_drafts.graph`) must strip that key themselves rather
