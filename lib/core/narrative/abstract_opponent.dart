@@ -45,6 +45,15 @@ class AbstractOpponent {
 
   bool isDefeated(int currentGuard) => currentGuard <= 0;
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'display_name': displayName,
+        'guard': maxGuard,
+        if (typicalDamage != 0) 'typical_damage': typicalDamage,
+        if (nonviolentAlternative.isNotEmpty)
+          'nonviolent_alternative': nonviolentAlternative,
+      };
+
   factory AbstractOpponent.fromJson(Map<String, dynamic> json) {
     return AbstractOpponent(
       id: json['id'] as String,

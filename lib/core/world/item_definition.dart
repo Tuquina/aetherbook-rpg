@@ -20,6 +20,13 @@ class ItemDefinition {
   final String description;
   final ItemCategory category;
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'display_name': displayName,
+        if (description.isNotEmpty) 'description': description,
+        if (category != ItemCategory.misc) 'category': category.name,
+      };
+
   factory ItemDefinition.fromJson(Map<String, dynamic> json) {
     return ItemDefinition(
       id: json['id'] as String,

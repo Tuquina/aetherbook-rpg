@@ -11,6 +11,12 @@ class TechniqueUpgrade {
   final int costQi;
   final String effect;
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        if (costQi != 0) 'cost_qi': costQi,
+        if (effect.isNotEmpty) 'effect': effect,
+      };
+
   factory TechniqueUpgrade.fromJson(Map<String, dynamic> json) {
     return TechniqueUpgrade(
       id: json['id'] as String,
@@ -60,6 +66,19 @@ class Technique {
   final String restriction;
 
   final TechniqueUpgrade? upgrade;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'display_name': displayName,
+        if (costQi != 0) 'cost_qi': costQi,
+        if (costLedgerDebt != 0) 'cost_ledger_debt': costLedgerDebt,
+        if (primaryAttribute != null) 'primary_attribute': primaryAttribute,
+        if (effect.isNotEmpty) 'effect': effect,
+        if (mechanicalBonus.isNotEmpty) 'mechanical_bonus': mechanicalBonus,
+        if (effectOptions.isNotEmpty) 'effect_options': effectOptions,
+        if (restriction.isNotEmpty) 'restriction': restriction,
+        if (upgrade != null) 'upgrade': upgrade!.toJson(),
+      };
 
   factory Technique.fromJson(Map<String, dynamic> json) {
     return Technique(

@@ -29,6 +29,16 @@ class Npc {
   /// `targetId`.
   final List<String> aliases;
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'display_name': displayName,
+        if (age != null) 'age': age,
+        if (role.isNotEmpty) 'role': role,
+        if (description.isNotEmpty) 'description': description,
+        if (voiceNotes.isNotEmpty) 'voice_notes': voiceNotes,
+        if (aliases.isNotEmpty) 'aliases': aliases,
+      };
+
   factory Npc.fromJson(Map<String, dynamic> json) {
     return Npc(
       id: json['id'] as String,

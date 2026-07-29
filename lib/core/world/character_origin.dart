@@ -41,6 +41,16 @@ class CharacterOrigin {
   /// Empty falls back to `World.seedChoices`.
   final List<String> seedChoices;
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'display_name': displayName,
+        if (baseAttributes.isNotEmpty) 'base_attributes': baseAttributes,
+        'tag_id': tagId,
+        if (narrativeConnection.isNotEmpty) 'narrative_connection': narrativeConnection,
+        if (seedNarration != null) 'seed_narration': seedNarration,
+        if (seedChoices.isNotEmpty) 'seed_choices': seedChoices,
+      };
+
   factory CharacterOrigin.fromJson(Map<String, dynamic> json) {
     return CharacterOrigin(
       id: json['id'] as String,

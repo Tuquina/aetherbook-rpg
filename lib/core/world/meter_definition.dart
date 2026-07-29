@@ -52,6 +52,13 @@ class MeterDefinition {
     return clamp(character.meter(key));
   }
 
+  Map<String, dynamic> toJson() => {
+        if (min != null) 'min': min,
+        if (max != null) 'max': max,
+        'initial': initial,
+        if (derivedFromFlags != null) 'derived_from_flags': derivedFromFlags,
+      };
+
   factory MeterDefinition.fromJson(Map<String, dynamic> json) {
     return MeterDefinition(
       min: (json['min'] as num?)?.toInt(),

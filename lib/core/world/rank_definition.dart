@@ -24,6 +24,14 @@ class RankDefinition {
   /// improve one…) — a content/UI concern, not mechanically enforced here.
   final String reward;
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'level': level,
+        'exp_required': expRequired,
+        if (milestoneFlag != null) 'milestone_flag': milestoneFlag,
+        if (reward.isNotEmpty) 'reward': reward,
+      };
+
   factory RankDefinition.fromJson(Map<String, dynamic> json) {
     return RankDefinition(
       id: json['id'] as String,

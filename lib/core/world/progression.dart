@@ -25,6 +25,12 @@ class Progression {
       ? unitLabel
       : '${unitLabel[0].toUpperCase()}${unitLabel.substring(1)}';
 
+  Map<String, dynamic> toJson() => {
+        'enabled': enabled,
+        'unit_label': unitLabel,
+        'base_exp_per_level': baseExpPerLevel,
+      };
+
   factory Progression.fromJson(Map<String, dynamic>? json) {
     if (json == null) return const Progression();
     return Progression(

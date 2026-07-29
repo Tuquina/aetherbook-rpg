@@ -389,6 +389,97 @@ class World {
     return definition.resolve(character, key);
   }
 
+  /// Mirrors [World.fromJson] key-for-key. Includes `'graph'` for a generic,
+  /// correct round trip — callers that store the graph in a separate column
+  /// (e.g. `campaign_drafts.graph`) must strip that key themselves rather
+  /// than relying on this method to omit it.
+  Map<String, dynamic> toJson() => {
+        'slug': slug,
+        'name': name,
+        'theme': theme,
+        'tone': tone,
+        'system_prompt': systemPrompt,
+        'image_style_suffix': imageStyleSuffix,
+        'resolution': {
+          'default_difficulty': defaultDifficulty,
+          'critical_margin': criticalMargin,
+          'primary_attribute': primaryAttribute,
+          if (attributeKeywords.isNotEmpty)
+            'attribute_keywords': attributeKeywords,
+          if (intentKeywords.isNotEmpty) 'intent_keywords': intentKeywords,
+          if (riskKeywords.isNotEmpty) 'risk_keywords': riskKeywords,
+          if (selfGrantPatterns.isNotEmpty)
+            'self_grant_patterns': selfGrantPatterns,
+        },
+        'progression': progression.toJson(),
+        if (resourceFormulas.isNotEmpty)
+          'resources': resourceFormulas.map(
+            (key, formula) => MapEntry(key, formula.toJson()),
+          ),
+        if (meterDefinitions.isNotEmpty)
+          'meters': meterDefinitions.map(
+            (key, definition) => MapEntry(key, definition.toJson()),
+          ),
+        if (attributeKeys.isNotEmpty) 'attributes': attributeKeys,
+        if (origins.isNotEmpty)
+          'origins': [for (final o in origins) o.toJson()],
+        if (vows.isNotEmpty) 'vows': [for (final v in vows) v.toJson()],
+        if (tones.isNotEmpty) 'tones': [for (final t in tones) t.toJson()],
+        if (ranks.isNotEmpty) 'ranks': [for (final r in ranks) r.toJson()],
+        if (opponents.isNotEmpty)
+          'opponents': [for (final o in opponents) o.toJson()],
+        if (npcs.isNotEmpty) 'npcs': [for (final n in npcs) n.toJson()],
+        if (techniques.isNotEmpty)
+          'techniques': [for (final t in techniques) t.toJson()],
+        if (items.isNotEmpty) 'items': [for (final i in items) i.toJson()],
+        if (places.isNotEmpty) 'places': [for (final p in places) p.toJson()],
+        if (terms.isNotEmpty) 'terms': [for (final t in terms) t.toJson()],
+        if (characterTags.isNotEmpty)
+          'character_tags': [for (final c in characterTags) c.toJson()],
+        if (storyGraph != null) 'graph': storyGraph!.toJson(),
+        'starting_character': _characterToJson(startingCharacter),
+        'seed': {
+          'narration': seedNarration,
+          if (seedChoices.isNotEmpty) 'choices': seedChoices,
+          if (personalItemSeedHook != null)
+            'personal_item_hook': personalItemSeedHook,
+        },
+        'ai_runtime_required': aiRuntimeRequired,
+        'free_text_actions': allowFreeText,
+        if (catalogDescription != null)
+          'catalog_description': catalogDescription,
+        if (estimatedDurationMinutes != null)
+          'estimated_duration_minutes': estimatedDurationMinutes,
+        if (contentWarning != null) 'content_warning': contentWarning,
+        'relationship_magnitude_cap': relationshipMagnitudeCap,
+        'relationship_min': relationshipMin,
+        'relationship_max': relationshipMax,
+        'chargen_free_attribute_point': hasFreeAttributePoint,
+        'chargen_vow_label': chargenVowLabel,
+        'chargen_customizable_name': hasCustomizableName,
+        if (themeAccentHex != null) 'theme_accent': themeAccentHex,
+        if (themeBaseHex != null) 'theme_base': themeBaseHex,
+        if (themeSecondaryHex != null) 'theme_secondary': themeSecondaryHex,
+        if (themeTitleFontFamily != null)
+          'theme_title_font': themeTitleFontFamily,
+        if (themeTitleFontWeight != null)
+          'theme_title_weight': themeTitleFontWeight,
+        if (themeTitleLetterSpacing != null)
+          'theme_title_tracking': themeTitleLetterSpacing,
+        if (themeTitleUppercase) 'theme_title_uppercase': themeTitleUppercase,
+        if (themeTitleColorHex != null)
+          'theme_title_color': themeTitleColorHex,
+        if (themeTexture != null) 'theme_texture': themeTexture,
+      };
+
+  static Map<String, dynamic> _characterToJson(Character character) => {
+        'name': character.name,
+        'level': character.level,
+        'exp': character.exp,
+        if (character.attributes.isNotEmpty) 'attributes': character.attributes,
+        if (character.resources.isNotEmpty) 'resources': character.resources,
+      };
+
   factory World.fromJson(Map<String, dynamic> json) {
     final resolution =
         (json['resolution'] as Map?)?.cast<String, dynamic>() ?? const {};

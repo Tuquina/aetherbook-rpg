@@ -15,6 +15,12 @@ class CodexPlace {
   final String displayName;
   final String description;
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'display_name': displayName,
+        if (description.isNotEmpty) 'description': description,
+      };
+
   factory CodexPlace.fromJson(Map<String, dynamic> json) {
     return CodexPlace(
       id: json['id'] as String,

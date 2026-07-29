@@ -13,6 +13,8 @@ class CharacterTagRule {
 
   final String label;
 
+  Map<String, dynamic> toJson() => {'flag': flagKey, 'label': label};
+
   factory CharacterTagRule.fromJson(Map<String, dynamic> json) {
     return CharacterTagRule(
       flagKey: json['flag'] as String,

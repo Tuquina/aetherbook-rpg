@@ -14,4 +14,6 @@ class Vow {
       text: json['text'] as String,
     );
   }
+
+  Map<String, dynamic> toJson() => {'id': id, 'text': text};
 }

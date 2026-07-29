@@ -37,6 +37,12 @@ class ResourceFormula {
     return const ResourceFormula();
   }
 
+  /// The inverse of [ResourceFormula.fromJson] — a bare number when there's
+  /// no per-attribute component (the common case, and what a flat-resource
+  /// world already writes by hand), the structured map otherwise.
+  Object toJson() =>
+      perAttribute.isEmpty ? base : {'base': base, 'per_attribute': perAttribute};
+
   static Map<String, int> _perAttributeFromJson(Object? value) {
     if (value is Map) {
       return value.map(

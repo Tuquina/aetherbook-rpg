@@ -30,6 +30,13 @@ class ToneOption {
   /// choosing a bare adjective blind.
   final String previewText;
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'label': label,
+        if (blurb.isNotEmpty) 'blurb': blurb,
+        if (previewText.isNotEmpty) 'preview': previewText,
+      };
+
   factory ToneOption.fromJson(Map<String, dynamic> json) {
     return ToneOption(
       id: json['id'] as String,

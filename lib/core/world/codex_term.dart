@@ -14,6 +14,12 @@ class CodexTerm {
   final String displayName;
   final String description;
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'display_name': displayName,
+        if (description.isNotEmpty) 'description': description,
+      };
+
   factory CodexTerm.fromJson(Map<String, dynamic> json) {
     return CodexTerm(
       id: json['id'] as String,
