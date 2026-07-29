@@ -77,6 +77,13 @@ class _CoverForm extends StatefulWidget {
 class _CoverFormState extends State<_CoverForm> {
   late final _titleController = TextEditingController(text: widget.initial.title);
   late final _synopsisController = TextEditingController(text: widget.initial.synopsis);
+
+  /// `true` for an admin-authored official campaign that declares its own
+  /// [World] instead of borrowing one via `baseWorldSlug` — this screen
+  /// never offers to switch it to a bundled base world, and never touches
+  /// `baseWorldSlug` on save (would silently clear `customWorld`, see
+  /// [CampaignDraft.copyWith]'s mutual-exclusion rule).
+  late final bool _isCustomWorld = widget.initial.customWorld != null;
   late String _baseWorldSlug =
       widget.initial.baseWorldSlug ?? widget.baseWorlds.first.slug;
   late int _durationMinutes = _closestPreset(widget.initial.estimatedDurationMinutes);
@@ -100,6 +107,7 @@ class _CoverFormState extends State<_CoverForm> {
   }
 
   World get _selectedWorld =>
+      widget.initial.customWorld ??
       widget.baseWorlds.firstWhere((w) => w.slug == _baseWorldSlug, orElse: () => widget.baseWorlds.first);
 
   bool get _offlinePlayable => !_aiRuntimeRequired;
@@ -138,7 +146,7 @@ class _CoverFormState extends State<_CoverForm> {
   CampaignDraft get _result => widget.initial.copyWith(
         title: _titleController.text.trim(),
         synopsis: _synopsisController.text.trim(),
-        baseWorldSlug: _baseWorldSlug,
+        baseWorldSlug: _isCustomWorld ? null : _baseWorldSlug,
         estimatedDurationMinutes: _durationMinutes,
         coverImageUrl: _coverImageUrl,
         clearCoverImageUrl: _coverImageUrl == null,
@@ -170,6 +178,8 @@ class _CoverFormState extends State<_CoverForm> {
           final formColumn = _FormColumn(
             titleController: _titleController,
             synopsisController: _synopsisController,
+            isCustomWorld: _isCustomWorld,
+            customWorldName: widget.initial.customWorld?.name,
             baseWorldSlug: _baseWorldSlug,
             baseWorlds: widget.baseWorlds,
             onBaseWorldChanged: (v) => setState(() => _baseWorldSlug = v),
@@ -240,6 +250,8 @@ class _FormColumn extends StatelessWidget {
   const _FormColumn({
     required this.titleController,
     required this.synopsisController,
+    required this.isCustomWorld,
+    required this.customWorldName,
     required this.baseWorldSlug,
     required this.baseWorlds,
     required this.onBaseWorldChanged,
@@ -258,6 +270,12 @@ class _FormColumn extends StatelessWidget {
 
   final TextEditingController titleController;
   final TextEditingController synopsisController;
+
+  /// `true` for an admin-authored official campaign that declares its own
+  /// [World] (Admin Stage 3) — shows [customWorldName] as a static label
+  /// instead of [baseWorlds]' dropdown, which has no entry for it.
+  final bool isCustomWorld;
+  final String? customWorldName;
   final String baseWorldSlug;
   final List<World> baseWorlds;
   final ValueChanged<String> onBaseWorldChanged;
@@ -306,43 +324,70 @@ class _FormColumn extends StatelessWidget {
                 children: [
                   Text('En qué mundo pasa', style: EditorType.overline),
                   const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: AetherSpace.sm + 2),
-                    decoration: BoxDecoration(
-                      color: AetherColors.surface,
-                      borderRadius: AetherRadius.allMd,
-                      border: Border.all(color: worldAccent.withValues(alpha: 0.35)),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: baseWorldSlug,
-                        isExpanded: true,
-                        dropdownColor: AetherColors.surface,
-                        items: [
-                          for (final world in baseWorlds)
-                            DropdownMenuItem(
-                              value: world.slug,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                        color: WorldTheme.forWorld(world).accent, shape: BoxShape.circle),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(world.name, style: AetherType.body.copyWith(fontSize: 13)),
-                                ],
-                              ),
-                            ),
+                  if (isCustomWorld)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AetherSpace.sm + 2, vertical: AetherSpace.sm + 3),
+                      decoration: BoxDecoration(
+                        color: AetherColors.surface,
+                        borderRadius: AetherRadius.allMd,
+                        border: Border.all(color: worldAccent.withValues(alpha: 0.35)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(color: worldAccent, shape: BoxShape.circle),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(customWorldName ?? 'Mundo personalizado',
+                              style: AetherType.body.copyWith(fontSize: 13)),
                         ],
-                        onChanged: (v) => v == null ? null : onBaseWorldChanged(v),
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: AetherSpace.sm + 2),
+                      decoration: BoxDecoration(
+                        color: AetherColors.surface,
+                        borderRadius: AetherRadius.allMd,
+                        border: Border.all(color: worldAccent.withValues(alpha: 0.35)),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: baseWorldSlug,
+                          isExpanded: true,
+                          dropdownColor: AetherColors.surface,
+                          items: [
+                            for (final world in baseWorlds)
+                              DropdownMenuItem(
+                                value: world.slug,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                          color: WorldTheme.forWorld(world).accent, shape: BoxShape.circle),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(world.name, style: AetherType.body.copyWith(fontSize: 13)),
+                                  ],
+                                ),
+                              ),
+                          ],
+                          onChanged: (v) => v == null ? null : onBaseWorldChanged(v),
+                        ),
                       ),
                     ),
-                  ),
                   const SizedBox(height: 6),
-                  Text('Define los atributos, los colores y el tono del narrador.',
+                  Text(
+                      isCustomWorld
+                          ? 'Este mundo fue creado con el constructor de mundo.'
+                          : 'Define los atributos, los colores y el tono del narrador.',
                       style: EditorType.hint),
                 ],
               ),

@@ -93,10 +93,11 @@ class _CampaignMapScreenState extends State<CampaignMapScreen> {
     final draft = results[0] as CampaignDraft?;
     final baseWorlds = results[1] as List<World>;
     if (draft == null || !mounted) return;
-    final world = baseWorlds.firstWhere(
-      (w) => w.slug == draft.baseWorldSlug,
-      orElse: () => baseWorlds.first,
-    );
+    final world = draft.customWorld ??
+        baseWorlds.firstWhere(
+          (w) => w.slug == draft.baseWorldSlug,
+          orElse: () => baseWorlds.first,
+        );
     if (!mounted) return;
     setState(() {
       _draft = draft;
@@ -119,10 +120,11 @@ class _CampaignMapScreenState extends State<CampaignMapScreen> {
       nodeCount: draft.graph.nodes.length,
     );
     if (updated == null) return;
-    final newWorld = baseWorlds.firstWhere(
-      (w) => w.slug == updated.baseWorldSlug,
-      orElse: () => baseWorlds.first,
-    );
+    final newWorld = updated.customWorld ??
+        baseWorlds.firstWhere(
+          (w) => w.slug == updated.baseWorldSlug,
+          orElse: () => baseWorlds.first,
+        );
     setState(() => _baseWorld = newWorld);
     await _save(updated);
   }
