@@ -2,11 +2,42 @@
 
 > RPG de narrativa interactiva impulsado por IA — la historia se escribe en tiempo real según tus decisiones.
 
-Aetherbook es un "elige tu propia aventura" evolucionado: un *Game Master* de IA narra sobre un estado de juego que el motor controla de forma **determinista**. La IA nunca decide mecánicas ni inventa stats — solo narra sobre resultados que el código ya resolvió.
+Aetherbook es un "elige tu propia aventura" evolucionado: un *Game Master* de IA narra sobre un estado de juego que el motor controla de forma **determinista**. La IA nunca decide mecánicas, calcula daño ni inventa ítems — solo narra sobre resultados que el código ya resolvió. Eso elimina el problema clásico de los "juegos con IA": que el modelo se olvide de algo, rompa una regla o contradiga lo que ya pasó.
 
 📄 El diseño completo está en [`GDD-RPG-Narrativo-IA.md`](GDD-RPG-Narrativo-IA.md). Las reglas operativas para desarrollar con Claude Code están en [`CLAUDE.md`](CLAUDE.md). Toda la narración (prompts y contenido escrito a mano) sigue [`NARRATIVE_VOICE.md`](NARRATIVE_VOICE.md): español neutro con tuteo, nunca voseo rioplatense.
 
-🎮 **Jugalo ya, sin instalar nada:** [aetherbook-rpg.vercel.app](https://aetherbook-rpg.vercel.app) — deployado en Vercel (tier gratuito), redeploya solo con cada push a `master` (`vercel.json`).
+🎮 **Jugalo ya, sin instalar nada:** [aetherbook-rpg.vercel.app](https://aetherbook-rpg.vercel.app)
+
+---
+
+## Qué propone
+
+La mayoría de los "juegos con IA" son un chat sin memoria ni reglas propias. Aetherbook separa el problema en dos capas que nunca se mezclan:
+
+- **Estado del juego** (determinista, en Postgres): stats, inventario, flags de trama, relaciones, ubicación en la historia. Vive en el servidor, se valida en código, y es la única fuente de verdad.
+- **Narración** (IA): recibe el estado y el resultado mecánico ya calculado, y solo lo viste con prosa. Nunca tira dados, nunca decide si algo tuvo éxito, nunca inventa una consecuencia mecánica por su cuenta.
+
+Sobre esa base, tres formas distintas de jugar conviven en el mismo motor:
+
+1. **Aventura libre** — elegís un género, armás tu personaje y la IA narra la historia turno a turno, sin guion previo.
+2. **Historia completa** — una campaña escrita a mano de punta a punta, sin IA en absoluto: cada escena, cada tirada y cada final está preescrito. Se juega sin conexión una vez cargada.
+3. **Historia híbrida** — un esqueleto de hitos fijos (escritos a mano, con final garantizado) relleno turno a turno por un narrador de IA real. La coherencia de una historia curada, con la libertad de una generada.
+
+## Qué incluye hoy
+
+**Cinco mundos para jugar libremente** — Isekai, Xianxia, Superhéroes, Cyberpunk y Post-apocalíptico, cada uno con su propio chargen (orígenes, juramento, vocabulario de atributos propio: nunca el mismo formulario repetido entre géneros). Podés tener varias historias abiertas a la vez por género — cada una es tuya, se listan y retoman desde "Tus historias".
+
+**Historias completas y campañas híbridas ya escritas** — dos historias completas 100% curadas y sin IA ("El último tren no espera a los vivos", thriller post-apocalíptico zombi; "Treinta y seis horas antes del apagón violeta", thriller criminal cyberpunk) y una campaña híbrida real narrada por el modelo ("Los nombres que devora el cielo", xianxia), con chargen propio, conflictos extendidos, combate por guardia y múltiples finales que desembocan en un epílogo que reacciona a lo que hiciste.
+
+**Memoria de tres niveles** — los últimos turnos viajan literales en el prompt, un diario resumido se regenera cada pocos turnos, y todo lo que no puede perderse vive en tablas de Postgres. El modelo nunca ve el historial completo de la partida.
+
+**Generación de imágenes por escena** — cada turno narrado por IA dispara, en paralelo, la generación de una ilustración de la escena (cacheada por hash del prompt, así el mismo prompt nunca vuelve a pedirle nada al proveedor). Nunca bloquea ni rompe la narración si falla.
+
+**Cuentas sin fricción** — arrancás como usuario anónimo, sin crear cuenta, y podés vincular un email después para llevar el progreso entre dispositivos sin perder nada de lo ya jugado.
+
+**Escribí tu propia historia** — desde "Escribir", cualquier cuenta puede armar su propia campaña híbrida dentro de la app: un editor de mapa de nodos (escenas fijas, tramos libres, hubs de actividades, finales con su propia dificultad), una checklist de prepublicación que detecta referencias colgantes o nodos inalcanzables, un modo de prueba con dado forzable para recorrer cualquier rama sin depender del azar, y un flujo de publicación con aviso de derechos. Una vez publicada, aparece en **Explorar** para que cualquiera la juegue — como una novela de comunidad.
+
+**Panel de administración** — un grupo reducido de cuentas puede además construir historias oficiales completas o híbridas con un sistema de atributos, recursos y tema visual propio desde cero (sin partir de un mundo existente), y revisar o editar cualquier campaña oficial ya publicada, la haya escrito quien la haya escrito. Una campaña oficial publicada aparece en el catálogo real ("Historias completas"/"Historias pre-armadas"), no solo en Explorar.
 
 ---
 
@@ -38,11 +69,7 @@ Por qué uno distinto: `run-web.ps1`/`.sh` corren `flutter run -d web-server`, q
 
 Buscá la IP de tu PC en la red local (`ipconfig` → IPv4, algo como `192.168.1.40`) y entrá desde el navegador del teléfono a `http://<esa-ip>:8080`. En iPhone, Safari → *Compartir → Agregar a inicio* para que se sienta como una app. Si aun así ves pantalla en blanco, revisá que el celular esté en la misma red WiFi que la PC (no una red de invitados con "aislamiento de clientes") y que el Firewall de Windows no esté bloqueando la conexión entrante al puerto 8080 de Docker.
 
-Al abrir la app vas a ver un **menú para elegir historia**, agrupado en tres módulos — *historias completas* (sin IA), *historias pre-armadas* (híbridas, con narrador de IA) y **"Creá tu propia historia"** (freeform, ya desbloqueado). Hoy hay dos historias completas y una pre-armada: **"El último tren no espera a los vivos"** y **"Treinta y seis horas antes del apagón violeta"** (las dos, historias completas curadas, **sin IA**: 100% preescritas, cero llamadas de red durante la partida, jugables sin conexión una vez cargadas) y "Los nombres que devora el cielo" (campaña híbrida, con creación de personaje, narrada por el modelo real). Dentro de una partida, la flecha arriba a la izquierda vuelve al menú sin perder el progreso (la misma sesión sigue en memoria y persistida en Supabase; volver a entrar a la misma historia la retoma donde quedó). El ícono de reiniciar en cada tarjeta abandona esa sesión y empieza una limpia.
-
-**"Creá tu propia historia"** (Fase 2) es distinto a los otros dos módulos: no son historias con nombre propio, son **5 géneros** para elegir — Isekai, Xianxia, Superhéroes, Cyberpunk y Post-apocalíptico (`assets/worlds/{isekai,xianxia,superheroes,cyberpunk,postapoc}.json`). Elegís un género, armás tu personaje con el chargen propio de ese mundo (orígenes y juramento con su propio vocabulario de atributos por género — nunca el mismo formulario repetido), y desde ahí la IA narra en tiempo real, sin guion previo. A diferencia de los otros módulos, acá **podés tener varias historias guardadas a la vez** — el género es el template compartido, cada historia creada es tuya — y se ven/retoman desde la sección "Tus historias" dentro del mismo módulo, con opción de abandonar la que ya no quieras seguir.
-
-El cliente usa el narrador real ([lib/main.dart](lib/main.dart)): `HttpNarratorAdapter` llama a la Edge Function desplegada (Gemini → Groq de fallback), y `HttpMemoryDigestAdapter` hace lo mismo para el diario resumido. Jugar "Los nombres que devora el cielo" gasta cuota real de esos proveedores (gratuita, pero real). Las dos historias completas ("El último tren..." y "Treinta y seis horas antes del apagón violeta") no — su motor nunca invoca al narrador (`ai_runtime_required: false`), así que siguen siendo 100% gratis y funcionan sin conexión. Los tests nunca gastan cuota: corren contra `FakeNarratorAdapter`/`FakeMemoryDigestAdapter` (JSON fijo, sin red), nunca contra el narrador real.
+El cliente usa el narrador real ([lib/main.dart](lib/main.dart)): `HttpNarratorAdapter` llama a la Edge Function desplegada (Gemini → Groq de fallback), y `HttpMemoryDigestAdapter` hace lo mismo para el diario resumido. Jugar una historia híbrida o freeform gasta cuota real de esos proveedores (gratuita, pero real). Las historias completas no — su motor nunca invoca al narrador (`ai_runtime_required: false`), así que siguen siendo 100% gratis y funcionan sin conexión. Los tests nunca gastan cuota: corren contra `FakeNarratorAdapter`/`FakeMemoryDigestAdapter` (JSON fijo, sin red), nunca contra el narrador real.
 
 ### Cuentas: de anónimo a permanente
 
@@ -59,8 +86,10 @@ Configurado en [Authentication → URL Configuration](https://supabase.com/dashb
 .\tool\flutter.ps1 test
 .\tool\flutter.ps1 analyze
 
-# Edge Function del narrador (Deno/TypeScript)
+# Edge Functions (Deno/TypeScript)
 .\tool\deno.ps1 test --allow-net --allow-env supabase/functions/narrator/
+.\tool\deno.ps1 test --allow-net --allow-env supabase/functions/memory-digest/
+.\tool\deno.ps1 test --allow-net --allow-env supabase/functions/generate-image/
 .\tool\deno.ps1 lint supabase/functions/narrator/
 ```
 
@@ -70,35 +99,6 @@ Ningún test toca red real ni gasta cuota de IA: todo corre contra fakes/mocks (
 
 ---
 
-## Qué lo hace distinto
-
-La mayoría de los "juegos con IA" son un chat sin memoria ni reglas. Acá el motor separa claramente:
-
-- **Estado del juego** (determinista, en Postgres): stats, inventario, flags de trama, relaciones, ubicación.
-- **Narración** (IA): recibe el estado y el resultado mecánico ya calculado, y solo lo narra con estilo.
-
-Eso elimina el problema clásico de que "el modelo se olvida", inventa ítems o rompe las reglas.
-
-## Tres modos, un solo motor
-
-1. **Aventura libre** — la IA genera la historia turno a turno.
-2. **Historia pre-armada** — campañas escritas a mano, con ramas fijas y calidad garantizada.
-3. **Híbrido** *(modo por defecto)* — un esqueleto de hitos pre-escritos + relleno generativo dinámico entre ellos. Coherencia de una historia curada, libertad de una generada.
-
-El modo 2 (historia pre-armada) ya tiene dos instancias reales y completas, ambas 100% curadas: **"El último tren no espera a los vivos"** (`assets/worlds/curated_zombie_01_ultimo_tren.json`), post-apocalíptico zombi — 103 nodos, prólogo + 10 capítulos, 6 finales + 2 cierres de fracaso + epílogo modular, ~14.700 palabras de prosa autorada — y **"Treinta y seis horas antes del apagón violeta"** (`assets/worlds/curated_cyberpunk_02_apagon_violeta.json`), thriller cyberpunk-criminal con protagonista fijo (Dante Rivas) — 63 nodos, misma estructura de prólogo + 10 capítulos + 6 finales + 2 fracasos + epílogo modular. Cero IA en runtime en las dos: cada elección, tirada y consecuencia está preescrita, así que el narrador nunca se invoca y la partida funciona sin conexión.
-
-El modo 3 (híbrido) tiene **"Los nombres que devora el cielo"** (`assets/worlds/xianxia_lianshu.json`), con creación de personaje estructurada, un grafo de 19 nodos (hitos fijos, corredores acotados, hubs de actividades y resoluciones), conflictos extendidos y progresión por rango con hitos. Se narra con el modelo real (Gemini/Groq), no con JSON fijo, y la posición en el grafo se guarda en Supabase, así que sobrevive cerrar la app. Es jugable de punta a punta: el clímax resuelve uno de sus 5 finales + fuga anticipada (chequeo contra la dificultad del final, con fallback de fracaso y técnica final otorgada) y desemboca en un epílogo que reacciona a lo que pasó en la partida.
-
-**Mundos iniciales (5, según el GDD):** Isekai, Xianxia (cultivo), Superhéroes, Cyberpunk, Post-apocalíptico. Isekai y Xianxia son mundos distintos — comparten la premisa de "otro mundo" pero no el género. Los 5 ya tienen contenido (Fase 2, `assets/worlds/{isekai,xianxia,superheroes,cyberpunk,postapoc}.json`): cada uno es un mundo freeform con su propio chargen (orígenes + juramento, vocabulario de atributos propio) jugable desde "Creá tu propia historia" en el menú. `xianxia_lianshu.json` (la campaña híbrida) sigue siendo aparte — mismo género, contenido curado con grafo de nodos en vez de freeform.
-
-## Pilares de diseño
-
-1. **Agencia real** — las decisiones cambian el estado del mundo de forma persistente y verificable.
-2. **Coherencia sobre espectáculo** — el estado manda; nada de prosa brillante que se contradice.
-3. **Costo cero de operación (al inicio)** — jugable con tiers gratuitos de IA.
-4. **Presentación que enamora** — tipografía, ritmo, transiciones y ambientación son parte del gameplay.
-5. **Motor agnóstico al proveedor de IA** — cambiar de Gemini a Groq no debe tocar la lógica del juego.
-
 ## Stack
 
 | Capa | Tecnología | Por qué |
@@ -106,8 +106,8 @@ El modo 3 (híbrido) tiene **"Los nombres que devora el cielo"** (`assets/worlds
 | Cliente | **Flutter** (iOS / Android / web) | Una sola base de código, sensación de app nativa premium, animaciones y theming por mundo de alta calidad. |
 | Backend | **Supabase** (Postgres, Auth, Storage, RLS) | Estado relacional + log de turnos inmutable (event-sourced light), tier gratuito, mínima operación. |
 | Broker de IA | **Supabase Edge Functions** (Deno/TypeScript) | Guarda las API keys fuera del cliente y orquesta el fallback entre proveedores. |
-| Narración | Gemini Flash (principal) → Groq (fallback real) | Structured output nativo, velocidad y cuotas gratuitas complementarias. Cerebras/OpenRouter quedan como fallback futuro, no implementados. |
-| Imágenes | Pollinations.ai, vía Edge Function `generate-image` | Generación async de escenas, cacheada por SHA-256 del prompt en Storage. Cloudflare Workers AI queda como alternativa futura. |
+| Narración | Gemini Flash (principal) → Groq (fallback real) | Structured output nativo, velocidad y cuotas gratuitas complementarias. |
+| Imágenes | Pollinations.ai, vía Edge Function `generate-image` | Generación async de escenas, cacheada por SHA-256 del prompt en Storage. |
 
 ## Arquitectura
 
@@ -118,6 +118,7 @@ core/            Dart puro, sin infra
   engine/        ResolvePlayerAction, EXP, chequeos, costos
   narrative/     grafo de nodos, evaluación de gates
   state/         agregados: character, world, session
+  authoring/     ediciones de grafo, checklist de prepublicación, materialización de mundos oficiales
 
 ports/           interfaces (contratos), lib/ports/
   NarratorPort
@@ -125,6 +126,7 @@ ports/           interfaces (contratos), lib/ports/
   ImageGeneratorPort
   GameStateRepositoryPort
   WorldRepositoryPort
+  CampaignDraftRepositoryPort
   AuthPort
 
 adapters/        lib/adapters/, salvo donde se aclara
@@ -134,24 +136,26 @@ adapters/        lib/adapters/, salvo donde se aclara
   memory/        HttpMemoryDigestAdapter (cliente Dart, real) -> Edge Function memory-digest/
   image/         HttpImageGeneratorAdapter (cliente Dart, real) -> Edge Function
                  generate-image/ (Pollinations.ai, cachea en Storage por hash del prompt)
-  content/       AssetWorldRepository — lee assets/worlds/*.json
-  persistence/   SupabaseGameStateAdapter
+  content/       AssetWorldRepository (assets/worlds/*.json) + CompositeWorldRepository
+                 (cae a una campaña oficial publicada en Supabase si el slug no es un asset)
+  persistence/   SupabaseGameStateAdapter, SupabaseCampaignDraftAdapter
   auth/          SupabaseAuthAdapter
   fakes/         FakeNarratorAdapter, FakeMemoryDigestAdapter, FakeImageGeneratorAdapter,
                  FakeAuthAdapter (tests, sin gastar cuota de IA ni tocar red)
+
+app/editor/      lib/app/editor/ — el editor de campañas en la app: mapa de nodos,
+                 editores por tipo de nodo, checklist, modo de prueba, World Builder
 ```
 
 Regla de dependencias: **hacia adentro** (`adapters` → `ports` → `core`). El cliente Flutter depende de los puertos, nunca de un adaptador concreto.
 
-## Roadmap
+## Pilares de diseño
 
-- **Fase 0 — Prueba de concepto** *(completa)*: un mundo (Xianxia), modo freeform, loop mínimo acción → resolución → narración JSON → render, `FakeNarratorAdapter`. Sin auth, sin imágenes.
-- **Fase 1 — MVP jugable** *(completa)*: ✅ narrador real conectado al cliente (`HttpNarratorAdapter` -> Edge Function -> Gemini con fallback a Groq vía `FallbackNarratorAdapter`), ✅ memoria de tres niveles conectada (`HttpMemoryDigestAdapter` -> Edge Function `memory-digest` vía Groq), ✅ persistencia real en Supabase + Auth anónimo (RLS por sesión), ✅ posición en el grafo persistida (nodo actual, turnos de corredor, progreso de conflicto extendido — sobrevive un refresh), ✅ motor del modo híbrido completo (`core/narrative`: hitos fijos, corredores acotados, hubs de actividades, resoluciones; conflictos extendidos; combate por guard; chargen estructurado; progresión por rango con hitos), ✅ resolución de finales y epílogo (`GameController.availableEndings`/`chooseEnding`: chequeo contra la dificultad del final, fallback de fracaso, técnica final otorgada, epílogo ensamblado por `assembleEpilogueBeats`), ✅ una campaña híbrida real cargada (`xianxia_lianshu.json`, "Los nombres que devora el cielo") jugable de punta a punta, ya narrada por el modelo real, ✅ una historia curada 100% sin IA completa (`curated_zombie_01_ultimo_tren.json`, "El último tren no espera a los vivos"), ✅ menú de historias en 3 módulos con reinicio de partida, ✅ estado terminal explícito ("Fin de la historia") al llegar al epílogo de cualquiera de las dos campañas, ✅ `ClassifyFreeAction` reemplazando al inferidor por keyword en la acción libre, ✅ inventario real (`ItemDefinition` declarativo por mundo, `InventoryScreen` accesible desde el ícono en la barra de estado), ✅ generación de imágenes por turno (`generate-image` vía Pollinations.ai, cacheada por hash del prompt en Storage, nunca bloquea ni rompe la narración si falla), ✅ narrador reescrito en español neutro con tuteo (nunca voseo rioplatense) en todo el contenido y prompts, con [`NARRATIVE_VOICE.md`](NARRATIVE_VOICE.md) como guía de estilo durable.
-- **Fase 2 — Contenido y mundos** *(en progreso)*: ✅ los 5 mundos freeform (Isekai, Xianxia, Superhéroes, Cyberpunk, Post-apocalíptico genérico — distinto de la historia curada zombi de fase 1) con chargen y theming propios, jugables desde "Creá tu propia historia". ✅ una segunda historia completa sin IA (`curated_cyberpunk_02_apagon_violeta.json`, "Treinta y seis horas antes del apagón violeta"). Falta: más campañas pre-armadas/híbridas más allá de "Los nombres que devora el cielo".
-- **Fase 3 — Pulido y profundidad**: consistencia de personaje en imágenes, NPCs con memoria, rebobinar partidas, observabilidad.
-- **Fase 4 — Distribución**: App Store / Play Store + build web, compartir historias generadas.
-
-Detalle completo de cada fase en el [GDD, §11](GDD-RPG-Narrativo-IA.md#11-roadmap-por-fases).
+1. **Agencia real** — las decisiones cambian el estado del mundo de forma persistente y verificable.
+2. **Coherencia sobre espectáculo** — el estado manda; nada de prosa brillante que se contradice.
+3. **Costo cero de operación (al inicio)** — jugable con tiers gratuitos de IA.
+4. **Presentación que enamora** — tipografía, ritmo, transiciones y ambientación son parte del gameplay.
+5. **Motor agnóstico al proveedor de IA** — cambiar de Gemini a Groq no debe tocar la lógica del juego.
 
 ## Reglas de oro del proyecto
 
@@ -164,10 +168,6 @@ Detalle completo de cada fase en el [GDD, §11](GDD-RPG-Narrativo-IA.md#11-roadm
 7. Los tiers gratuitos son una restricción de diseño, no un SLA.
 
 Detalle completo en [`CLAUDE.md`](CLAUDE.md).
-
-## Estado del proyecto
-
-✅ Fase 1 completa — motor híbrido completo con resolución de finales y epílogo, dos historias curadas 100% sin IA jugables de punta a punta ("El último tren no espera a los vivos" y "Treinta y seis horas antes del apagón violeta") y una campaña híbrida real jugable de punta a punta ("Los nombres que devora el cielo"), todas narradas/persistidas con los servicios reales, con acción libre clasificada en motor (`ClassifyFreeAction`), inventario real con pantalla propia, generación de imágenes por turno y narración en español neutro (tuteo) en todo el contenido. En curso Fase 2: ya jugables los 5 géneros freeform ("Creá tu propia historia") y la segunda historia completa; queda más contenido pre-armado/híbrido.
 
 ## Licencia
 
