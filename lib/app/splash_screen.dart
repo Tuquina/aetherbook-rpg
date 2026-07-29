@@ -1,15 +1,15 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../ports/auth_port.dart';
 import 'account_screen.dart';
+import 'design/breakpoints.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'game_controller.dart';
 import 'onboarding_screen.dart';
 import 'widgets/atmosphere.dart';
-import 'widgets/brand_mark.dart';
+import 'widgets/brand_lockup.dart';
+import 'widgets/scrollable_centered.dart';
 import 'world_select_screen.dart';
 
 /// The entry screen: the brand symbol, the wordmark, and the way in. A moment
@@ -38,20 +38,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 4200),
-  )..repeat();
-
+class _SplashScreenState extends State<SplashScreen> {
   bool _checkingOnboarding = false;
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
 
   /// The one entry action: goes straight to [WorldSelectScreen] once there's
   /// a real account (or in the degraded in-memory-only mode, where there's
@@ -119,123 +107,189 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Respect the OS "reduce motion" preference: hold the tome open, still.
-    final reduceMotion = MediaQuery.of(context).disableAnimations;
-    if (reduceMotion && _c.isAnimating) _c.stop();
-
     return Scaffold(
       body: AetherBackground(
         child: SafeArea(
-          // A fixed-height brand block + pitch/CTA block never fits every
-          // viewport this same code runs on (phone/tablet/web, CLAUDE.md §3)
-          // — a short window (landscape phone, a resized desktop browser)
-          // needs this to scroll instead of overflowing. The gap between the
-          // two blocks is *not* a `Spacer`/`Expanded` (those can't live
-          // inside a `SingleChildScrollView`'s unbounded main axis — the
-          // exact bug this replaced: on any phone tall enough that both
-          // blocks' actual content was shorter than the two hand-picked
-          // `viewport.maxHeight` fractions, `Align(topCenter)` still left
-          // the CTA block floating mid-screen with dead space below it,
-          // instead of pinned to the bottom edge as V2 §10a shows it).
-          // `Column(mainAxisAlignment: spaceBetween)` needs no Flexible
-          // child to do this: fed `BoxConstraints(minHeight: viewport,
-          // maxHeight: infinity)` by the `ConstrainedBox`, a `Column` with
-          // no flex children sizes itself to `max(childrenHeight,
-          // minHeight)` and only then distributes *actual* leftover space
-          // between its children — which is exactly "brand block at the
-          // top, CTA block at the bottom, gap absorbs whatever's left" on
-          // any viewport, and still just grows (and scrolls) past
-          // `minHeight` if the content itself is taller. This is why the
-          // 440-wide reading measure now lives on each *block* individually
-          // (`ConstrainedBox(maxWidth: 440)`, centered by the outer
-          // `Column`'s own default `crossAxisAlignment.center`) instead of
-          // wrapping the whole thing in an outer `Center`/`Align` — either
-          // of those shrink-wraps to its child's natural height under an
-          // unbounded incoming `maxHeight`, silently undoing the stretch
-          // this fix depends on.
           child: LayoutBuilder(
-            builder: (context, viewport) => SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: viewport.maxHeight),
-                child: Padding(
-                  padding: const EdgeInsets.all(AetherSpace.xl),
-                  child: _EntranceFade(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Centered within the top *half* of the viewport
-                        // (not flush against the top edge), so its own
-                        // center sits at roughly 1/4 of the screen height —
-                        // an explicit height, not `Expanded`, for the same
-                        // "no flex inside a scrollable's unbounded main
-                        // axis" reason the rest of this layout avoids it.
-                        // The bottom (CTA) block's own flush-to-bottom
-                        // behavior is untouched: with only two children left
-                        // in this `spaceBetween` Column, the single gap
-                        // between them still absorbs 100% of the leftover
-                        // space, so the CTA block's bottom edge still lands
-                        // exactly on the viewport's bottom edge either way.
-                        SizedBox(
-                          height: viewport.maxHeight * 0.5,
-                          child: Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 440),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  AnimatedBuilder(
-                                    animation: _c,
-                                    builder: (context, _) =>
-                                        BrandMark(size: 66, filled: false, glow: _c.value),
-                                  ),
-                                  const SizedBox(height: AetherSpace.xl),
-                                  AnimatedBuilder(
-                                    animation: _c,
-                                    builder: (context, _) => _Wordmark(shimmer: _c.value),
-                                  ),
-                                  const SizedBox(height: AetherSpace.lg),
-                                  const _OrnamentDivider(),
-                                  const SizedBox(height: AetherSpace.lg),
-                                  Text(
-                                    'Un multiverso que se escribe contigo.',
-                                    textAlign: TextAlign.center,
-                                    style: AetherType.body.copyWith(
-                                        color: AetherColors.parchmentDim,
-                                        fontSize: 15,
-                                        fontStyle: FontStyle.italic),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 440),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const _ExplainerLines(),
-                              const SizedBox(height: AetherSpace.xl),
-                              _PrimaryButton(
-                                label: 'Comenzar',
-                                busy: _checkingOnboarding,
-                                onTap: _checkingOnboarding ? null : _begin,
-                              ),
-                              if (widget.auth != null) ...[
-                                const SizedBox(height: AetherSpace.md),
-                                const _SaveProgressCaption(),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
+            builder: (context, viewport) {
+              final desktop = viewport.maxWidth >= AetherBreakpoints.desktop;
+              return _EntranceFade(
+                child: desktop ? _buildDesktop() : _buildCompact(viewport),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Phone and tablet (`< AetherBreakpoints.desktop`) — a single centered
+  /// column, unchanged from before the desktop split layout existed.
+  ///
+  /// A fixed-height brand block + pitch/CTA block never fits every viewport
+  /// this same code runs on (phone/tablet, CLAUDE.md §3) — a short window
+  /// (landscape phone) needs this to scroll instead of overflowing. The gap
+  /// between the two blocks is *not* a `Spacer`/`Expanded` (those can't live
+  /// inside a `SingleChildScrollView`'s unbounded main axis — the exact bug
+  /// this replaced: on any phone tall enough that both blocks' actual
+  /// content was shorter than the two hand-picked `viewport.maxHeight`
+  /// fractions, `Align(topCenter)` still left the CTA block floating
+  /// mid-screen with dead space below it, instead of pinned to the bottom
+  /// edge as V2 §10a shows it). `Column(mainAxisAlignment: spaceBetween)`
+  /// needs no Flexible child to do this: fed `BoxConstraints(minHeight:
+  /// viewport, maxHeight: infinity)` by the `ConstrainedBox`, a `Column`
+  /// with no flex children sizes itself to `max(childrenHeight, minHeight)`
+  /// and only then distributes *actual* leftover space between its children
+  /// — which is exactly "brand block at the top, CTA block at the bottom,
+  /// gap absorbs whatever's left" on any viewport, and still just grows
+  /// (and scrolls) past `minHeight` if the content itself is taller. This is
+  /// why the 440-wide reading measure lives on each *block* individually
+  /// (`ConstrainedBox(maxWidth: 440)`, centered by the outer `Column`'s own
+  /// default `crossAxisAlignment.center`) instead of wrapping the whole
+  /// thing in an outer `Center`/`Align` — either of those shrink-wraps to
+  /// its child's natural height under an unbounded incoming `maxHeight`,
+  /// silently undoing the stretch this fix depends on.
+  Widget _buildCompact(BoxConstraints viewport) {
+    return SingleChildScrollView(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: viewport.maxHeight),
+        child: Padding(
+          padding: const EdgeInsets.all(AetherSpace.xl),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Centered within the top *half* of the viewport (not flush
+              // against the top edge), so its own center sits at roughly
+              // 1/4 of the screen height — an explicit height, not
+              // `Expanded`, for the same "no flex inside a scrollable's
+              // unbounded main axis" reason the rest of this layout avoids
+              // it. The bottom (CTA) block's own flush-to-bottom behavior
+              // is untouched: with only two children left in this
+              // `spaceBetween` Column, the single gap between them still
+              // absorbs 100% of the leftover space, so the CTA block's
+              // bottom edge still lands exactly on the viewport's bottom
+              // edge either way.
+              SizedBox(
+                height: viewport.maxHeight * 0.5,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    child: const BrandLockup(
+                      tagline: 'Un multiverso que se escribe contigo.',
                     ),
                   ),
                 ),
               ),
-            ),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const _ExplainerLines(),
+                    const SizedBox(height: AetherSpace.xl),
+                    _PrimaryButton(
+                      label: 'Comenzar',
+                      busy: _checkingOnboarding,
+                      onTap: _checkingOnboarding ? null : _begin,
+                    ),
+                    if (widget.auth != null) ...[
+                      const SizedBox(height: AetherSpace.md),
+                      const _SaveProgressCaption(),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// Desktop (`>= AetherBreakpoints.desktop`) — the mobile-shaped single
+  /// column used to just float, centered, in a sea of empty space on a wide
+  /// browser window (nothing here ever adapted past a 440px reading
+  /// measure). A two-panel split instead: a hero-scale [BrandLockup] fills
+  /// the wide side, and the actual entry action lives in a bordered card on
+  /// a fixed-width side — the same "surface + hairlineStrong border" card
+  /// language every other card in the app already uses (`StoryCard`, the
+  /// module cards), not a new one-off treatment.
+  Widget _buildDesktop() {
+    return Padding(
+      padding: const EdgeInsets.all(AetherSpace.huge),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: const BrandLockup(
+                  markSize: 108,
+                  wordmarkFontSize: 62,
+                  tagline: 'Un multiverso que se escribe contigo.',
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: AetherSpace.huge),
+          SizedBox(
+            width: 440,
+            child: ScrollableCentered(
+              child: _DesktopEntranceCard(
+                checkingOnboarding: _checkingOnboarding,
+                onBegin: _begin,
+                showSaveCaption: widget.auth != null,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The desktop split layout's right-hand panel: same explainer lines,
+/// "Comenzar" button and save-progress caption as the compact layout's
+/// bottom block, just inside a bordered card instead of loose on the page.
+class _DesktopEntranceCard extends StatelessWidget {
+  const _DesktopEntranceCard({
+    required this.checkingOnboarding,
+    required this.onBegin,
+    required this.showSaveCaption,
+  });
+
+  final bool checkingOnboarding;
+  final VoidCallback onBegin;
+  final bool showSaveCaption;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AetherSpace.xxl),
+      decoration: BoxDecoration(
+        color: AetherColors.surface,
+        borderRadius: AetherRadius.allLg,
+        border: Border.all(color: AetherColors.hairlineStrong),
+        boxShadow: AetherShadow.panel,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _ExplainerLines(),
+          const SizedBox(height: AetherSpace.xl),
+          _PrimaryButton(
+            label: 'Comenzar',
+            busy: checkingOnboarding,
+            onTap: checkingOnboarding ? null : onBegin,
+          ),
+          if (showSaveCaption) ...[
+            const SizedBox(height: AetherSpace.md),
+            const _SaveProgressCaption(),
+          ],
+        ],
       ),
     );
   }
@@ -260,109 +314,6 @@ void _goToWorldSelectFrom(BuildContext context, GameController controller,
           FadeTransition(opacity: anim, child: child),
     ),
   );
-}
-
-// ── Wordmark ──────────────────────────────────────────────────────────────
-
-/// The title treatment: a heavy serif slab with a soft ember glow sitting
-/// behind it and a slow gold shimmer sweeping across the letterforms — the
-/// single most ceremonial element on screen, so it earns its own painter
-/// instead of a plain styled [Text].
-class _Wordmark extends StatelessWidget {
-  const _Wordmark({required this.shimmer});
-
-  /// 0..1 loop position, reused from the tome's animation so the whole
-  /// screen breathes on one clock instead of several out-of-sync timers.
-  final double shimmer;
-
-  static const _text = 'Aetherbook';
-  static const _style = TextStyle(
-    fontFamily: 'Marcellus',
-    fontSize: 40,
-    fontWeight: FontWeight.w400,
-    letterSpacing: 1.2,
-    color: Colors.white,
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    // The shimmer highlight travels left-to-right and loops; a wide,
-    // soft-edged band rather than a hard line so it reads as a gleam, not a
-    // scan.
-    final sweep = (shimmer * 2.6) - 0.8;
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // Ember glow, blurred well past the glyph edges.
-        Text(
-          _text,
-          style: _style.copyWith(
-            color: AetherColors.gold.withValues(alpha: 0.55),
-            shadows: [
-              Shadow(
-                  color: AetherColors.gold.withValues(alpha: 0.6),
-                  blurRadius: 28),
-            ],
-          ),
-        ),
-        ShaderMask(
-          shaderCallback: (rect) => LinearGradient(
-            colors: const [
-              AetherColors.goldSoft,
-              AetherColors.goldBright,
-              Colors.white,
-              AetherColors.goldBright,
-              AetherColors.goldSoft,
-            ],
-            stops: [
-              (sweep - 0.35).clamp(0.0, 1.0),
-              (sweep - 0.12).clamp(0.0, 1.0),
-              sweep.clamp(0.0, 1.0),
-              (sweep + 0.12).clamp(0.0, 1.0),
-              (sweep + 0.35).clamp(0.0, 1.0),
-            ],
-          ).createShader(rect),
-          child: Text(_text, style: _style),
-        ),
-      ],
-    );
-  }
-}
-
-/// A small heraldic rule under the wordmark — two hairlines flanking a
-/// diamond — the kind of flourish that signals "this is a tome", not a form.
-class _OrnamentDivider extends StatelessWidget {
-  const _OrnamentDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    Widget line() => Container(
-          width: 42,
-          height: 1,
-          color: AetherColors.hairlineStrong,
-        );
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        line(),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AetherSpace.sm),
-          child: Transform.rotate(
-            angle: math.pi / 4,
-            child: Container(
-              width: 7,
-              height: 7,
-              decoration: BoxDecoration(
-                color: AetherColors.gold,
-                boxShadow: AetherShadow.glow(AetherColors.gold, strength: 0.6),
-              ),
-            ),
-          ),
-        ),
-        line(),
-      ],
-    );
-  }
 }
 
 // ── Explainer lines ─────────────────────────────────────────────────────────

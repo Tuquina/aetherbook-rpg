@@ -3,11 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../ports/auth_port.dart';
+import 'design/breakpoints.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'widgets/atmosphere.dart';
+import 'widgets/brand_lockup.dart';
 import 'widgets/brand_mark.dart';
 import 'widgets/google_logo.dart';
+import 'widgets/scrollable_centered.dart';
 
 /// Where the player creates or signs into the real account required to play
 /// at all (V2: no anonymous/guest path — `SplashScreen` reaches this screen
@@ -215,51 +218,125 @@ class _AccountScreenState extends State<AccountScreen> {
     return Scaffold(
       body: AetherBackground(
         child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              // A scrollable ListView, not a fixed centered Column: the form
-              // can overflow a short viewport — a small phone in landscape,
-              // or the keyboard eating half the screen — same reason
-              // ChargenScreen scrolls instead of centering its content.
-              child: ListView(
-                padding: const EdgeInsets.all(AetherSpace.xl),
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.arrow_back_rounded,
-                          color: AetherColors.goldSoft),
-                    ),
-                  ),
-                  const SizedBox(height: AetherSpace.lg),
-                  const BrandMark(size: 44),
-                  const SizedBox(height: AetherSpace.lg),
-                  if (_mode == _Mode.forgotPassword)
-                    ..._forgotPasswordContent()
-                  else if (_signUpSent)
-                    ..._signUpSentContent()
-                  else ...[
-                    ..._googleContent(),
-                    const SizedBox(height: AetherSpace.xl),
-                    _OrDivider(),
-                    const SizedBox(height: AetherSpace.xl),
-                    if (_emailTakenWarning) ...[
-                      _EmailTakenWarning(
-                        onSwitchToSignIn: () => _switchMode(_Mode.signIn),
-                      ),
-                      const SizedBox(height: AetherSpace.lg),
-                    ],
-                    if (_mode == _Mode.signUp) ..._signUpContent() else ..._signInContent(),
-                  ],
-                ],
-              ),
-            ),
+          child: LayoutBuilder(
+            builder: (context, viewport) {
+              final desktop = viewport.maxWidth >= AetherBreakpoints.desktop;
+              return desktop ? _buildDesktop(context) : _buildMobile(context);
+            },
           ),
         ),
       ),
     );
+  }
+
+  /// Phone and tablet — unchanged from before the desktop split layout
+  /// existed. A scrollable `ListView`, not a fixed centered `Column`: the
+  /// form can overflow a short viewport — a small phone in landscape, or
+  /// the keyboard eating half the screen — same reason `ChargenScreen`
+  /// scrolls instead of centering its content.
+  Widget _buildMobile(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: ListView(
+          padding: const EdgeInsets.all(AetherSpace.xl),
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.arrow_back_rounded,
+                    color: AetherColors.goldSoft),
+              ),
+            ),
+            const SizedBox(height: AetherSpace.lg),
+            const BrandMark(size: 44),
+            const SizedBox(height: AetherSpace.lg),
+            ..._modeContent(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Desktop — the same 440px-wide form used to float alone in the middle
+  /// of the whole browser window, no different from a phone screen just
+  /// stretched into empty space. A two-panel split instead, matching
+  /// `SplashScreen`'s own desktop layout so "arrival" and "sign in" read as
+  /// one coherent flow rather than two unrelated screens: a [BrandLockup]
+  /// on the wide side (smaller than the splash's own, and with no tagline —
+  /// a player only reaches this screen after already seeing that pitch
+  /// once), the actual form in a bordered card on a fixed-width side.
+  Widget _buildDesktop(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AetherSpace.huge),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: const BrandLockup(markSize: 88, wordmarkFontSize: 50),
+              ),
+            ),
+          ),
+          const SizedBox(width: AetherSpace.huge),
+          SizedBox(
+            width: 460,
+            child: ScrollableCentered(
+              child: Container(
+                padding: const EdgeInsets.all(AetherSpace.xxl),
+                decoration: BoxDecoration(
+                  color: AetherColors.surface,
+                  borderRadius: AetherRadius.allLg,
+                  border: Border.all(color: AetherColors.hairlineStrong),
+                  boxShadow: AetherShadow.panel,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.arrow_back_rounded,
+                            color: AetherColors.goldSoft),
+                      ),
+                    ),
+                    const SizedBox(height: AetherSpace.sm),
+                    ..._modeContent(),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The mode-dependent body (sign up / sign in / forgot password / sent
+  /// confirmations) — identical on mobile and desktop, only the chrome
+  /// around it (a loose `ListView` vs. a bordered card) differs.
+  List<Widget> _modeContent() {
+    if (_mode == _Mode.forgotPassword) return _forgotPasswordContent();
+    if (_signUpSent) return _signUpSentContent();
+    return [
+      ..._googleContent(),
+      const SizedBox(height: AetherSpace.xl),
+      _OrDivider(),
+      const SizedBox(height: AetherSpace.xl),
+      if (_emailTakenWarning) ...[
+        _EmailTakenWarning(
+          onSwitchToSignIn: () => _switchMode(_Mode.signIn),
+        ),
+        const SizedBox(height: AetherSpace.lg),
+      ],
+      if (_mode == _Mode.signUp) ..._signUpContent() else ..._signInContent(),
+    ];
   }
 
   List<Widget> _googleContent() => [
