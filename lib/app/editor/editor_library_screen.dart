@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/authoring/admin_emails.dart';
 import '../../core/authoring/campaign_draft.dart';
 import '../../core/world/world.dart';
 import '../../ports/campaign_draft_repository_port.dart';
@@ -14,6 +15,7 @@ import '../widgets/library_thumbnail.dart';
 import 'campaign_map_screen.dart';
 import 'design/editor_tokens.dart';
 import 'editor_base_worlds.dart';
+import 'world_builder_screen.dart';
 
 /// "Tus historias escritas" (V2 design prototype §9a's entry point) — every
 /// campaign the account has authored, draft or published, mirroring
@@ -45,18 +47,33 @@ class EditorLibraryScreen extends StatefulWidget {
   State<EditorLibraryScreen> createState() => _EditorLibraryScreenState();
 }
 
-typedef _LibraryData = ({List<CampaignDraftSummary> drafts, List<World> baseWorlds});
+typedef _LibraryData = ({
+  List<CampaignDraftSummary> drafts,
+  List<CampaignDraftSummary> official,
+  List<World> baseWorlds,
+});
 
 class _EditorLibraryScreenState extends State<EditorLibraryScreen> {
   late Future<_LibraryData> _data = _load();
   late final Future<List<World>> _baseWorlds =
       Future.wait(editorBaseWorldSlugs.map(widget.controller.loadWorldInfo));
 
+  bool get _isAdmin => isAdminEmail(widget.controller.auth?.email);
+
   Future<_LibraryData> _load() async {
-    final results = await Future.wait([widget.campaignDrafts.listMine(), _baseWorlds]);
+    final results = await Future.wait([
+      widget.campaignDrafts.listMine(),
+      // Admin-only in practice: for a non-admin caller RLS already returns
+      // just the already-published official campaigns (a public list), see
+      // `CampaignDraftRepositoryPort.listOfficial`'s own doc comment — but
+      // there's nothing useful to show a non-admin here, so skip the call.
+      _isAdmin ? widget.campaignDrafts.listOfficial() : Future.value(const []),
+      _baseWorlds,
+    ]);
     return (
       drafts: results[0] as List<CampaignDraftSummary>,
-      baseWorlds: results[1] as List<World>,
+      official: results[1] as List<CampaignDraftSummary>,
+      baseWorlds: results[2] as List<World>,
     );
   }
 
@@ -73,7 +90,7 @@ class _EditorLibraryScreenState extends State<EditorLibraryScreen> {
     _refresh();
   }
 
-  Future<void> _createDraft() async {
+  Future<void> _createCommunityDraft() async {
     final worlds = await _baseWorlds;
     if (!mounted) return;
     final result = await showModalBottomSheet<({String title, String baseWorldSlug})>(
@@ -99,6 +116,43 @@ class _EditorLibraryScreenState extends State<EditorLibraryScreen> {
     _refresh();
   }
 
+  Future<void> _createOfficialDraft(CampaignOfficialModule module) async {
+    final world = await WorldBuilderScreen.open(context);
+    if (world == null || !mounted) return;
+    final draft = await widget.campaignDrafts.createOfficialDraft(
+      customWorld: world,
+      officialModule: module,
+    );
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      CampaignMapScreen.route(
+        controller: widget.controller,
+        campaignDrafts: widget.campaignDrafts,
+        draftId: draft.id!,
+      ),
+    );
+    _refresh();
+  }
+
+  Future<void> _createDraft() async {
+    if (!_isAdmin) return _createCommunityDraft();
+
+    final choice = await showModalBottomSheet<_NewCampaignType>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _NewCampaignTypeSheet(),
+    );
+    if (choice == null) return;
+    switch (choice) {
+      case _NewCampaignType.community:
+        await _createCommunityDraft();
+      case _NewCampaignType.complete:
+        await _createOfficialDraft(CampaignOfficialModule.complete);
+      case _NewCampaignType.hybrid:
+        await _createOfficialDraft(CampaignOfficialModule.hybrid);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -113,6 +167,7 @@ class _EditorLibraryScreenState extends State<EditorLibraryScreen> {
                 );
               }
               final drafts = snapshot.data!.drafts;
+              final official = snapshot.data!.official;
               final accentBySlug = {
                 for (final w in snapshot.data!.baseWorlds)
                   w.slug: WorldTheme.forWorld(w).accent,
@@ -166,7 +221,7 @@ class _EditorLibraryScreenState extends State<EditorLibraryScreen> {
                             ),
                             const SizedBox(height: AetherSpace.lg),
                             Expanded(
-                              child: drafts.isEmpty
+                              child: (drafts.isEmpty && official.isEmpty)
                                   ? Center(
                                       child: Text(
                                         'Todavía no escribiste ninguna historia.',
@@ -175,16 +230,36 @@ class _EditorLibraryScreenState extends State<EditorLibraryScreen> {
                                         textAlign: TextAlign.center,
                                       ),
                                     )
-                                  : ListView.separated(
-                                      itemCount: drafts.length,
-                                      separatorBuilder: (_, _) =>
+                                  : ListView(
+                                      children: [
+                                        if (official.isNotEmpty) ...[
+                                          Text('Oficiales (administración)',
+                                              style: EditorType.overline),
                                           const SizedBox(height: AetherSpace.sm),
-                                      itemBuilder: (context, i) => _DraftCard(
-                                        summary: drafts[i],
-                                        accent: accentBySlug[drafts[i].baseWorldSlug] ??
-                                            AetherColors.gold,
-                                        onTap: () => _openDraft(drafts[i]),
-                                      ),
+                                          for (final o in official) ...[
+                                            _DraftCard(
+                                              summary: o,
+                                              accent: accentBySlug[o.baseWorldSlug] ??
+                                                  AetherColors.gold,
+                                              onTap: () => _openDraft(o),
+                                            ),
+                                            const SizedBox(height: AetherSpace.sm),
+                                          ],
+                                          const SizedBox(height: AetherSpace.lg),
+                                          Text('Tus historias escritas',
+                                              style: EditorType.overline),
+                                          const SizedBox(height: AetherSpace.sm),
+                                        ],
+                                        for (final d in drafts) ...[
+                                          _DraftCard(
+                                            summary: d,
+                                            accent: accentBySlug[d.baseWorldSlug] ??
+                                                AetherColors.gold,
+                                            onTap: () => _openDraft(d),
+                                          ),
+                                          const SizedBox(height: AetherSpace.sm),
+                                        ],
+                                      ],
                                     ),
                             ),
                           ],
@@ -275,6 +350,107 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         published ? 'Publicada' : 'Borrador',
         style: EditorType.pill.copyWith(color: color),
+      ),
+    );
+  }
+}
+
+enum _NewCampaignType { community, complete, hybrid }
+
+/// The admin-only first step of "Nueva historia" (Admin Stage 3, project
+/// decision 2026-07-31): a non-admin never sees this — [_createDraft] skips
+/// straight to [_NewCampaignSheet]. An admin picks between an ordinary
+/// community novel (shows up only in "Explorar") or an official campaign
+/// (lands in the real "Historias completas"/"Historias pre-armadas"
+/// catalog once published) — either official option opens the World
+/// Builder next, never the base-world picker.
+class _NewCampaignTypeSheet extends StatelessWidget {
+  const _NewCampaignTypeSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+          AetherSpace.xl, AetherSpace.lg, AetherSpace.xl, AetherSpace.xl),
+      decoration: const BoxDecoration(
+        color: AetherColors.ink,
+        borderRadius: BorderRadius.vertical(top: AetherRadius.lg),
+        border: Border(top: BorderSide(color: AetherColors.hairlineStrong)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Qué tipo de historia', style: AetherType.display.copyWith(fontSize: 20)),
+          const SizedBox(height: AetherSpace.lg),
+          _TypeOption(
+            title: 'Historia de comunidad',
+            subtitle: 'Solo aparece en Explorar, sobre un mundo existente.',
+            icon: Icons.groups_rounded,
+            onTap: () => Navigator.of(context).pop(_NewCampaignType.community),
+          ),
+          const SizedBox(height: AetherSpace.sm),
+          _TypeOption(
+            title: 'Historia completa (oficial)',
+            subtitle: 'Sin narrador de IA en partida, con atributos propios.',
+            icon: Icons.auto_stories_rounded,
+            onTap: () => Navigator.of(context).pop(_NewCampaignType.complete),
+          ),
+          const SizedBox(height: AetherSpace.sm),
+          _TypeOption(
+            title: 'Historia híbrida (oficial)',
+            subtitle: 'Vestida por IA en vivo, con atributos propios.',
+            icon: Icons.route_rounded,
+            onTap: () => Navigator.of(context).pop(_NewCampaignType.hybrid),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TypeOption extends StatelessWidget {
+  const _TypeOption({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: AetherRadius.allMd,
+      child: Container(
+        padding: const EdgeInsets.all(AetherSpace.md),
+        decoration: BoxDecoration(
+          color: AetherColors.surface,
+          borderRadius: AetherRadius.allMd,
+          border: Border.all(color: AetherColors.hairline),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: AetherColors.goldSoft),
+            const SizedBox(width: AetherSpace.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: AetherType.title.copyWith(fontSize: 15)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: AetherType.caption),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: AetherColors.parchmentFaint),
+          ],
+        ),
       ),
     );
   }
