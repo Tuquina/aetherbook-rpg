@@ -66,6 +66,14 @@ class _ChipListFieldState extends State<ChipListField> {
       children: [
         for (final (i, value) in widget.values.indexed)
           Container(
+            // A value can run much longer than the short community tags this
+            // was designed for — a migrated world's single descriptive
+            // `content_warning` paragraph, for one (Admin Stage 5). Wraps
+            // within a max width instead of forcing one unbounded line, so
+            // it never overflows the Wrap — never ellipsis-truncated, since
+            // a content warning is exactly the text an admin most needs to
+            // read in full.
+            constraints: const BoxConstraints(maxWidth: 320),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: AetherColors.surface,
@@ -74,8 +82,11 @@ class _ChipListFieldState extends State<ChipListField> {
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(value, style: EditorType.label.copyWith(color: AetherColors.parchment)),
+                Flexible(
+                  child: Text(value, style: EditorType.label.copyWith(color: AetherColors.parchment)),
+                ),
                 const SizedBox(width: 6),
                 InkWell(
                   onTap: () => _removeAt(i),
