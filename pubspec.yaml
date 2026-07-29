@@ -43,6 +43,12 @@ dependencies:
   # Bezier paths into a CustomPainter.
   flutter_svg: ^2.2.1
 
+  # Campaign editor cover-image upload (V2 design prototype §9f) — the only
+  # place in the app a player picks a file from their own device rather than
+  # receiving one generated server-side. Cross-platform (incl. web) from the
+  # Flutter team itself.
+  image_picker: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

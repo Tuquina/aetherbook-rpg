@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/authoring/campaign_draft.dart';
@@ -111,5 +113,26 @@ class SupabaseCampaignDraftAdapter implements CampaignDraftRepositoryPort {
         .from('campaign_drafts')
         .update({'status': CampaignDraftStatus.draft.toString()})
         .eq('id', id);
+  }
+
+  @override
+  Future<String> uploadCoverImage(
+    String id,
+    Uint8List bytes, {
+    required String fileExtension,
+  }) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('uploadCoverImage requires a signed-in user');
+    }
+    // Same path every time (upsert): a re-upload replaces the previous
+    // cover in place instead of accumulating orphaned files per edit.
+    final path = '$userId/$id/cover.$fileExtension';
+    await _client.storage.from('campaign-covers').uploadBinary(
+          path,
+          bytes,
+          fileOptions: const FileOptions(upsert: true),
+        );
+    return _client.storage.from('campaign-covers').getPublicUrl(path);
   }
 }

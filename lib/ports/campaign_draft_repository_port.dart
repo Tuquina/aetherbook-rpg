@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../core/authoring/campaign_draft.dart';
 
 /// Persists and loads player-authored campaigns (V2 design prototype
@@ -49,4 +51,18 @@ abstract class CampaignDraftRepositoryPort {
   /// property of how a reading session snapshots its own campaign content,
   /// not something this method needs to do.
   Future<void> unpublishDraft(String id);
+
+  /// Uploads [bytes] as [id]'s cover image (V2 design prototype §9f,
+  /// "Imagen de portada") to the `campaign-covers` bucket and returns its
+  /// public URL — the one place in the app a player uploads a file from
+  /// their own device rather than receiving one generated server-side.
+  /// Overwrites any previous cover for the same draft (same path every
+  /// time, `upsert`). Doesn't itself call [saveDraft]; the caller still
+  /// sets [CampaignDraft.coverImageUrl] and persists it like any other
+  /// field edit.
+  Future<String> uploadCoverImage(
+    String id,
+    Uint8List bytes, {
+    required String fileExtension,
+  });
 }

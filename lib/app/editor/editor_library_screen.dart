@@ -13,20 +13,7 @@ import '../widgets/atmosphere.dart';
 import '../widgets/library_thumbnail.dart';
 import 'campaign_map_screen.dart';
 import 'design/editor_tokens.dart';
-
-/// The base worlds a new campaign can be authored on top of (V2 design
-/// prototype §9f: "Define los atributos, los colores y el tono del
-/// narrador") — the 5 freeform genre frameworks (CLAUDE.md Fase 2), not the
-/// fully-authored curated campaigns or the one existing hybrid campaign,
-/// since those are specific stories rather than reusable attribute/theme
-/// systems.
-const editorBaseWorldSlugs = [
-  'isekai',
-  'xianxia',
-  'superheroes',
-  'cyberpunk',
-  'postapoc',
-];
+import 'editor_base_worlds.dart';
 
 /// "Tus historias escritas" (V2 design prototype §9a's entry point) — every
 /// campaign the account has authored, draft or published, mirroring

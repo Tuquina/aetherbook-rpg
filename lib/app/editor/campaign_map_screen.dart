@@ -17,7 +17,9 @@ import '../game_controller.dart';
 import '../library_rows.dart' show relativeTimeLabel;
 import 'choice_editor_screen.dart';
 import 'corridor_editor_screen.dart';
+import 'cover_editor_screen.dart';
 import 'design/editor_tokens.dart';
+import 'editor_base_worlds.dart';
 import 'ending_editor_screen.dart';
 import 'hub_editor_screen.dart';
 import 'widgets/chip_list_field.dart';
@@ -68,6 +70,7 @@ class CampaignMapScreen extends StatefulWidget {
 class _CampaignMapScreenState extends State<CampaignMapScreen> {
   CampaignDraft? _draft;
   World? _baseWorld;
+  List<World>? _allBaseWorlds;
   String? _selectedNodeId;
   bool _saving = false;
   int _nextNodeSeq = 1;
@@ -79,16 +82,45 @@ class _CampaignMapScreenState extends State<CampaignMapScreen> {
   }
 
   Future<void> _load() async {
-    final draft = await widget.campaignDrafts.loadDraft(widget.draftId);
+    final results = await Future.wait([
+      widget.campaignDrafts.loadDraft(widget.draftId),
+      Future.wait(editorBaseWorldSlugs.map(widget.controller.loadWorldInfo)),
+    ]);
+    final draft = results[0] as CampaignDraft?;
+    final baseWorlds = results[1] as List<World>;
     if (draft == null || !mounted) return;
-    final world = await widget.controller.loadWorldInfo(draft.baseWorldSlug);
+    final world = baseWorlds.firstWhere(
+      (w) => w.slug == draft.baseWorldSlug,
+      orElse: () => baseWorlds.first,
+    );
     if (!mounted) return;
     setState(() {
       _draft = draft;
       _baseWorld = world;
+      _allBaseWorlds = baseWorlds;
       _nextNodeSeq = draft.graph.nodes.length + 1;
       _selectedNodeId ??= draft.graph.nodes.isEmpty ? null : draft.graph.startNodeId;
     });
+  }
+
+  Future<void> _openCover() async {
+    final draft = _draft;
+    final baseWorlds = _allBaseWorlds;
+    if (draft == null || baseWorlds == null) return;
+    final updated = await CoverEditorScreen.open(
+      context,
+      draft: draft,
+      campaignDrafts: widget.campaignDrafts,
+      baseWorlds: baseWorlds,
+      nodeCount: draft.graph.nodes.length,
+    );
+    if (updated == null) return;
+    final newWorld = baseWorlds.firstWhere(
+      (w) => w.slug == updated.baseWorldSlug,
+      orElse: () => baseWorlds.first,
+    );
+    setState(() => _baseWorld = newWorld);
+    await _save(updated);
   }
 
   Future<void> _save(CampaignDraft next) async {
@@ -256,6 +288,7 @@ class _CampaignMapScreenState extends State<CampaignMapScreen> {
                   saving: _saving,
                   updatedAt: draft.updatedAt,
                   onBack: () => Navigator.of(context).pop(),
+                  onCover: _openCover,
                   onPlaytest: () => _showComingSoon('Probar el borrador'),
                   onPublish: () => _showComingSoon('Publicar'),
                 ),
@@ -312,6 +345,7 @@ class _Header extends StatelessWidget {
     required this.saving,
     required this.updatedAt,
     required this.onBack,
+    required this.onCover,
     required this.onPlaytest,
     required this.onPublish,
   });
@@ -323,6 +357,7 @@ class _Header extends StatelessWidget {
   final bool saving;
   final DateTime? updatedAt;
   final VoidCallback onBack;
+  final VoidCallback onCover;
   final VoidCallback onPlaytest;
   final VoidCallback onPublish;
 
@@ -389,6 +424,12 @@ class _Header extends StatelessWidget {
             style: EditorType.meta,
           ),
           const SizedBox(width: AetherSpace.md),
+          IconButton(
+            onPressed: onCover,
+            tooltip: 'Portada e información',
+            icon: const Icon(Icons.image_outlined, color: AetherColors.goldSoft),
+          ),
+          const SizedBox(width: AetherSpace.sm),
           OutlinedButton(
             onPressed: onPlaytest,
             style: OutlinedButton.styleFrom(
