@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'adapters/auth/supabase_auth_adapter.dart';
 import 'adapters/content/asset_world_repository.dart';
+import 'adapters/content/composite_world_repository.dart';
 import 'adapters/image/http_image_generator_adapter.dart';
 import 'adapters/memory/http_memory_digest_adapter.dart';
 import 'adapters/narrator/http_narrator_adapter.dart';
@@ -40,8 +41,20 @@ Future<void> main() async {
   // calls either port regardless (`ai_runtime_required: false`). The image
   // generator (GDD §6) is "nice to have" by design — HttpImageGeneratorAdapter
   // never throws, so wiring it in can't turn a provider hiccup into a crash.
+  //
+  // The world repository falls back to an admin-authored official
+  // campaign_drafts row (Admin Stage 3) whenever a slug isn't a bundled
+  // asset — only wired in when Supabase itself is up, same degradation as
+  // every other Supabase-backed feature below.
+  final campaignDrafts = supabase?.campaignDrafts;
+  final worldRepository = campaignDrafts != null
+      ? CompositeWorldRepository(
+          assets: const AssetWorldRepository(),
+          campaignDrafts: campaignDrafts,
+        )
+      : const AssetWorldRepository();
   final controller = GameController(
-    worldRepository: const AssetWorldRepository(),
+    worldRepository: worldRepository,
     narrator: HttpNarratorAdapter(
       endpoint: _narratorEndpoint,
       publishableKey: _supabasePublishableKey,
@@ -57,7 +70,7 @@ Future<void> main() async {
     ),
     auth: supabase?.auth,
     settingsPort: supabase?.settings,
-    campaignDrafts: supabase?.campaignDrafts,
+    campaignDrafts: campaignDrafts,
   );
 
   runApp(AetherbookApp(controller: controller, auth: supabase?.auth));

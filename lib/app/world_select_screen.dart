@@ -146,10 +146,25 @@ class WorldSelectScreen extends StatefulWidget {
 }
 
 class _WorldSelectScreenState extends State<WorldSelectScreen> {
-  late final Future<List<World>> _worlds = Future.wait(
-    _availableWorldSlugs.map(widget.controller.loadWorldInfo),
-  );
+  late final Future<List<World>> _worlds = _loadWorlds();
   late final Future<List<SessionLibraryEntry>> _library = widget.controller.storyLibrary();
+
+  /// Every bundled world plus every published official campaign (Admin
+  /// Stage 3) — same "Historias completas"/"Historias pre-armadas" catalog,
+  /// just sourced from two places now. `listOfficial()` also returns
+  /// unpublished official drafts to an admin caller, but RLS narrows that
+  /// down to published-only for anyone else, so this never needs its own
+  /// status filter (`CampaignDraftRepositoryPort.listOfficial`'s own doc
+  /// comment). `campaignDrafts` is `null` in the in-memory-degraded mode —
+  /// same graceful fallback every other account feature uses.
+  Future<List<World>> _loadWorlds() async {
+    final campaignDrafts = widget.controller.campaignDrafts;
+    final officialSlugs = campaignDrafts != null
+        ? (await campaignDrafts.listOfficial()).map((s) => s.slug).toList()
+        : const <String>[];
+    final slugs = {..._availableWorldSlugs, ...officialSlugs};
+    return Future.wait(slugs.map(widget.controller.loadWorldInfo));
+  }
 
   @override
   void initState() {
