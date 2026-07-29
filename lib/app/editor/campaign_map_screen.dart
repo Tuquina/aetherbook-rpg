@@ -24,6 +24,7 @@ import 'design/editor_tokens.dart';
 import 'editor_base_worlds.dart';
 import 'ending_editor_screen.dart';
 import 'hub_editor_screen.dart';
+import 'playtest_screen.dart';
 import 'rights_notice_dialog.dart';
 import 'widgets/chip_list_field.dart';
 
@@ -315,6 +316,23 @@ class _CampaignMapScreenState extends State<CampaignMapScreen> {
     setState(() => _draft = reloaded);
   }
 
+  /// Always starts from the graph's real start node — the header button's
+  /// own label ("Probar desde el inicio"). Jumping to an arbitrary scene
+  /// mid-test is `PlaytestScreen`'s own "Empezar la prueba en" picker, not
+  /// this entry point.
+  void _openPlaytest() {
+    final draft = _draft;
+    final world = _baseWorld;
+    if (draft == null || world == null) return;
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => PlaytestScreen(
+        graph: draft.graph,
+        world: world,
+        nodeTitles: draft.nodeTitles,
+      ),
+    ));
+  }
+
   void _showComingSoon(String what) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -356,7 +374,7 @@ class _CampaignMapScreenState extends State<CampaignMapScreen> {
                   updatedAt: draft.updatedAt,
                   onBack: () => Navigator.of(context).pop(),
                   onCover: _openCover,
-                  onPlaytest: () => _showComingSoon('Probar el borrador'),
+                  onPlaytest: _openPlaytest,
                   onPublish: draft.isPublished ? _unpublish : _publish,
                   onOpenChecklist: _openChecklist,
                 ),

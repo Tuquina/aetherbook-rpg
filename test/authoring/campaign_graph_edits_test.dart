@@ -1,5 +1,8 @@
 import 'package:aetherbook/core/authoring/campaign_graph_edits.dart';
+import 'package:aetherbook/core/narrative/ending.dart';
 import 'package:aetherbook/core/narrative/gate.dart';
+import 'package:aetherbook/core/narrative/hub_activity.dart';
+import 'package:aetherbook/core/narrative/story_choice.dart';
 import 'package:aetherbook/core/narrative/story_graph.dart';
 import 'package:aetherbook/core/narrative/story_node.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -209,6 +212,55 @@ void main() {
       final built = CampaignGraphEdits.buildGate([a, b]);
       expect(built, isA<AllOfGate>());
       expect((built as AllOfGate).gates, [a, b]);
+    });
+  });
+
+  group('CampaignGraphEdits.allReferencedFlagKeys', () {
+    test('collects flag keys from choice/exit/activity gates and ending requirements', () {
+      final graph = StoryGraph(startNodeId: 'a', nodes: {
+        'a': FixedAnchorNode(id: 'a', choices: [
+          StoryChoice(label: 'x', targetNodeId: 'hub', gate: const FlagGate('saw_intro')),
+        ]),
+        'hub': StateHubNode(
+          id: 'hub',
+          activities: const [
+            HubActivity(id: 'act', label: 'y', gate: FlagGate('met_wen')),
+          ],
+          exits: [
+            StoryChoice(label: 'z', targetNodeId: 'end', gate: const FlagGate('ready_to_leave')),
+          ],
+        ),
+        'end': const ResolutionNode(id: 'end', endings: [
+          Ending(
+            id: 'e1',
+            visibleChoice: 'x',
+            hardRequirement: FlagGate('has_registry'),
+            softRequirements: [FlagGate('wen_alive')],
+          ),
+        ]),
+      });
+      expect(
+        CampaignGraphEdits.allReferencedFlagKeys(graph),
+        {'saw_intro', 'met_wen', 'ready_to_leave', 'has_registry', 'wen_alive'},
+      );
+    });
+
+    test('is empty for a graph with no flag gates anywhere', () {
+      const graph = StoryGraph(startNodeId: 'a', nodes: {'a': FixedAnchorNode(id: 'a')});
+      expect(CampaignGraphEdits.allReferencedFlagKeys(graph), isEmpty);
+    });
+
+    test('reaches into AllOfGate/AnyOfGate composites', () {
+      final graph = StoryGraph(startNodeId: 'a', nodes: {
+        'a': FixedAnchorNode(id: 'a', choices: [
+          const StoryChoice(
+            label: 'x',
+            targetNodeId: 'a',
+            gate: AllOfGate([FlagGate('one'), AnyOfGate([FlagGate('two'), FlagGate('three')])]),
+          ),
+        ]),
+      });
+      expect(CampaignGraphEdits.allReferencedFlagKeys(graph), {'one', 'two', 'three'});
     });
   });
 

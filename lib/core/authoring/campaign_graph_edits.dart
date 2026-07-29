@@ -208,6 +208,50 @@ abstract final class CampaignGraphEdits {
         ResolutionNode() => const [],
       };
 
+  /// Every `FlagGate` key referenced anywhere in [graph] — every choice/
+  /// exit/activity gate, and every ending's hard/soft requirements. Powers
+  /// the playtest panel's "Lo que ya pasó" toggle list (§9j): the set of
+  /// flags worth letting a tester flip, without hand-declaring one per
+  /// campaign.
+  static Set<String> allReferencedFlagKeys(StoryGraph graph) {
+    final keys = <String>{};
+    void collect(Gate gate) => keys.addAll(_flagKeysOf(gate));
+    for (final node in graph.nodes.values) {
+      switch (node) {
+        case FixedAnchorNode(:final choices):
+          for (final c in choices) {
+            collect(c.gate);
+          }
+        case BoundedCorridorNode(:final choices):
+          for (final c in choices) {
+            collect(c.gate);
+          }
+        case StateHubNode(:final exits, :final activities):
+          for (final e in exits) {
+            collect(e.gate);
+          }
+          for (final a in activities) {
+            collect(a.gate);
+          }
+        case ResolutionNode(:final endings):
+          for (final e in endings) {
+            collect(e.hardRequirement);
+            for (final soft in e.softRequirements) {
+              collect(soft);
+            }
+          }
+      }
+    }
+    return keys;
+  }
+
+  static Set<String> _flagKeysOf(Gate gate) => switch (gate) {
+        FlagGate(:final key) => {key},
+        AllOfGate(:final gates) => {for (final g in gates) ..._flagKeysOf(g)},
+        AnyOfGate(:final gates) => {for (final g in gates) ..._flagKeysOf(g)},
+        _ => const {},
+      };
+
   /// [gate] decomposed into a flat AND-list for the editor's gate-condition
   /// list (§9b/§9c/§9g/§9h "Sólo aparece si…") — the inverse of [buildGate].
   /// `AlwaysGate` flattens to `[]`; an `AllOfGate` flattens to its direct
