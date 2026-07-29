@@ -23,17 +23,22 @@ import 'widgets/home_bottom_nav.dart';
 import 'widgets/home_sidebar.dart';
 import 'widgets/library_thumbnail.dart';
 
-/// The stories offered in the menu (GDD §9). Adding a new campaign means
-/// adding its slug here once its content JSON exists in `assets/worlds/` —
-/// everything shown about it (name, tone, whether it's curated) is always
-/// read live from the world itself via [GameController.loadWorldInfo],
-/// never duplicated in this list. The 5 freeform genres (Fase 2 — "crea tu
-/// propia historia") land in `StoryModule.aiNarrator` automatically, purely
-/// from content (no `graph` key in their JSON), same as every other module.
+/// The freeform genre worlds offered in the menu (GDD §9) — adding a new one
+/// means adding its slug here once its content JSON exists in
+/// `assets/worlds/`. The 3 curated/hybrid campaigns
+/// (`curated_zombie_01_ultimo_tren`, `curated_cyberpunk_02_apagon_violeta`,
+/// `xianxia_lianshu`) migrated out of this list in Admin Stage 5: they're
+/// official `campaign_drafts` rows now (author `aetherbook.app@gmail.com`),
+/// merged into the catalog dynamically via `listOfficial()` in
+/// [_WorldSelectScreenState._loadWorlds] instead of being hardcoded here —
+/// their bundled JSON stays on disk purely as a fallback backup, still
+/// covered by the content tests that read it directly. Everything shown
+/// about a world (name, tone, whether it's curated) is always read live via
+/// [GameController.loadWorldInfo], never duplicated in this list. The 5
+/// freeform genres (Fase 2 — "crea tu propia historia") land in
+/// `StoryModule.aiNarrator` automatically, purely from content (no `graph`
+/// key in their JSON), same as every other module.
 const _availableWorldSlugs = [
-  'curated_zombie_01_ultimo_tren',
-  'curated_cyberpunk_02_apagon_violeta',
-  'xianxia_lianshu',
   'isekai',
   'xianxia',
   'superheroes',

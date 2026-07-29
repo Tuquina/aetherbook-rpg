@@ -3,10 +3,13 @@
 // Neither call site had widget-test coverage before this file -- only
 // GameController.abandonStory's *delegation* to persistence was covered
 // (game_controller_persistence_test.dart), never the confirmation UI itself.
+import 'dart:typed_data';
+
 import 'package:aetherbook/app/game_controller.dart';
 import 'package:aetherbook/app/game_screen.dart';
 import 'package:aetherbook/app/world_select_screen.dart';
 import 'package:aetherbook/adapters/narrator/fake_narrator_adapter.dart';
+import 'package:aetherbook/core/authoring/campaign_draft.dart';
 import 'package:aetherbook/core/engine/action_resolution.dart';
 import 'package:aetherbook/core/engine/dice.dart';
 import 'package:aetherbook/core/narrative/extended_conflict.dart';
@@ -15,10 +18,61 @@ import 'package:aetherbook/core/narrative/story_node.dart';
 import 'package:aetherbook/core/state/character.dart';
 import 'package:aetherbook/core/state/game_session.dart';
 import 'package:aetherbook/core/world/world.dart';
+import 'package:aetherbook/ports/campaign_draft_repository_port.dart';
 import 'package:aetherbook/ports/game_state_repository_port.dart';
 import 'package:aetherbook/ports/world_repository_port.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+/// Admin Stage 5: `curated_zombie_01_ultimo_tren` no longer lives in
+/// [WorldSelectScreen]'s hardcoded `_availableWorldSlugs` — it's a published
+/// official `campaign_drafts` row now, merged into the catalog dynamically
+/// via `listOfficial()`. This fake stands in for that merge so the test
+/// below can still exercise a real `StoryModule.complete` restart.
+class _FakeOfficialCampaignRepository implements CampaignDraftRepositoryPort {
+  @override
+  Future<List<CampaignDraftSummary>> listOfficial() async => [
+        CampaignDraftSummary(
+          id: 'draft-1',
+          slug: 'curated_zombie_01_ultimo_tren',
+          title: 'El último tren no espera a los vivos',
+          status: CampaignDraftStatus.published,
+          nodeCount: 1,
+          updatedAt: DateTime.now(),
+          officialModule: CampaignOfficialModule.complete,
+        ),
+      ];
+
+  @override
+  Future<List<CampaignDraftSummary>> listMine() => throw UnimplementedError();
+  @override
+  Future<List<CampaignDraftSummary>> listExplorable() => throw UnimplementedError();
+  @override
+  Future<CampaignDraft?> loadDraft(String id) => throw UnimplementedError();
+  @override
+  Future<CampaignDraft?> loadPublishedBySlug(String slug) => throw UnimplementedError();
+  @override
+  Future<CampaignDraft> createDraft({required String baseWorldSlug, required String title}) =>
+      throw UnimplementedError();
+  @override
+  Future<CampaignDraft> createOfficialDraft({
+    required World customWorld,
+    required CampaignOfficialModule officialModule,
+  }) =>
+      throw UnimplementedError();
+  @override
+  Future<void> saveDraft(CampaignDraft draft) => throw UnimplementedError();
+  @override
+  Future<void> deleteDraft(String id) => throw UnimplementedError();
+  @override
+  Future<void> publishDraft(String id, {required DateTime licenseAcceptedAt}) =>
+      throw UnimplementedError();
+  @override
+  Future<void> unpublishDraft(String id) => throw UnimplementedError();
+  @override
+  Future<String> uploadCoverImage(String id, Uint8List bytes, {required String fileExtension}) =>
+      throw UnimplementedError();
+}
 
 const _storyGraph = StoryGraph(
   startNodeId: 'inicio',
@@ -235,11 +289,13 @@ void main() {
       worldRepository: _MixedWorldRepository(),
       narrator: const FakeNarratorAdapter(latency: Duration.zero),
       dice: const FixedDice(10),
+      campaignDrafts: _FakeOfficialCampaignRepository(),
     );
 
     await tester
         .pumpWidget(MaterialApp(home: WorldSelectScreen(controller: controller)));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     await tester.tap(find.text('Historias completas'));
     await tester.pump();
