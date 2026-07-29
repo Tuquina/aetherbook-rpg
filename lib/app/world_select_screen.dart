@@ -6,6 +6,7 @@ import 'codex_screen.dart';
 import 'create_story_screen.dart';
 import 'design/breakpoints.dart';
 import 'editor/editor_library_screen.dart';
+import 'explorar_screen.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'design/world_theme.dart';
@@ -149,18 +150,23 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
   late final Future<List<World>> _worlds = _loadWorlds();
   late final Future<List<SessionLibraryEntry>> _library = widget.controller.storyLibrary();
 
-  /// Every bundled world plus every published official campaign (Admin
+  /// Every bundled world plus every *published* official campaign (Admin
   /// Stage 3) — same "Historias completas"/"Historias pre-armadas" catalog,
   /// just sourced from two places now. `listOfficial()` also returns
-  /// unpublished official drafts to an admin caller, but RLS narrows that
-  /// down to published-only for anyone else, so this never needs its own
-  /// status filter (`CampaignDraftRepositoryPort.listOfficial`'s own doc
-  /// comment). `campaignDrafts` is `null` in the in-memory-degraded mode —
-  /// same graceful fallback every other account feature uses.
+  /// unpublished drafts to an admin caller (for the editor's own "Oficiales"
+  /// review list) — filtered to [CampaignDraftSummary.isPublished] here
+  /// because this is the real player-facing catalog: an admin's own
+  /// in-progress draft must not show up as playable from the home dashboard,
+  /// same as it wouldn't for anyone else. `campaignDrafts` is `null` in the
+  /// in-memory-degraded mode — same graceful fallback every other account
+  /// feature uses.
   Future<List<World>> _loadWorlds() async {
     final campaignDrafts = widget.controller.campaignDrafts;
     final officialSlugs = campaignDrafts != null
-        ? (await campaignDrafts.listOfficial()).map((s) => s.slug).toList()
+        ? (await campaignDrafts.listOfficial())
+            .where((s) => s.isPublished)
+            .map((s) => s.slug)
+            .toList()
         : const <String>[];
     final slugs = {..._availableWorldSlugs, ...officialSlugs};
     return Future.wait(slugs.map(widget.controller.loadWorldInfo));
@@ -316,19 +322,11 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
     );
   }
 
-  void _showComingSoon() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AetherColors.surfaceRaised,
-        content: Text('Todavía no está disponible.', style: TextStyle(color: AetherColors.parchment)),
-      ),
-    );
+  void _openExplorar() {
+    Navigator.of(context).push(ExplorarScreen.route(controller: widget.controller));
   }
 
-  /// What each [HomeNavDestination] does from the home dashboard —
-  /// "Explorar" is the one gap flagged rather than invented: no "discover
-  /// other players' stories" feature exists yet.
+  /// What each [HomeNavDestination] does from the home dashboard.
   void _onNavSelect(HomeNavDestination destination, List<World> worlds) {
     switch (destination) {
       case HomeNavDestination.inicio:
@@ -338,7 +336,7 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
       case HomeNavDestination.escribir:
         _openEditor();
       case HomeNavDestination.explorar:
-        _showComingSoon();
+        _openExplorar();
       case HomeNavDestination.codice:
         _openCodex();
       case HomeNavDestination.ajustes:

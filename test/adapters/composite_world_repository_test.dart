@@ -27,12 +27,14 @@ class _FakeCampaignDraftRepository implements CampaignDraftRepositoryPort {
   final Map<String, CampaignDraft> officialBySlug;
 
   @override
-  Future<CampaignDraft?> loadOfficialBySlug(String slug) async => officialBySlug[slug];
+  Future<CampaignDraft?> loadPublishedBySlug(String slug) async => officialBySlug[slug];
 
   @override
   Future<List<CampaignDraftSummary>> listMine() => throw UnimplementedError();
   @override
   Future<List<CampaignDraftSummary>> listOfficial() => throw UnimplementedError();
+  @override
+  Future<List<CampaignDraftSummary>> listExplorable() => throw UnimplementedError();
   @override
   Future<CampaignDraft?> loadDraft(String id) => throw UnimplementedError();
   @override

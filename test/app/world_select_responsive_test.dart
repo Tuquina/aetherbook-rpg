@@ -98,14 +98,17 @@ void main() {
       expect(find.textContaining('Todas'), findsOneWidget);
     });
 
-    testWidgets('desktop sidebar "Explorar" shows a coming-soon snackbar, not a crash',
-        (tester) async {
+    testWidgets('desktop sidebar "Explorar" opens ExplorarScreen, not a crash', (tester) async {
       await _pumpAt(tester, const Size(1280, 900));
 
       await tester.tap(find.text('Explorar'));
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.text('Todavía no está disponible.'), findsOneWidget);
+      // No `campaignDrafts` wired in this test's controller (in-memory-only
+      // mode) — ExplorarScreen degrades to its empty state instead of
+      // crashing, same fallback every other account feature uses.
+      expect(find.text('Todavía no hay novelas publicadas por la comunidad.'), findsOneWidget);
     });
   });
 

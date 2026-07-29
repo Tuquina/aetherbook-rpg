@@ -28,13 +28,21 @@ abstract class CampaignDraftRepositoryPort {
   /// isn't this user's — RLS handles that transparently).
   Future<CampaignDraft?> loadDraft(String id);
 
-  /// One *official* draft by [slug] (`CampaignDraft.officialModule != null`),
-  /// graph included, or `null` if there isn't one — used by
+  /// One *published* draft by [slug] — official or an ordinary community
+  /// novel, doesn't matter which — or `null` if there isn't one. Used by
   /// `CompositeWorldRepository` to resolve a world slug the bundled assets
-  /// don't recognize. Relies on RLS the same way [listOfficial] does: a
-  /// published campaign resolves for anyone, an unpublished one only for an
-  /// admin.
-  Future<CampaignDraft?> loadOfficialBySlug(String slug);
+  /// don't recognize, and by `ExplorarScreen` to open a community novel.
+  /// Always filtered to `status = 'published'`: an unpublished draft is
+  /// never playable this way, admin or not — reviewing/editing one before
+  /// publish is the editor's job (`loadDraft`/[listOfficial]), not real
+  /// play's.
+  Future<CampaignDraft?> loadPublishedBySlug(String slug);
+
+  /// Every published community novel (`officialModule == null`), any
+  /// author, newest-updated first — "Explorar" (Admin Stage 4). Official
+  /// campaigns never appear here; they live in the real "Historias
+  /// completas"/"Historias pre-armadas" catalog once published instead.
+  Future<List<CampaignDraftSummary>> listExplorable();
 
   /// Creates a new, empty draft based on [baseWorldSlug] and returns it
   /// (with its persisted `id`/`slug` set). [title] seeds both the display

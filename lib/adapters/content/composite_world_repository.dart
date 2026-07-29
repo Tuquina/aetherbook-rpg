@@ -8,12 +8,13 @@ import '../../core/world/world.dart';
 import '../../ports/campaign_draft_repository_port.dart';
 import '../../ports/world_repository_port.dart';
 
-/// Resolves a world slug against the bundled assets first, falling back to
-/// an admin-authored official `campaign_drafts` row (Admin Stage 3) when the
-/// assets don't recognize it — the one integration point that lets
-/// `GameController.start`/`loadWorldInfo` play a DB-sourced official
-/// campaign without knowing the difference, since both paths end up handing
-/// back a plain [World].
+/// Resolves a world slug against the bundled assets first, falling back to a
+/// published `campaign_drafts` row (admin-authored official, Admin Stage 3,
+/// or an ordinary published community novel, Admin Stage 4) when the assets
+/// don't recognize it — the one integration point that lets
+/// `GameController.start`/`loadWorldInfo` play a DB-sourced campaign without
+/// knowing the difference, since both paths end up handing back a plain
+/// [World].
 class CompositeWorldRepository implements WorldRepositoryPort {
   CompositeWorldRepository({
     required WorldRepositoryPort assets,
@@ -29,14 +30,14 @@ class CompositeWorldRepository implements WorldRepositoryPort {
     try {
       return await _assets.loadWorld(slug);
     } catch (_) {
-      // Not a bundled asset — fall through to the official-campaign lookup
+      // Not a bundled asset — fall through to the published-campaign lookup
       // below rather than surfacing whatever asset-loading error this was
       // (a missing file is the expected case here, not a real failure).
     }
 
-    final draft = await _campaignDrafts.loadOfficialBySlug(slug);
+    final draft = await _campaignDrafts.loadPublishedBySlug(slug);
     if (draft == null) {
-      throw StateError('No world or official campaign found for slug "$slug"');
+      throw StateError('No world or published campaign found for slug "$slug"');
     }
     World? baseWorld;
     final baseWorldSlug = draft.baseWorldSlug;

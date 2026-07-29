@@ -54,15 +54,27 @@ class SupabaseCampaignDraftAdapter implements CampaignDraftRepositoryPort {
   }
 
   @override
-  Future<CampaignDraft?> loadOfficialBySlug(String slug) async {
+  Future<CampaignDraft?> loadPublishedBySlug(String slug) async {
     final row = await _client
         .from('campaign_drafts')
         .select()
         .eq('slug', slug)
-        .not('official_module', 'is', null)
+        .eq('status', CampaignDraftStatus.published.toString())
         .maybeSingle();
     if (row == null) return null;
     return campaignDraftFromRow(row);
+  }
+
+  @override
+  Future<List<CampaignDraftSummary>> listExplorable() async {
+    final rows = await _client
+        .from('campaign_drafts')
+        .select(
+            'id, slug, title, base_world_slug, status, cover_image_url, graph, updated_at, official_module')
+        .eq('status', CampaignDraftStatus.published.toString())
+        .filter('official_module', 'is', null)
+        .order('updated_at', ascending: false);
+    return [for (final row in rows) campaignDraftSummaryFromRow(row)];
   }
 
   @override
