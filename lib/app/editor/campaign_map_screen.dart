@@ -486,6 +486,8 @@ class _Header extends StatelessWidget {
                 Text(
                   '$worldName · ${published ? 'publicada' : 'borrador'}',
                   style: EditorType.meta,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
