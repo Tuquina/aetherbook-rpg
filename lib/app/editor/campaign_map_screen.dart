@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../core/authoring/campaign_checklist.dart';
 import '../../core/authoring/campaign_draft.dart';
 import '../../core/authoring/campaign_graph_edits.dart';
 import '../../core/narrative/story_choice.dart';
@@ -23,6 +24,7 @@ import 'design/editor_tokens.dart';
 import 'editor_base_worlds.dart';
 import 'ending_editor_screen.dart';
 import 'hub_editor_screen.dart';
+import 'rights_notice_dialog.dart';
 import 'widgets/chip_list_field.dart';
 
 /// The campaign editor's map — a `StoryGraph` under construction (V2 design
@@ -258,6 +260,61 @@ class _CampaignMapScreenState extends State<CampaignMapScreen> {
     }
   }
 
+  /// The header's "Publicar" button (V2 design prototype §9a/§9i/§10c
+  /// end-to-end): shows the checklist first if anything still blocks
+  /// publishing, otherwise the rights notice, and only calls
+  /// [CampaignDraftRepositoryPort.publishDraft] once the author accepts it.
+  Future<void> _publish() async {
+    final draft = _draft;
+    if (draft == null) return;
+    if (CampaignChecklist.blocking(draft).isNotEmpty) {
+      await _openChecklist();
+      return;
+    }
+    final accepted = await RightsNoticeDialog.open(
+      context,
+      storyTitle: draft.title.isEmpty ? 'Sin título' : draft.title,
+    );
+    if (!accepted) return;
+    await widget.campaignDrafts.publishDraft(draft.id!, licenseAcceptedAt: DateTime.now());
+    if (!mounted) return;
+    final reloaded = await widget.campaignDrafts.loadDraft(widget.draftId);
+    if (!mounted || reloaded == null) return;
+    setState(() => _draft = reloaded);
+  }
+
+  Future<void> _unpublish() async {
+    final draft = _draft;
+    if (draft == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AetherColors.surface,
+        title: Text('¿Despublicar esta historia?', style: AetherType.title.copyWith(fontSize: 16)),
+        content: Text(
+          'Deja de aparecer en la biblioteca. Las partidas ya empezadas por otros lectores pueden terminarse.',
+          style: AetherType.body.copyWith(fontSize: 13, color: AetherColors.parchmentDim),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('Cancelar', style: EditorType.button.copyWith(color: AetherColors.parchmentDim)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Despublicar', style: EditorType.button.copyWith(color: AetherColors.failure)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await widget.campaignDrafts.unpublishDraft(draft.id!);
+    if (!mounted) return;
+    final reloaded = await widget.campaignDrafts.loadDraft(widget.draftId);
+    if (!mounted || reloaded == null) return;
+    setState(() => _draft = reloaded);
+  }
+
   void _showComingSoon(String what) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -300,7 +357,8 @@ class _CampaignMapScreenState extends State<CampaignMapScreen> {
                   onBack: () => Navigator.of(context).pop(),
                   onCover: _openCover,
                   onPlaytest: () => _showComingSoon('Probar el borrador'),
-                  onPublish: _openChecklist,
+                  onPublish: draft.isPublished ? _unpublish : _publish,
+                  onOpenChecklist: _openChecklist,
                 ),
                 Expanded(
                   child: desktop
@@ -358,6 +416,7 @@ class _Header extends StatelessWidget {
     required this.onCover,
     required this.onPlaytest,
     required this.onPublish,
+    required this.onOpenChecklist,
   });
 
   final String title;
@@ -369,7 +428,14 @@ class _Header extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onCover;
   final VoidCallback onPlaytest;
+
+  /// Publishes (or, once already published, unpublishes) — see
+  /// `_CampaignMapScreenState._publish`/`._unpublish`.
   final VoidCallback onPublish;
+
+  /// Always opens the checklist, regardless of publish state — the
+  /// dangling-refs badge's own tap target.
+  final VoidCallback onOpenChecklist;
 
   @override
   Widget build(BuildContext context) {
@@ -407,7 +473,7 @@ class _Header extends StatelessWidget {
           const Spacer(),
           if (danglingCount > 0) ...[
             InkWell(
-              onTap: onPublish,
+              onTap: onOpenChecklist,
               borderRadius: AetherRadius.allSm,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: AetherSpace.sm, vertical: 6),
@@ -454,15 +520,33 @@ class _Header extends StatelessWidget {
             child: Text('Probar desde el inicio', style: EditorType.button),
           ),
           const SizedBox(width: AetherSpace.sm),
-          FilledButton(
-            onPressed: onPublish,
-            style: FilledButton.styleFrom(
-              backgroundColor: AetherColors.goldBright,
-              foregroundColor: AetherColors.void_,
-              shape: RoundedRectangleBorder(borderRadius: AetherRadius.allMd),
+          if (published)
+            OutlinedButton(
+              onPressed: onPublish,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AetherColors.success,
+                side: BorderSide(color: AetherColors.success.withValues(alpha: 0.5)),
+                shape: RoundedRectangleBorder(borderRadius: AetherRadius.allMd),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.check_circle_rounded, size: 15, color: AetherColors.success),
+                  const SizedBox(width: 6),
+                  Text('Publicada', style: EditorType.button.copyWith(color: AetherColors.success)),
+                ],
+              ),
+            )
+          else
+            FilledButton(
+              onPressed: onPublish,
+              style: FilledButton.styleFrom(
+                backgroundColor: AetherColors.goldBright,
+                foregroundColor: AetherColors.void_,
+                shape: RoundedRectangleBorder(borderRadius: AetherRadius.allMd),
+              ),
+              child: Text('Publicar', style: EditorType.button.copyWith(color: AetherColors.void_)),
             ),
-            child: Text('Publicar', style: EditorType.button.copyWith(color: AetherColors.void_)),
-          ),
         ],
       ),
     );
