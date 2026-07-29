@@ -6,6 +6,7 @@ import '../../core/narrative/hub_activity.dart';
 import '../../core/narrative/story_graph.dart';
 import '../../core/narrative/story_node.dart';
 import '../../core/world/world.dart';
+import '../design/breakpoints.dart';
 import '../design/tokens.dart';
 import '../design/typography.dart';
 import 'design/editor_tokens.dart';
@@ -107,41 +108,60 @@ class _PlaytestBanner extends StatelessWidget {
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: AetherSpace.lg),
       color: const Color(0xFFD8B65E).withValues(alpha: 0.12),
-      child: Row(
-        children: [
-          const Icon(Icons.science_rounded, size: 17, color: Color(0xFFD8B65E)),
-          const SizedBox(width: AetherSpace.sm),
-          Text('ESTÁS PROBANDO UN BORRADOR',
-              style: EditorType.overline.copyWith(color: const Color(0xFFD8B65E), letterSpacing: 1.6)),
-          const SizedBox(width: AetherSpace.md),
-          Expanded(
-            child: Text('Nada de esto se guarda como partida', style: EditorType.meta),
-          ),
-          InkWell(
-            onTap: onRestart,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.restart_alt_rounded, size: 16, color: AetherColors.parchmentDim),
-                const SizedBox(width: 6),
-                Text('Empezar de nuevo', style: EditorType.button.copyWith(color: AetherColors.parchmentDim)),
-              ],
+      // The full sentence + both labeled actions never fit a 375px row (the
+      // same overflow-banner-on-top-of-the-overflow-warning irony this
+      // fixes elsewhere) -- below the tablet breakpoint, the explanatory
+      // sentence drops and "restart" shrinks to icon-only; "Volver al
+      // mapa" stays labeled since it's the one way out of playtest mode.
+      child: LayoutBuilder(builder: (context, constraints) {
+        final compact = constraints.maxWidth < AetherBreakpoints.tablet;
+        return Row(
+          children: [
+            const Icon(Icons.science_rounded, size: 17, color: Color(0xFFD8B65E)),
+            const SizedBox(width: AetherSpace.sm),
+            Text(compact ? 'PRUEBA' : 'ESTÁS PROBANDO UN BORRADOR',
+                style: EditorType.overline.copyWith(color: const Color(0xFFD8B65E), letterSpacing: 1.6)),
+            const SizedBox(width: AetherSpace.md),
+            if (!compact)
+              Expanded(
+                child: Text('Nada de esto se guarda como partida', style: EditorType.meta),
+              )
+            else
+              const Spacer(),
+            if (compact)
+              IconButton(
+                onPressed: onRestart,
+                tooltip: 'Empezar de nuevo',
+                icon: const Icon(Icons.restart_alt_rounded, size: 18, color: AetherColors.parchmentDim),
+              )
+            else
+              InkWell(
+                onTap: onRestart,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.restart_alt_rounded, size: 16, color: AetherColors.parchmentDim),
+                    const SizedBox(width: 6),
+                    Text('Empezar de nuevo',
+                        style: EditorType.button.copyWith(color: AetherColors.parchmentDim)),
+                  ],
+                ),
+              ),
+            SizedBox(width: compact ? AetherSpace.sm : AetherSpace.lg),
+            InkWell(
+              onTap: onBack,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.edit_rounded, size: 16, color: AetherColors.goldBright),
+                  const SizedBox(width: 6),
+                  Text('Volver al mapa', style: EditorType.button.copyWith(color: AetherColors.goldBright)),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: AetherSpace.lg),
-          InkWell(
-            onTap: onBack,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.edit_rounded, size: 16, color: AetherColors.goldBright),
-                const SizedBox(width: 6),
-                Text('Volver al mapa', style: EditorType.button.copyWith(color: AetherColors.goldBright)),
-              ],
-            ),
-          ),
-        ],
-      ),
+          ],
+        );
+      }),
     );
   }
 }

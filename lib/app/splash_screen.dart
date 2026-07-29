@@ -163,33 +163,50 @@ class _SplashScreenState extends State<SplashScreen>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 440),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              AnimatedBuilder(
-                                animation: _c,
-                                builder: (context, _) =>
-                                    BrandMark(size: 66, filled: false, glow: _c.value),
+                        // Centered within the top *half* of the viewport
+                        // (not flush against the top edge), so its own
+                        // center sits at roughly 1/4 of the screen height —
+                        // an explicit height, not `Expanded`, for the same
+                        // "no flex inside a scrollable's unbounded main
+                        // axis" reason the rest of this layout avoids it.
+                        // The bottom (CTA) block's own flush-to-bottom
+                        // behavior is untouched: with only two children left
+                        // in this `spaceBetween` Column, the single gap
+                        // between them still absorbs 100% of the leftover
+                        // space, so the CTA block's bottom edge still lands
+                        // exactly on the viewport's bottom edge either way.
+                        SizedBox(
+                          height: viewport.maxHeight * 0.5,
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 440),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  AnimatedBuilder(
+                                    animation: _c,
+                                    builder: (context, _) =>
+                                        BrandMark(size: 66, filled: false, glow: _c.value),
+                                  ),
+                                  const SizedBox(height: AetherSpace.xl),
+                                  AnimatedBuilder(
+                                    animation: _c,
+                                    builder: (context, _) => _Wordmark(shimmer: _c.value),
+                                  ),
+                                  const SizedBox(height: AetherSpace.lg),
+                                  const _OrnamentDivider(),
+                                  const SizedBox(height: AetherSpace.lg),
+                                  Text(
+                                    'Un multiverso que se escribe contigo.',
+                                    textAlign: TextAlign.center,
+                                    style: AetherType.body.copyWith(
+                                        color: AetherColors.parchmentDim,
+                                        fontSize: 15,
+                                        fontStyle: FontStyle.italic),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: AetherSpace.xl),
-                              AnimatedBuilder(
-                                animation: _c,
-                                builder: (context, _) => _Wordmark(shimmer: _c.value),
-                              ),
-                              const SizedBox(height: AetherSpace.lg),
-                              const _OrnamentDivider(),
-                              const SizedBox(height: AetherSpace.lg),
-                              Text(
-                                'Un multiverso que se escribe contigo.',
-                                textAlign: TextAlign.center,
-                                style: AetherType.body.copyWith(
-                                    color: AetherColors.parchmentDim,
-                                    fontSize: 15,
-                                    fontStyle: FontStyle.italic),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                         ConstrainedBox(

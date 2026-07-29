@@ -691,7 +691,14 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: AetherSpace.sm,
               crossAxisSpacing: AetherSpace.sm,
-              childAspectRatio: 1.6,
+              // The title now wraps to 2 lines instead of ellipsizing (V2
+              // Stage 8 follow-up -- "Historias comp..." was illegible). A
+              // fixed aspect ratio can't grow to fit that second line at a
+              // large OS text-scale setting, especially on the narrower
+              // desktop columns (crossAxisCount 3), so the ratio itself
+              // shrinks (taller cards) as text-scale grows.
+              childAspectRatio:
+                  _moduleCardAspectRatio(MediaQuery.textScalerOf(context).scale(1.0), crossAxisCount),
               children: [
                 for (final module in StoryModule.values)
                   _ModuleCard(
@@ -1078,6 +1085,16 @@ class _HowToPlayButtonState extends State<_HowToPlayButton> {
 /// One of the three story-type tiles. Shows the module's icon, title,
 /// teaser and how many campaigns live inside it; dims and shows a lock when
 /// the module isn't playable yet.
+/// Card grows taller (smaller ratio) as text-scale grows, more aggressively
+/// on the narrower desktop columns -- see the comment at the grid's
+/// `childAspectRatio` call site.
+double _moduleCardAspectRatio(double textScale, int crossAxisCount) {
+  if (textScale <= 1.0) return 1.6;
+  final narrowPenalty = crossAxisCount >= 3 ? 0.55 : 0.35;
+  final ratio = 1.6 - (textScale - 1.0) * narrowPenalty;
+  return ratio.clamp(1.05, 1.6);
+}
+
 class _ModuleCard extends StatefulWidget {
   const _ModuleCard({
     required this.module,
@@ -1153,65 +1170,50 @@ class _ModuleCardState extends State<_ModuleCard> {
                   padding: const EdgeInsets.all(AetherSpace.lg),
                   child: Opacity(
                     opacity: enabled ? 1 : 0.6,
-                    child: Row(
+                    // The title used to share its row with the icon and the
+                    // count pill, squeezed down to one ellipsized line on
+                    // anything narrower than a full-width phone list (the
+                    // 2-column tablet grid, mainly — "Historias comp...").
+                    // Icon and pill now sit on their own header row, so the
+                    // title gets the card's full width to wrap into instead:
+                    // "Historias / completas", never a mid-word cut.
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 46,
-                          height: 46,
-                          decoration: BoxDecoration(
-                            color: style.accent
-                                .withValues(alpha: enabled ? 0.16 : 0.08),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                                color: style.accent.withValues(alpha: 0.5)),
-                          ),
-                          child: Icon(style.icon,
-                              color: enabled ? style.bright : style.accent,
-                              size: 22),
-                        ),
-                        const SizedBox(width: AetherSpace.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(module.title,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: AetherType.title
-                                            .copyWith(fontSize: 17)),
-                                  ),
-                                  // Flexible + FittedBox(scaleDown): at a
-                                  // large OS text-scale setting, the pill's
-                                  // own "N historias" label can be wider than
-                                  // this fixed-aspect-ratio card has room for
-                                  // (V2 Stage 8) -- shrinks instead of
-                                  // overflowing the Row horizontally.
-                                  if (enabled)
-                                    Flexible(
-                                      child: FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: _CountPill(
-                                            count: widget.count, color: style.accent),
-                                      ),
-                                    )
-                                  else
-                                    const Icon(Icons.lock_outline_rounded,
-                                        size: 16,
-                                        color: AetherColors.parchmentFaint),
-                                ],
+                        Row(
+                          children: [
+                            Container(
+                              width: 46,
+                              height: 46,
+                              decoration: BoxDecoration(
+                                color: style.accent
+                                    .withValues(alpha: enabled ? 0.16 : 0.08),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                    color: style.accent.withValues(alpha: 0.5)),
                               ),
-                              const SizedBox(height: 4),
-                              Text(module.teaser,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AetherType.caption),
-                            ],
-                          ),
+                              child: Icon(style.icon,
+                                  color: enabled ? style.bright : style.accent,
+                                  size: 22),
+                            ),
+                            const Spacer(),
+                            if (enabled)
+                              _CountPill(count: widget.count, color: style.accent)
+                            else
+                              const Icon(Icons.lock_outline_rounded,
+                                  size: 16, color: AetherColors.parchmentFaint),
+                          ],
                         ),
+                        const SizedBox(height: AetherSpace.sm),
+                        Text(module.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AetherType.title.copyWith(fontSize: 17)),
+                        const SizedBox(height: 4),
+                        Text(module.teaser,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AetherType.caption),
                       ],
                     ),
                   ),

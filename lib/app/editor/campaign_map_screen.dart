@@ -374,6 +374,7 @@ class _CampaignMapScreenState extends State<CampaignMapScreen> {
                   danglingCount: danglingCount,
                   saving: _saving,
                   updatedAt: draft.updatedAt,
+                  compact: !desktop,
                   onBack: () => Navigator.of(context).pop(),
                   onCover: _openCover,
                   onPlaytest: _openPlaytest,
@@ -432,6 +433,7 @@ class _Header extends StatelessWidget {
     required this.danglingCount,
     required this.saving,
     required this.updatedAt,
+    required this.compact,
     required this.onBack,
     required this.onCover,
     required this.onPlaytest,
@@ -445,6 +447,16 @@ class _Header extends StatelessWidget {
   final int danglingCount;
   final bool saving;
   final DateTime? updatedAt;
+
+  /// Below the `desktop` breakpoint (V2 §2a) this toolbar's full content —
+  /// dangling-refs label, "Guardado hace X", a labeled playtest button, a
+  /// labeled publish button — never fits one 375px-wide row (the Flutter
+  /// debug overflow banner confirmed it: real clipped content, not just a
+  /// dev-mode warning). Compact mode drops the save-timestamp text and
+  /// shrinks the dangling chip and playtest button to icon-only with
+  /// tooltips; the publish button stays labeled since it's a single word
+  /// either way ("Publicar"/"Publicada").
+  final bool compact;
   final VoidCallback onBack;
   final VoidCallback onCover;
   final VoidCallback onPlaytest;
@@ -460,8 +472,9 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 58,
-      padding: const EdgeInsets.symmetric(horizontal: AetherSpace.lg),
+      constraints: BoxConstraints(minHeight: compact ? 0 : 58),
+      padding: EdgeInsets.symmetric(
+          horizontal: AetherSpace.lg, vertical: compact ? AetherSpace.sm : 0),
       decoration: const BoxDecoration(
         color: AetherColors.ink,
         border: Border(bottom: BorderSide(color: AetherColors.hairline)),
@@ -473,26 +486,38 @@ class _Header extends StatelessWidget {
             icon: const Icon(Icons.arrow_back_rounded, color: AetherColors.goldSoft),
           ),
           const SizedBox(width: AetherSpace.sm),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(title,
+          Expanded(
+            // Compact mode drops the world/status subtitle (the publish
+            // pill already says as much) and lets the title itself wrap to
+            // 2 lines instead of ellipsizing at a handful of characters —
+            // the trailing icon cluster alone eats most of a 375px row, so
+            // a single ellipsized line left almost nothing for the title
+            // ("Los…" for "Los nombres que devora el cielo").
+            child: compact
+                ? Text(title,
                     style: const TextStyle(
-                        fontFamily: 'Marcellus', fontSize: 17, color: AetherColors.goldBright),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
-                Text(
-                  '$worldName · ${published ? 'publicada' : 'borrador'}',
-                  style: EditorType.meta,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+                        fontFamily: 'Marcellus', fontSize: 16, color: AetherColors.goldBright),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis)
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(title,
+                          style: const TextStyle(
+                              fontFamily: 'Marcellus', fontSize: 17, color: AetherColors.goldBright),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                      Text(
+                        '$worldName · ${published ? 'publicada' : 'borrador'}',
+                        style: EditorType.meta,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
           ),
-          const Spacer(),
+          const SizedBox(width: AetherSpace.sm),
           if (danglingCount > 0) ...[
             InkWell(
               onTap: onOpenChecklist,
@@ -509,38 +534,74 @@ class _Header extends StatelessWidget {
                   children: [
                     const Icon(Icons.error_outline_rounded, size: 15, color: AetherColors.failure),
                     const SizedBox(width: 6),
-                    Text('$danglingCount cabo${danglingCount == 1 ? '' : 's'} suelto${danglingCount == 1 ? '' : 's'}',
+                    Text(
+                        compact
+                            ? '$danglingCount'
+                            : '$danglingCount cabo${danglingCount == 1 ? '' : 's'} suelto${danglingCount == 1 ? '' : 's'}',
                         style: EditorType.pill.copyWith(color: AetherColors.failure)),
                   ],
                 ),
               ),
             ),
-            const SizedBox(width: AetherSpace.md),
+            const SizedBox(width: AetherSpace.sm),
           ],
-          Text(
-            saving
-                ? 'Guardando…'
-                : updatedAt == null
-                    ? ''
-                    : 'Guardado ${relativeTimeLabel(updatedAt!)}',
-            style: EditorType.meta,
-          ),
-          const SizedBox(width: AetherSpace.md),
-          IconButton(
-            onPressed: onCover,
-            tooltip: 'Portada e información',
-            icon: const Icon(Icons.image_outlined, color: AetherColors.goldSoft),
-          ),
-          const SizedBox(width: AetherSpace.sm),
-          OutlinedButton(
-            onPressed: onPlaytest,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AetherColors.goldBright,
-              side: const BorderSide(color: AetherColors.hairlineStrong),
-              shape: RoundedRectangleBorder(borderRadius: AetherRadius.allMd),
+          if (!compact) ...[
+            Text(
+              saving
+                  ? 'Guardando…'
+                  : updatedAt == null
+                      ? ''
+                      : 'Guardado ${relativeTimeLabel(updatedAt!)}',
+              style: EditorType.meta,
             ),
-            child: Text('Probar desde el inicio', style: EditorType.button),
-          ),
+            const SizedBox(width: AetherSpace.md),
+            IconButton(
+              onPressed: onCover,
+              tooltip: 'Portada e información',
+              icon: const Icon(Icons.image_outlined, color: AetherColors.goldSoft),
+            ),
+            const SizedBox(width: AetherSpace.sm),
+            OutlinedButton(
+              onPressed: onPlaytest,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AetherColors.goldBright,
+                side: const BorderSide(color: AetherColors.hairlineStrong),
+                shape: RoundedRectangleBorder(borderRadius: AetherRadius.allMd),
+              ),
+              child: Text('Probar desde el inicio', style: EditorType.button),
+            ),
+          ] else
+            // "Portada" and "Probar desde el inicio" both fold into one
+            // menu on mobile -- neither needs to be one tap away the way
+            // publishing does, and spelling both out as separate buttons
+            // is what was squeezing the title down to a few characters.
+            PopupMenuButton<void>(
+              tooltip: 'Más opciones',
+              icon: const Icon(Icons.more_vert_rounded, color: AetherColors.goldSoft),
+              color: AetherColors.surfaceRaised,
+              itemBuilder: (context) => [
+                PopupMenuItem<void>(
+                  onTap: onCover,
+                  child: const Row(
+                    children: [
+                      Icon(Icons.image_outlined, color: AetherColors.goldSoft, size: 18),
+                      SizedBox(width: AetherSpace.sm),
+                      Text('Portada e información'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<void>(
+                  onTap: onPlaytest,
+                  child: const Row(
+                    children: [
+                      Icon(Icons.play_circle_outline_rounded, color: AetherColors.goldBright, size: 18),
+                      SizedBox(width: AetherSpace.sm),
+                      Text('Probar desde el inicio'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           const SizedBox(width: AetherSpace.sm),
           if (published)
             OutlinedButton(
@@ -605,6 +666,7 @@ class _DesktopBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final layers = CampaignGraphEdits.bfsLayers(draft.graph);
     final depths = layers.keys.toList()..sort();
+    final sceneNumbers = _sceneNumbers(draft.graph);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -625,6 +687,7 @@ class _DesktopBody extends StatelessWidget {
                       draft: draft,
                       selectedNodeId: selectedNodeId,
                       onSelect: onSelect,
+                      sceneNumbers: sceneNumbers,
                     ),
                     const SizedBox(width: AetherSpace.xl),
                   ],
@@ -843,18 +906,52 @@ class _SceneRow extends StatelessWidget {
   }
 }
 
+/// A stable 1-based locator per node id — "escena N" — so an author can
+/// reference one out loud regardless of which view (desktop's BFS-layer
+/// columns vs. mobile's flat list) happens to be showing it. Keyed off the
+/// graph's own map order (== JSON/insertion order), the one ordering every
+/// view already shares, rather than each view's own display order.
+Map<String, int> _sceneNumbers(StoryGraph graph) => {
+      for (final (i, id) in graph.nodes.keys.toList().indexed) id: i + 1,
+    };
+
+/// The "escena N" locator badge — sits top-right, at the same height as a
+/// card's kind label, on both the desktop [_NodeCard] and mobile
+/// [_MobileNodeRow].
+class _SceneNumberBadge extends StatelessWidget {
+  const _SceneNumberBadge({required this.number});
+
+  final int number;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: AetherColors.surface,
+        borderRadius: AetherRadius.allPill,
+        border: Border.all(color: AetherColors.hairlineStrong),
+      ),
+      child: Text('#$number',
+          style: EditorType.meta.copyWith(fontSize: 10, color: AetherColors.parchmentFaint)),
+    );
+  }
+}
+
 class _NodeColumn extends StatelessWidget {
   const _NodeColumn({
     required this.nodeIds,
     required this.draft,
     required this.selectedNodeId,
     required this.onSelect,
+    required this.sceneNumbers,
   });
 
   final List<String> nodeIds;
   final CampaignDraft draft;
   final String? selectedNodeId;
   final ValueChanged<String> onSelect;
+  final Map<String, int> sceneNumbers;
 
   @override
   Widget build(BuildContext context) {
@@ -871,6 +968,7 @@ class _NodeColumn extends StatelessWidget {
               selected: id == selectedNodeId,
               onTap: () => onSelect(id),
               summary: _summaryFor(draft.graph.nodes[id]!, draft),
+              sceneNumber: sceneNumbers[id]!,
             ),
           ),
       ],
@@ -895,6 +993,7 @@ class _NodeCard extends StatelessWidget {
     required this.selected,
     required this.onTap,
     required this.summary,
+    required this.sceneNumber,
   });
 
   final StoryNode node;
@@ -903,6 +1002,7 @@ class _NodeCard extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   final String summary;
+  final int sceneNumber;
 
   @override
   Widget build(BuildContext context) {
@@ -940,6 +1040,8 @@ class _NodeCard extends StatelessWidget {
                     style: EditorType.kicker.copyWith(color: color),
                   ),
                 ),
+                const SizedBox(width: 6),
+                _SceneNumberBadge(number: sceneNumber),
               ],
             ),
             const SizedBox(height: AetherSpace.sm),
@@ -1016,6 +1118,7 @@ class _MobileBodyState extends State<_MobileBody> {
   @override
   Widget build(BuildContext context) {
     final entries = widget.draft.graph.nodes.entries.toList();
+    final sceneNumbers = _sceneNumbers(widget.draft.graph);
     return Stack(
       children: [
         ListView(
@@ -1039,6 +1142,7 @@ class _MobileBodyState extends State<_MobileBody> {
                   title: widget.draft.titleForNode(entry.key),
                   isStart: entry.key == widget.draft.graph.startNodeId,
                   onTap: () => _openInspector(context, entry.key),
+                  sceneNumber: sceneNumbers[entry.key]!,
                 ),
               ),
           ],
@@ -1144,12 +1248,14 @@ class _MobileNodeRow extends StatelessWidget {
     required this.title,
     required this.isStart,
     required this.onTap,
+    required this.sceneNumber,
   });
 
   final StoryNode node;
   final String title;
   final bool isStart;
   final VoidCallback onTap;
+  final int sceneNumber;
 
   @override
   Widget build(BuildContext context) {
@@ -1173,8 +1279,12 @@ class _MobileNodeRow extends StatelessWidget {
                 if (isStart) const SizedBox(width: 6),
                 Icon(EditorNodeColors.kindIcon(node), size: 15, color: color),
                 const SizedBox(width: 6),
-                Text(EditorNodeColors.kindLabel(node).toUpperCase(),
-                    style: EditorType.kicker.copyWith(color: color)),
+                Expanded(
+                  child: Text(EditorNodeColors.kindLabel(node).toUpperCase(),
+                      style: EditorType.kicker.copyWith(color: color)),
+                ),
+                const SizedBox(width: 6),
+                _SceneNumberBadge(number: sceneNumber),
               ],
             ),
             const SizedBox(height: AetherSpace.sm),

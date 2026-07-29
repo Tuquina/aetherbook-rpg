@@ -301,26 +301,33 @@ class _DraftCard extends StatelessWidget {
             LibraryThumbnail(imageUrl: summary.coverImageUrl, accent: accent, size: 44),
             const SizedBox(width: AetherSpace.md),
             Expanded(
+              // Title on its own full-width line so it can wrap to 2 lines
+              // instead of ellipsizing mid-word next to the status pill
+              // ("Los nombres que d…") -- the pill moves down next to the
+              // scene count/timestamp instead, same fix as `_ModuleCard`.
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(
+                    summary.title.isEmpty ? 'Sin título' : summary.title,
+                    style: AetherType.title.copyWith(fontSize: 16),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
                   Row(
                     children: [
                       Expanded(
                         child: Text(
-                          summary.title.isEmpty ? 'Sin título' : summary.title,
-                          style: AetherType.title.copyWith(fontSize: 16),
+                          '${summary.nodeCount} escenas · ${relativeTimeLabel(summary.updatedAt)}',
+                          style: AetherType.caption,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: AetherSpace.sm),
                       _StatusPill(published: summary.isPublished),
                     ],
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '${summary.nodeCount} escenas · ${relativeTimeLabel(summary.updatedAt)}',
-                    style: AetherType.caption,
                   ),
                 ],
               ),

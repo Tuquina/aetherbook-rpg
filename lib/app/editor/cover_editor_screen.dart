@@ -176,6 +176,7 @@ class _CoverFormState extends State<_CoverForm> {
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 900;
           final formColumn = _FormColumn(
+            narrow: !wide,
             titleController: _titleController,
             synopsisController: _synopsisController,
             isCustomWorld: _isCustomWorld,
@@ -248,6 +249,7 @@ class _CoverFormState extends State<_CoverForm> {
 
 class _FormColumn extends StatelessWidget {
   const _FormColumn({
+    required this.narrow,
     required this.titleController,
     required this.synopsisController,
     required this.isCustomWorld,
@@ -268,6 +270,14 @@ class _FormColumn extends StatelessWidget {
     required this.onOfflinePlayableChanged,
   });
 
+  /// Below the same 900px threshold the outer `LayoutBuilder` uses to stack
+  /// the preview column beneath the form instead of beside it -- the
+  /// world/duration fields below share that same row-vs-column split.
+  /// Forcing them into a fixed 50/50 `Row` at any width narrower than that
+  /// left the world name (a full campaign title for a custom-world
+  /// campaign, not a short base-world name) with no room and overflowing
+  /// past the edge of its column.
+  final bool narrow;
   final TextEditingController titleController;
   final TextEditingController synopsisController;
 
@@ -315,120 +325,141 @@ class _FormColumn extends StatelessWidget {
           decoration: _decoration().copyWith(counterStyle: EditorType.meta),
         ),
         const SizedBox(height: AetherSpace.md),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('En qué mundo pasa', style: EditorType.overline),
-                  const SizedBox(height: 8),
-                  if (isCustomWorld)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: AetherSpace.sm + 2, vertical: AetherSpace.sm + 3),
-                      decoration: BoxDecoration(
-                        color: AetherColors.surface,
-                        borderRadius: AetherRadius.allMd,
-                        border: Border.all(color: worldAccent.withValues(alpha: 0.35)),
+        Builder(builder: (context) {
+          final worldColumn = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('En qué mundo pasa', style: EditorType.overline),
+              const SizedBox(height: 8),
+              if (isCustomWorld)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AetherSpace.sm + 2, vertical: AetherSpace.sm + 3),
+                  decoration: BoxDecoration(
+                    color: AetherColors.surface,
+                    borderRadius: AetherRadius.allMd,
+                    border: Border.all(color: worldAccent.withValues(alpha: 0.35)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(color: worldAccent, shape: BoxShape.circle),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(color: worldAccent, shape: BoxShape.circle),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(customWorldName ?? 'Mundo personalizado',
-                              style: AetherType.body.copyWith(fontSize: 13)),
-                        ],
+                      const SizedBox(width: 8),
+                      // A custom-world campaign's "world" is the campaign
+                      // itself (Admin Stage 3) -- its name is a full title,
+                      // not a short base-world label like "Xianxia", and a
+                      // bare unwrapped `Text` here used to overflow past the
+                      // edge of this half-width column on any narrow
+                      // screen.
+                      Flexible(
+                        child: Text(customWorldName ?? 'Mundo personalizado',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AetherType.body.copyWith(fontSize: 13)),
                       ),
-                    )
-                  else
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: AetherSpace.sm + 2),
-                      decoration: BoxDecoration(
-                        color: AetherColors.surface,
-                        borderRadius: AetherRadius.allMd,
-                        border: Border.all(color: worldAccent.withValues(alpha: 0.35)),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: baseWorldSlug,
-                          isExpanded: true,
-                          dropdownColor: AetherColors.surface,
-                          items: [
-                            for (final world in baseWorlds)
-                              DropdownMenuItem(
-                                value: world.slug,
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                          color: WorldTheme.forWorld(world).accent, shape: BoxShape.circle),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(world.name, style: AetherType.body.copyWith(fontSize: 13)),
-                                  ],
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: AetherSpace.sm + 2),
+                  decoration: BoxDecoration(
+                    color: AetherColors.surface,
+                    borderRadius: AetherRadius.allMd,
+                    border: Border.all(color: worldAccent.withValues(alpha: 0.35)),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: baseWorldSlug,
+                      isExpanded: true,
+                      dropdownColor: AetherColors.surface,
+                      items: [
+                        for (final world in baseWorlds)
+                          DropdownMenuItem(
+                            value: world.slug,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                      color: WorldTheme.forWorld(world).accent, shape: BoxShape.circle),
                                 ),
-                              ),
-                          ],
-                          onChanged: (v) => v == null ? null : onBaseWorldChanged(v),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 6),
-                  Text(
-                      isCustomWorld
-                          ? 'Este mundo fue creado con el constructor de mundo.'
-                          : 'Define los atributos, los colores y el tono del narrador.',
-                      style: EditorType.hint),
-                ],
-              ),
-            ),
-            const SizedBox(width: AetherSpace.lg),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Cuánto dura', style: EditorType.overline),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: AetherSpace.sm + 2),
-                    decoration: BoxDecoration(
-                      color: AetherColors.surface,
-                      borderRadius: AetherRadius.allMd,
-                      border: Border.all(color: AetherColors.hairline),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<int>(
-                        value: durationMinutes,
-                        isExpanded: true,
-                        dropdownColor: AetherColors.surface,
-                        items: [
-                          for (final preset in _durationPresets)
-                            DropdownMenuItem(
-                              value: preset.minutes,
-                              child: Text(preset.label, style: AetherType.body.copyWith(fontSize: 13)),
+                                const SizedBox(width: 8),
+                                Text(world.name, style: AetherType.body.copyWith(fontSize: 13)),
+                              ],
                             ),
-                        ],
-                        onChanged: (v) => v == null ? null : onDurationChanged(v),
-                      ),
+                          ),
+                      ],
+                      onChanged: (v) => v == null ? null : onBaseWorldChanged(v),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Text('Calculado sobre $nodeCount escenas.', style: EditorType.hint),
-                ],
+                ),
+              const SizedBox(height: 6),
+              Text(
+                  isCustomWorld
+                      ? 'Este mundo fue creado con el constructor de mundo.'
+                      : 'Define los atributos, los colores y el tono del narrador.',
+                  style: EditorType.hint),
+            ],
+          );
+          final durationColumn = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Cuánto dura', style: EditorType.overline),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: AetherSpace.sm + 2),
+                decoration: BoxDecoration(
+                  color: AetherColors.surface,
+                  borderRadius: AetherRadius.allMd,
+                  border: Border.all(color: AetherColors.hairline),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: durationMinutes,
+                    isExpanded: true,
+                    dropdownColor: AetherColors.surface,
+                    items: [
+                      for (final preset in _durationPresets)
+                        DropdownMenuItem(
+                          value: preset.minutes,
+                          child: Text(preset.label, style: AetherType.body.copyWith(fontSize: 13)),
+                        ),
+                    ],
+                    onChanged: (v) => v == null ? null : onDurationChanged(v),
+                  ),
+                ),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(height: 6),
+              Text('Calculado sobre $nodeCount escenas.', style: EditorType.hint),
+            ],
+          );
+          // Narrower than the outer form/preview breakpoint (900px, see
+          // `narrow`'s doc comment): each field gets the full row width
+          // instead of splitting it in half.
+          return narrow
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    worldColumn,
+                    const SizedBox(height: AetherSpace.lg),
+                    durationColumn,
+                  ],
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: worldColumn),
+                    const SizedBox(width: AetherSpace.lg),
+                    Expanded(child: durationColumn),
+                  ],
+                );
+        }),
         const SizedBox(height: AetherSpace.lg),
         Text('Imagen de portada', style: EditorType.overline),
         const SizedBox(height: 8),
