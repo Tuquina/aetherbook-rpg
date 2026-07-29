@@ -56,4 +56,11 @@ class StoryGraph {
       },
     );
   }
+
+  /// The inverse of [StoryGraph.fromJson] — exactly the shape the
+  /// `campaign_drafts.graph` jsonb column stores (see `CampaignDraft`).
+  Map<String, dynamic> toJson() => {
+        'start_node': startNodeId,
+        'nodes': nodes.map((id, node) => MapEntry(id, node.toJson())),
+      };
 }

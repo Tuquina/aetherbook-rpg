@@ -85,4 +85,10 @@ class ExtendedConflict {
           (json['repeat_attribute_penalty'] as num?)?.toInt() ?? -2,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'successes_required': successesRequired,
+        'failures_allowed': failuresAllowed,
+        'repeat_attribute_penalty': repeatAttributePenalty,
+      };
 }

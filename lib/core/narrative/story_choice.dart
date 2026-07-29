@@ -35,6 +35,12 @@ class ChoiceOutcome {
       resultText: json['result_text'] as String?,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        if (targetNodeId != null) 'target': targetNodeId,
+        if (effects.isNotEmpty) 'effects': [for (final e in effects) e.toJson()],
+        if (resultText != null) 'result_text': resultText,
+      };
 }
 
 /// A fixed, authored edge out of a [StoryNode] (GDD §4.1). Distinct from a
@@ -167,6 +173,26 @@ class StoryChoice implements Checkable {
     if (value is! Map) return null;
     return ChoiceOutcome.fromJson(value.cast<String, dynamic>());
   }
+
+  Map<String, dynamic> toJson() => {
+        'label': label,
+        'target': targetNodeId,
+        if (gate.toJson() != null) 'gate': gate.toJson(),
+        if (effects.isNotEmpty) 'effects': [for (final e in effects) e.toJson()],
+        if (resultText != null) 'result_text': resultText,
+        if (checkAttribute != null) 'check_attribute': checkAttribute,
+        if (checkDifficulty != null) 'check_difficulty': checkDifficulty,
+        if (onSuccess != null) 'on_success': onSuccess!.toJson(),
+        if (onCriticalSuccess != null)
+          'on_critical_success': onCriticalSuccess!.toJson(),
+        if (onFailure != null) 'on_failure': onFailure!.toJson(),
+        if (requiresConfirmation) 'requires_confirmation': requiresConfirmation,
+        if (confirmationText != null) 'confirmation_text': confirmationText,
+        if (advantageWhen?.toJson() != null)
+          'advantage_when': advantageWhen!.toJson(),
+        if (disadvantageWhen?.toJson() != null)
+          'disadvantage_when': disadvantageWhen!.toJson(),
+      };
 }
 
 List<StateDelta> _effectsFromJson(Object? value) {

@@ -109,3 +109,10 @@ flutter:
         - asset: assets/fonts/Spectral-Regular.ttf
         - asset: assets/fonts/Spectral-Italic.ttf
           style: italic
+    # Campaign editor only (V2 design prototype §9a-9j / EditorType) — a
+    # single variable font (weight+width axes), not four static files: Skia
+    # resolves the requested `FontWeight` against the font's own 'wght' axis,
+    # same "vendored, not CDN-fetched" convention as Marcellus/Spectral above.
+    - family: Archivo
+      fonts:
+        - asset: assets/fonts/Archivo-Variable.ttf

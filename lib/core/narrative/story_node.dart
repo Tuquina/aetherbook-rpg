@@ -44,6 +44,16 @@ sealed class StoryNode {
       _ => FixedAnchorNode.fromJson(id, json),
     };
   }
+
+  /// The inverse of [StoryNode.fromJson] — dispatches on the runtime type
+  /// the same way the factory dispatches on `json['type']`. Doesn't include
+  /// [id] (the graph stores nodes keyed by id, see `StoryGraph.toJson`).
+  Map<String, dynamic> toJson() => switch (this) {
+        FixedAnchorNode node => node._toJson(),
+        BoundedCorridorNode node => node._toJson(),
+        StateHubNode node => node._toJson(),
+        ResolutionNode node => node._toJson(),
+      };
 }
 
 /// Authored, guaranteed-quality prose with a small set of curated choices
@@ -112,6 +122,21 @@ final class FixedAnchorNode extends StoryNode {
       codexReveals: _stringList(json['codex_reveals']),
     );
   }
+
+  Map<String, dynamic> _toJson() => {
+        'type': 'fixed_anchor',
+        'narration': narration,
+        if (choices.isNotEmpty) 'choices': [for (final c in choices) c.toJson()],
+        if (fixedReveals.isNotEmpty) 'fixed_reveals': fixedReveals,
+        if (forbiddenReveals.isNotEmpty) 'forbidden_reveals': forbiddenReveals,
+        if (extendedConflict != null)
+          'extended_conflict': extendedConflict!.toJson(),
+        if (conditionalInserts.isNotEmpty)
+          'conditional_inserts': [
+            for (final i in conditionalInserts) i.toJson(),
+          ],
+        if (codexReveals.isNotEmpty) 'codex_reveals': codexReveals,
+      };
 }
 
 /// One literal text block from [FixedAnchorNode.conditionalInserts]: shown
@@ -128,6 +153,11 @@ class ConditionalInsert {
       gate: Gate.fromJson((json['gate'] as Map?)?.cast<String, dynamic>()),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'text': text,
+        if (gate.toJson() != null) 'gate': gate.toJson(),
+      };
 }
 
 List<ConditionalInsert> _insertsFromJson(Object? value) {
@@ -200,6 +230,19 @@ final class BoundedCorridorNode extends StoryNode {
       codexReveals: _stringList(json['codex_reveals']),
     );
   }
+
+  Map<String, dynamic> _toJson() => {
+        'type': 'bounded_corridor',
+        'goal': goal,
+        'turn_budget': turnBudget,
+        'fallback_exit': fallbackExitNodeId,
+        if (allowedLocations.isNotEmpty) 'allowed_locations': allowedLocations,
+        if (allowedNpcs.isNotEmpty) 'allowed_npcs': allowedNpcs,
+        if (allowedObstacles.isNotEmpty) 'allowed_obstacles': allowedObstacles,
+        if (forbiddenReveals.isNotEmpty) 'forbidden_reveals': forbiddenReveals,
+        if (choices.isNotEmpty) 'choices': [for (final c in choices) c.toJson()],
+        if (codexReveals.isNotEmpty) 'codex_reveals': codexReveals,
+      };
 }
 
 /// A hub of repeatable activities with no required order (§9.1: "dar
@@ -242,6 +285,14 @@ final class StateHubNode extends StoryNode {
       codexReveals: _stringList(json['codex_reveals']),
     );
   }
+
+  Map<String, dynamic> _toJson() => {
+        'type': 'state_hub',
+        if (activities.isNotEmpty)
+          'activities': [for (final a in activities) a.toJson()],
+        if (exits.isNotEmpty) 'exits': [for (final e in exits) e.toJson()],
+        if (codexReveals.isNotEmpty) 'codex_reveals': codexReveals,
+      };
 }
 
 /// The campaign's climax: a set of possible [Ending]s, each with hard/soft
@@ -312,6 +363,20 @@ final class ResolutionNode extends StoryNode {
       codexReveals: _stringList(json['codex_reveals']),
     );
   }
+
+  Map<String, dynamic> _toJson() => {
+        'type': 'resolution',
+        'narration': narration,
+        if (endings.isNotEmpty) 'endings': [for (final e in endings) e.toJson()],
+        if (epilogueBeats.isNotEmpty)
+          'epilogue_beats': [for (final b in epilogueBeats) b.toJson()],
+        if (finalTechniqueRules.isNotEmpty)
+          'final_technique_rules': [
+            for (final r in finalTechniqueRules) r.toJson(),
+          ],
+        if (epilogueNodeId != null) 'epilogue_node_id': epilogueNodeId,
+        if (codexReveals.isNotEmpty) 'codex_reveals': codexReveals,
+      };
 }
 
 List<StoryChoice> _choicesFromJson(Object? value) {

@@ -22,4 +22,9 @@ class EndingFallback {
       endingId: json['ending_id'] as String,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        if (gate.toJson() != null) 'gate': gate.toJson(),
+        'ending_id': endingId,
+      };
 }

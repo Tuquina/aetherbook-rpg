@@ -4,15 +4,21 @@ import '../design/tokens.dart';
 import '../design/typography.dart';
 import 'brand_mark.dart';
 
-/// The 4-5 destinations the home dashboard's nav chrome offers (V2 design
+/// The destinations the home dashboard's nav chrome offers (V2 design
 /// prototype §8a/§8b) — "Ajustes" is sidebar-only (desktop), matching the
-/// mockup's 4-item bottom nav on tablet.
-enum HomeNavDestination { inicio, misHistorias, explorar, codice, ajustes }
+/// mockup's original 4-item bottom nav on tablet. [escribir] (campaign
+/// editor, V2 design prototype §9a-9j) was added after that mockup shipped —
+/// a top-level "write your own campaign" section, distinct from
+/// `misHistorias` (reading what you've already played) and `explorar` (a
+/// stub for reading what others have published), so it gets its own
+/// destination rather than being buried in either.
+enum HomeNavDestination { inicio, misHistorias, escribir, explorar, codice, ajustes }
 
 extension HomeNavDestinationInfo on HomeNavDestination {
   String get label => switch (this) {
         HomeNavDestination.inicio => 'Inicio',
         HomeNavDestination.misHistorias => 'Mis historias',
+        HomeNavDestination.escribir => 'Escribir',
         HomeNavDestination.explorar => 'Explorar',
         HomeNavDestination.codice => 'El Códice',
         HomeNavDestination.ajustes => 'Ajustes',
@@ -21,6 +27,7 @@ extension HomeNavDestinationInfo on HomeNavDestination {
   IconData get icon => switch (this) {
         HomeNavDestination.inicio => Icons.home_outlined,
         HomeNavDestination.misHistorias => Icons.library_books_outlined,
+        HomeNavDestination.escribir => Icons.edit_note_outlined,
         HomeNavDestination.explorar => Icons.explore_outlined,
         HomeNavDestination.codice => Icons.menu_book_outlined,
         HomeNavDestination.ajustes => Icons.settings_outlined,
@@ -92,21 +99,35 @@ class HomeSidebar extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AetherSpace.xl),
-          for (final destination in HomeNavDestination.values)
-            _NavRow(
-              destination: destination,
-              selected: destination == current,
-              onTap: () => onSelect(destination),
+          // A scrollable Expanded, not a bare list + Spacer: 6 nav
+          // destinations plus a long "Mundos" list can outgrow the sidebar's
+          // fixed viewport height at a large OS text-scale setting (V2 Stage
+          // 8) — this section scrolls internally instead of overflowing the
+          // outer Column, so the account row below always stays put.
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final destination in HomeNavDestination.values)
+                    _NavRow(
+                      destination: destination,
+                      selected: destination == current,
+                      onTap: () => onSelect(destination),
+                    ),
+                  if (worlds.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                          AetherSpace.sm, AetherSpace.xl, AetherSpace.sm, AetherSpace.sm),
+                      child: Text('MUNDOS',
+                          style: AetherType.overline.copyWith(fontSize: 9, letterSpacing: 2)),
+                    ),
+                    for (final world in worlds) _WorldRow(world: world),
+                  ],
+                ],
+              ),
             ),
-          if (worlds.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(AetherSpace.sm, AetherSpace.xl, AetherSpace.sm, AetherSpace.sm),
-              child: Text('MUNDOS',
-                  style: AetherType.overline.copyWith(fontSize: 9, letterSpacing: 2)),
-            ),
-            for (final world in worlds) _WorldRow(world: world),
-          ],
-          const Spacer(),
+          ),
           const Divider(height: 1, color: AetherColors.hairline),
           const SizedBox(height: AetherSpace.md),
           Row(

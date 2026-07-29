@@ -83,6 +83,26 @@ class StateDelta {
 
   @override
   String toString() => 'StateDelta($type, $key, $value, op: $operation)';
+
+  static String _typeToString(StateDeltaType type) => switch (type) {
+        StateDeltaType.flag => 'flag',
+        StateDeltaType.exp => 'exp',
+        StateDeltaType.resource => 'resource',
+        StateDeltaType.meter => 'meter',
+        StateDeltaType.relationship => 'relationship',
+        StateDeltaType.listAdd => 'list_add',
+        StateDeltaType.listRemove => 'list_remove',
+        StateDeltaType.varSet => 'var_set',
+        StateDeltaType.vowStatus => 'vow_status',
+        StateDeltaType.unknown => 'unknown',
+      };
+
+  Map<String, dynamic> toJson() => {
+        'type': _typeToString(type),
+        'key': key,
+        'value': value,
+        if (operation != null) 'operation': operation,
+      };
 }
 
 /// A state delta as it arrives on the narrator's wire (campaign-bible

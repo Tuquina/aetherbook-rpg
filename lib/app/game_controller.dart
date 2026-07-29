@@ -30,6 +30,7 @@ import '../core/state/character.dart';
 import '../core/state/game_session.dart';
 import '../core/world/world.dart';
 import '../ports/auth_port.dart';
+import '../ports/campaign_draft_repository_port.dart';
 import '../ports/game_state_repository_port.dart';
 import '../ports/image_generator_port.dart';
 import '../ports/memory_digest_port.dart';
@@ -87,6 +88,7 @@ class GameController extends ChangeNotifier {
     ImageGeneratorPort? imageGenerator,
     this.auth,
     this.settingsPort,
+    this.campaignDrafts,
     int digestEveryNTurns = 5,
     Dice? dice,
   })  : _worldRepository = worldRepository,
@@ -114,6 +116,12 @@ class GameController extends ChangeNotifier {
   /// mode every other port above already handles.
   final AuthPort? auth;
   final SettingsPort? settingsPort;
+
+  /// Same "exposed, not threaded through every screen" reasoning as [auth]/
+  /// [settingsPort] above — the campaign editor (V2 design prototype
+  /// §9a-9j) is reached from `WorldSelectScreen`'s nav, same as Perfil/
+  /// Ajustes. `null` in the same degraded in-memory mode.
+  final CampaignDraftRepositoryPort? campaignDrafts;
   final int _digestEveryNTurns;
   final ResolvePlayerAction _resolve;
   final ClassifyFreeAction _classifyFreeAction;

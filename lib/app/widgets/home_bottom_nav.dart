@@ -4,14 +4,16 @@ import '../design/tokens.dart';
 import 'home_sidebar.dart';
 
 /// Bottom nav bar for the tablet home layout (V2 design prototype §8b) —
-/// 4 destinations, no "Ajustes" (sidebar-only on desktop, matching the
-/// mockup exactly).
+/// originally 4 destinations, no "Ajustes" (sidebar-only on desktop,
+/// matching the mockup exactly); `escribir` (the campaign editor) was added
+/// alongside it in `HomeNavDestination`.
 class HomeBottomNav extends StatelessWidget {
   const HomeBottomNav({super.key, required this.current, required this.onSelect});
 
   static const _destinations = [
     HomeNavDestination.inicio,
     HomeNavDestination.misHistorias,
+    HomeNavDestination.escribir,
     HomeNavDestination.explorar,
     HomeNavDestination.codice,
   ];

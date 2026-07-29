@@ -28,6 +28,12 @@ class EpilogueBeat {
       gate: Gate.fromJson((json['gate'] as Map?)?.cast<String, dynamic>()),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'movement': movement,
+        'text': text,
+        if (gate.toJson() != null) 'gate': gate.toJson(),
+      };
 }
 
 /// Assembles [beats] into ordered prose for [character]: groups by

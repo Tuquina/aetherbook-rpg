@@ -144,4 +144,29 @@ class Ending {
         EndingFallback.fromJson((item as Map).cast<String, dynamic>()),
     ];
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'visible_choice': visibleChoice,
+        if (hardRequirement.toJson() != null)
+          'hard_requirement': hardRequirement.toJson(),
+        if (softRequirements.isNotEmpty)
+          'soft_requirements': [
+            for (final g in softRequirements) g.toJson() ?? const {'type': 'always'},
+          ],
+        if (difficultyBySoftRequirementsMet.isNotEmpty)
+          'difficulty_by_soft_requirements_met': difficultyBySoftRequirementsMet
+              .map((k, v) => MapEntry(k.toString(), v)),
+        'base_difficulty': baseDifficulty,
+        if (successReveals.isNotEmpty) 'success_reveals': successReveals,
+        if (costReveals.isNotEmpty) 'cost_reveals': costReveals,
+        if (failureCostOptions.isNotEmpty)
+          'failure_cost_options': failureCostOptions,
+        if (onFailureFallbacks.isNotEmpty)
+          'on_failure_fallbacks': [
+            for (final f in onFailureFallbacks) f.toJson(),
+          ],
+        if (bodyBeats.isNotEmpty)
+          'body_beats': [for (final b in bodyBeats) b.toJson()],
+      };
 }

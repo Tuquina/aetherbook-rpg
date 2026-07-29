@@ -20,4 +20,9 @@ class FinalTechniqueRule {
       techniqueId: json['technique_id'] as String,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        if (gate.toJson() != null) 'gate': gate.toJson(),
+        'technique_id': techniqueId,
+      };
 }

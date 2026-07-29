@@ -134,4 +134,24 @@ class HubActivity implements Checkable {
     if (value is! Map) return null;
     return ChoiceOutcome.fromJson(value.cast<String, dynamic>());
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'label': label,
+        if (gate.toJson() != null) 'gate': gate.toJson(),
+        if (effects.isNotEmpty)
+          'effects': [for (final e in effects) e.toJson()],
+        if (resultText != null) 'result_text': resultText,
+        'repeatable': repeatable,
+        if (checkAttribute != null) 'check_attribute': checkAttribute,
+        if (checkDifficulty != null) 'check_difficulty': checkDifficulty,
+        if (onSuccess != null) 'on_success': onSuccess!.toJson(),
+        if (onCriticalSuccess != null)
+          'on_critical_success': onCriticalSuccess!.toJson(),
+        if (onFailure != null) 'on_failure': onFailure!.toJson(),
+        if (advantageWhen?.toJson() != null)
+          'advantage_when': advantageWhen!.toJson(),
+        if (disadvantageWhen?.toJson() != null)
+          'disadvantage_when': disadvantageWhen!.toJson(),
+      };
 }

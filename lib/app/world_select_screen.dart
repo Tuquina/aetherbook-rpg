@@ -5,6 +5,7 @@ import '../core/world/world.dart';
 import 'codex_screen.dart';
 import 'create_story_screen.dart';
 import 'design/breakpoints.dart';
+import 'editor/editor_library_screen.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
 import 'design/world_theme.dart';
@@ -289,6 +290,17 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
         .push(MyStoriesScreen.route(controller: widget.controller, catalogWorlds: worlds));
   }
 
+  void _openEditor() {
+    final campaignDrafts = widget.controller.campaignDrafts;
+    if (campaignDrafts == null) return;
+    Navigator.of(context).push(
+      EditorLibraryScreen.route(
+        controller: widget.controller,
+        campaignDrafts: campaignDrafts,
+      ),
+    );
+  }
+
   void _showComingSoon() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -308,6 +320,8 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
         break;
       case HomeNavDestination.misHistorias:
         _openMyStories(worlds);
+      case HomeNavDestination.escribir:
+        _openEditor();
       case HomeNavDestination.explorar:
         _showComingSoon();
       case HomeNavDestination.codice:
@@ -403,6 +417,16 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
                       ],
                     ),
                   ),
+                  // Phone width has no persistent nav chrome at all (unlike
+                  // tablet's HomeBottomNav/desktop's HomeSidebar), so
+                  // "Escribir" needs its own inline entry point here too —
+                  // same account guard as the profile icon below.
+                  if (widget.controller.campaignDrafts != null)
+                    IconButton(
+                      onPressed: _openEditor,
+                      icon: const Icon(Icons.edit_note_outlined, color: AetherColors.parchmentDim),
+                      tooltip: 'Escribir una historia',
+                    ),
                   // Only reachable with a real account behind it — the
                   // degraded in-memory mode (auth/settingsPort both null)
                   // has nothing to show in Perfil/Ajustes.
