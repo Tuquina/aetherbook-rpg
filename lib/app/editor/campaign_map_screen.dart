@@ -15,6 +15,7 @@ import '../design/typography.dart';
 import '../design/world_theme.dart';
 import '../game_controller.dart';
 import '../library_rows.dart' show relativeTimeLabel;
+import 'checklist_screen.dart';
 import 'choice_editor_screen.dart';
 import 'corridor_editor_screen.dart';
 import 'cover_editor_screen.dart';
@@ -248,6 +249,15 @@ class _CampaignMapScreenState extends State<CampaignMapScreen> {
         onReplaceNode: _replaceNode,
       );
 
+  Future<void> _openChecklist() async {
+    final draft = _draft;
+    if (draft == null) return;
+    final nodeId = await ChecklistScreen.open(context, draft: draft);
+    if (nodeId != null && draft.graph.nodes.containsKey(nodeId)) {
+      setState(() => _selectedNodeId = nodeId);
+    }
+  }
+
   void _showComingSoon(String what) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -290,7 +300,7 @@ class _CampaignMapScreenState extends State<CampaignMapScreen> {
                   onBack: () => Navigator.of(context).pop(),
                   onCover: _openCover,
                   onPlaytest: () => _showComingSoon('Probar el borrador'),
-                  onPublish: () => _showComingSoon('Publicar'),
+                  onPublish: _openChecklist,
                 ),
                 Expanded(
                   child: desktop
@@ -396,21 +406,25 @@ class _Header extends StatelessWidget {
           ),
           const Spacer(),
           if (danglingCount > 0) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: AetherSpace.sm, vertical: 6),
-              decoration: BoxDecoration(
-                color: AetherColors.failure.withValues(alpha: 0.08),
-                borderRadius: AetherRadius.allSm,
-                border: Border.all(color: AetherColors.failure.withValues(alpha: 0.4)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.error_outline_rounded, size: 15, color: AetherColors.failure),
-                  const SizedBox(width: 6),
-                  Text('$danglingCount cabo${danglingCount == 1 ? '' : 's'} suelto${danglingCount == 1 ? '' : 's'}',
-                      style: EditorType.pill.copyWith(color: AetherColors.failure)),
-                ],
+            InkWell(
+              onTap: onPublish,
+              borderRadius: AetherRadius.allSm,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: AetherSpace.sm, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AetherColors.failure.withValues(alpha: 0.08),
+                  borderRadius: AetherRadius.allSm,
+                  border: Border.all(color: AetherColors.failure.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline_rounded, size: 15, color: AetherColors.failure),
+                    const SizedBox(width: 6),
+                    Text('$danglingCount cabo${danglingCount == 1 ? '' : 's'} suelto${danglingCount == 1 ? '' : 's'}',
+                        style: EditorType.pill.copyWith(color: AetherColors.failure)),
+                  ],
+                ),
               ),
             ),
             const SizedBox(width: AetherSpace.md),
