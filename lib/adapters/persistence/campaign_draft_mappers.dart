@@ -4,6 +4,7 @@
 
 import '../../core/authoring/campaign_draft.dart';
 import '../../core/narrative/story_graph.dart';
+import '../../core/world/world.dart';
 
 Map<String, Object?> campaignDraftToRow(CampaignDraft draft) {
   return {
@@ -13,6 +14,7 @@ Map<String, Object?> campaignDraftToRow(CampaignDraft draft) {
     'title': draft.title,
     'synopsis': draft.synopsis,
     'base_world_slug': draft.baseWorldSlug,
+    'custom_world': _customWorldToRow(draft.customWorld),
     'status': draft.status.toString(),
     'content_warnings': draft.contentWarnings,
     'cover_image_url': draft.coverImageUrl,
@@ -33,7 +35,8 @@ CampaignDraft campaignDraftFromRow(Map<String, dynamic> row) {
     slug: row['slug'] as String,
     title: row['title'] as String? ?? '',
     synopsis: row['synopsis'] as String? ?? '',
-    baseWorldSlug: row['base_world_slug'] as String,
+    baseWorldSlug: row['base_world_slug'] as String?,
+    customWorld: _customWorldFromRow(row['custom_world']),
     status: CampaignDraftStatus.fromString(row['status'] as String? ?? 'draft'),
     contentWarnings: _stringList(row['content_warnings']),
     coverImageUrl: row['cover_image_url'] as String?,
@@ -58,13 +61,29 @@ CampaignDraftSummary campaignDraftSummaryFromRow(Map<String, dynamic> row) {
     id: row['id'] as String,
     slug: row['slug'] as String,
     title: row['title'] as String? ?? '',
-    baseWorldSlug: row['base_world_slug'] as String,
+    baseWorldSlug: row['base_world_slug'] as String?,
     status: CampaignDraftStatus.fromString(row['status'] as String? ?? 'draft'),
     coverImageUrl: row['cover_image_url'] as String?,
     nodeCount: nodeCount,
     updatedAt: _dateTime(row['updated_at']) ?? DateTime.now(),
     officialModule: CampaignOfficialModule.fromString(row['official_module'] as String?),
   );
+}
+
+/// `World.toJson()` is a generic serializer and includes `'graph'` — stripped
+/// here because the graph lives in its own `campaign_drafts.graph` column
+/// (`CampaignDraft.graph` is the single source of truth for it; a custom
+/// world's own `storyGraph` is always ignored).
+Map<String, dynamic>? _customWorldToRow(World? world) {
+  if (world == null) return null;
+  final json = world.toJson();
+  json.remove('graph');
+  return json;
+}
+
+World? _customWorldFromRow(Object? value) {
+  if (value is! Map) return null;
+  return World.fromJson(value.cast<String, dynamic>());
 }
 
 StoryGraph _graphFromRow(Object? value) {

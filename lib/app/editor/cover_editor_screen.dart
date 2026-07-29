@@ -77,7 +77,8 @@ class _CoverForm extends StatefulWidget {
 class _CoverFormState extends State<_CoverForm> {
   late final _titleController = TextEditingController(text: widget.initial.title);
   late final _synopsisController = TextEditingController(text: widget.initial.synopsis);
-  late String _baseWorldSlug = widget.initial.baseWorldSlug;
+  late String _baseWorldSlug =
+      widget.initial.baseWorldSlug ?? widget.baseWorlds.first.slug;
   late int _durationMinutes = _closestPreset(widget.initial.estimatedDurationMinutes);
   late String? _coverImageUrl = widget.initial.coverImageUrl;
   late List<String> _contentWarnings = widget.initial.contentWarnings;

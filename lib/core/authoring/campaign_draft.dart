@@ -1,13 +1,22 @@
 import '../narrative/story_graph.dart';
+import '../world/world.dart';
 
 /// A player-authored hybrid campaign (V2 design prototype §9a-9j), before or
 /// after publishing. Reuses [StoryGraph] as-is for [graph] — a draft's node
 /// content is exactly the same `StoryNode`/`StoryChoice`/`Ending`/`Gate`
 /// model every other campaign uses (CLAUDE.md §7, §11); only the surrounding
 /// metadata (title, cover, publish status...) and where it's persisted are
-/// new. Always authored "on top of" an existing [baseWorldSlug] for its
-/// attributes, resources, colors and narrator tone (§9f) — a draft never
-/// defines its own attribute system.
+/// new. Authored on top of its attributes/resources/colors/narrator-tone
+/// system either way (§9f: "Define los atributos, los colores y el tono del
+/// narrador") — either borrowed from an existing [baseWorldSlug] (every
+/// community novel, the only option before admin authoring existed), or, for
+/// an admin-authored official campaign, a fully custom one in
+/// [customWorld] (project decision 2026-07-31: "permitir un sistema de
+/// atributos propio desde cero"). Exactly one of the two is ever set — see
+/// the `campaign_drafts_world_source_check` constraint. [customWorld] is
+/// always built with a `null`/empty `storyGraph` — [graph] is this class's
+/// own, single source of truth for the node graph, never duplicated inside
+/// the custom world.
 ///
 /// Immutable, same shape as [GameSession]: the editor produces new instances
 /// via [copyWith], never mutates in place.
@@ -18,7 +27,8 @@ class CampaignDraft {
     required this.slug,
     this.title = '',
     this.synopsis = '',
-    required this.baseWorldSlug,
+    this.baseWorldSlug,
+    this.customWorld,
     this.status = CampaignDraftStatus.draft,
     this.contentWarnings = const [],
     this.coverImageUrl,
@@ -31,7 +41,10 @@ class CampaignDraft {
     this.publishedAt,
     this.createdAt,
     this.updatedAt,
-  });
+  }) : assert(
+          (baseWorldSlug == null) != (customWorld == null),
+          'exactly one of baseWorldSlug/customWorld must be set',
+        );
 
   /// The persisted row's id (`campaign_drafts.id`), or `null` for a draft
   /// that only exists in memory (not saved yet).
@@ -49,8 +62,16 @@ class CampaignDraft {
 
   /// Which bundled world (`assets/worlds/$baseWorldSlug.json`) this draft
   /// borrows attributes/resources/theme/narrator tone from (§9f: "Define los
-  /// atributos, los colores y el tono del narrador").
-  final String baseWorldSlug;
+  /// atributos, los colores y el tono del narrador"). `null` when
+  /// [customWorld] is set instead.
+  final String? baseWorldSlug;
+
+  /// A fully custom attribute/resource/theme/narrator-tone system, authored
+  /// from scratch by an admin instead of borrowing one via [baseWorldSlug]
+  /// (World Builder, Admin Stage 2). `null` for every ordinary community
+  /// novel. Its `storyGraph` is always ignored/empty — [graph] is this
+  /// draft's own graph.
+  final World? customWorld;
 
   final CampaignDraftStatus status;
 
@@ -106,6 +127,7 @@ class CampaignDraft {
     String? title,
     String? synopsis,
     String? baseWorldSlug,
+    World? customWorld,
     CampaignDraftStatus? status,
     List<String>? contentWarnings,
     String? coverImageUrl,
@@ -126,7 +148,8 @@ class CampaignDraft {
       slug: slug,
       title: title ?? this.title,
       synopsis: synopsis ?? this.synopsis,
-      baseWorldSlug: baseWorldSlug ?? this.baseWorldSlug,
+      baseWorldSlug: baseWorldSlug ?? (customWorld != null ? null : this.baseWorldSlug),
+      customWorld: customWorld ?? (baseWorldSlug != null ? null : this.customWorld),
       status: status ?? this.status,
       contentWarnings: contentWarnings ?? this.contentWarnings,
       coverImageUrl:
@@ -196,7 +219,7 @@ class CampaignDraftSummary {
     required this.id,
     required this.slug,
     required this.title,
-    required this.baseWorldSlug,
+    this.baseWorldSlug,
     required this.status,
     this.coverImageUrl,
     required this.nodeCount,
@@ -207,7 +230,9 @@ class CampaignDraftSummary {
   final String id;
   final String slug;
   final String title;
-  final String baseWorldSlug;
+
+  /// `null` for a draft built on a [CampaignDraft.customWorld] instead.
+  final String? baseWorldSlug;
   final CampaignDraftStatus status;
   final String? coverImageUrl;
   final CampaignOfficialModule? officialModule;

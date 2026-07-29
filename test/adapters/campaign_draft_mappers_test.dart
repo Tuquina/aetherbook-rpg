@@ -2,7 +2,33 @@ import 'package:aetherbook/adapters/persistence/campaign_draft_mappers.dart';
 import 'package:aetherbook/core/authoring/campaign_draft.dart';
 import 'package:aetherbook/core/narrative/story_graph.dart';
 import 'package:aetherbook/core/narrative/story_node.dart';
+import 'package:aetherbook/core/state/character.dart';
+import 'package:aetherbook/core/world/world.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+World _customWorld() {
+  return const World(
+    slug: 'mundo-personalizado',
+    name: 'Mundo personalizado',
+    theme: 'noir',
+    tone: 'tenso',
+    systemPrompt: 'Narra en tono noir.',
+    imageStyleSuffix: ', estilo noir',
+    defaultDifficulty: 12,
+    criticalMargin: 5,
+    primaryAttribute: 'astucia',
+    attributeKeys: ['astucia', 'temple'],
+    startingCharacter: Character(
+      name: 'Protagonista',
+      level: 1,
+      exp: 0,
+      attributes: {'astucia': 2, 'temple': 1},
+      resources: {},
+    ),
+    seedNarration: 'La lluvia no para desde ayer.',
+    seedChoices: ['Investigar', 'Esperar'],
+  );
+}
 
 CampaignDraft _draft({String? id}) {
   return CampaignDraft(
@@ -99,6 +125,29 @@ void main() {
       expect(draft.officialModule, CampaignOfficialModule.complete);
       final demoted = draft.copyWith(clearOfficialModule: true);
       expect(demoted.officialModule, isNull);
+    });
+
+    test('a custom-world draft round-trips its world and drops baseWorldSlug', () {
+      final draft = CampaignDraft(
+        id: 'draft-9',
+        authorId: 'author-1',
+        slug: 'mundo-personalizado',
+        title: 'Mundo personalizado',
+        customWorld: _customWorld(),
+        graph: const StoryGraph(startNodeId: '', nodes: {}),
+      );
+      final row = campaignDraftToRow(draft);
+      expect(row['base_world_slug'], isNull);
+      expect(row['custom_world'], isA<Map<String, dynamic>>());
+      // The graph lives in its own column — never duplicated inside custom_world.
+      expect((row['custom_world']! as Map).containsKey('graph'), isFalse);
+
+      final restored = campaignDraftFromRow(row.cast<String, dynamic>());
+      expect(restored.baseWorldSlug, isNull);
+      expect(restored.customWorld, isNotNull);
+      expect(restored.customWorld!.slug, 'mundo-personalizado');
+      expect(restored.customWorld!.attributeKeys, ['astucia', 'temple']);
+      expect(restored.customWorld!.storyGraph, isNull);
     });
   });
 
