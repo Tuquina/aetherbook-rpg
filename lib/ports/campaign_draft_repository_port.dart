@@ -14,6 +14,15 @@ abstract class CampaignDraftRepositoryPort {
   /// [CampaignDraftSummary]). Powers `EditorLibraryScreen`.
   Future<List<CampaignDraftSummary>> listMine();
 
+  /// Every campaign flagged [CampaignDraft.officialModule], of any status,
+  /// regardless of author — "revisar y editar todas las historias completas
+  /// e híbridas" (project decision 2026-07-30). Relies entirely on RLS
+  /// (`20260730_campaign_drafts_admin_official.sql`) to actually restrict
+  /// this to admins for non-published rows; a non-admin caller simply gets
+  /// back whatever's already publicly readable (published official
+  /// campaigns), never an error.
+  Future<List<CampaignDraftSummary>> listOfficial();
+
   /// One draft by id, graph included, or `null` if it doesn't exist (or
   /// isn't this user's — RLS handles that transparently).
   Future<CampaignDraft?> loadDraft(String id);

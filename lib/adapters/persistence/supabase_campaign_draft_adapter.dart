@@ -23,8 +23,20 @@ class SupabaseCampaignDraftAdapter implements CampaignDraftRepositoryPort {
     if (userId == null) return const [];
     final rows = await _client
         .from('campaign_drafts')
-        .select('id, slug, title, base_world_slug, status, cover_image_url, graph, updated_at')
+        .select(
+            'id, slug, title, base_world_slug, status, cover_image_url, graph, updated_at, official_module')
         .eq('author_id', userId)
+        .order('updated_at', ascending: false);
+    return [for (final row in rows) campaignDraftSummaryFromRow(row)];
+  }
+
+  @override
+  Future<List<CampaignDraftSummary>> listOfficial() async {
+    final rows = await _client
+        .from('campaign_drafts')
+        .select(
+            'id, slug, title, base_world_slug, status, cover_image_url, graph, updated_at, official_module')
+        .not('official_module', 'is', null)
         .order('updated_at', ascending: false);
     return [for (final row in rows) campaignDraftSummaryFromRow(row)];
   }

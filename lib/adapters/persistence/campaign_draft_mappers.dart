@@ -20,6 +20,7 @@ Map<String, Object?> campaignDraftToRow(CampaignDraft draft) {
     'ai_runtime_required': draft.aiRuntimeRequired,
     'graph': draft.graph.toJson(),
     'node_titles': draft.nodeTitles,
+    'official_module': draft.officialModule?.toString(),
     'license_accepted_at': draft.licenseAcceptedAt?.toIso8601String(),
     'published_at': draft.publishedAt?.toIso8601String(),
   };
@@ -41,6 +42,7 @@ CampaignDraft campaignDraftFromRow(Map<String, dynamic> row) {
     aiRuntimeRequired: row['ai_runtime_required'] as bool? ?? true,
     graph: _graphFromRow(row['graph']),
     nodeTitles: _stringMap(row['node_titles']),
+    officialModule: CampaignOfficialModule.fromString(row['official_module'] as String?),
     licenseAcceptedAt: _dateTime(row['license_accepted_at']),
     publishedAt: _dateTime(row['published_at']),
     createdAt: _dateTime(row['created_at']),
@@ -61,6 +63,7 @@ CampaignDraftSummary campaignDraftSummaryFromRow(Map<String, dynamic> row) {
     coverImageUrl: row['cover_image_url'] as String?,
     nodeCount: nodeCount,
     updatedAt: _dateTime(row['updated_at']) ?? DateTime.now(),
+    officialModule: CampaignOfficialModule.fromString(row['official_module'] as String?),
   );
 }
 

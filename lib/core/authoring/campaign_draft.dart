@@ -26,6 +26,7 @@ class CampaignDraft {
     this.aiRuntimeRequired = true,
     required this.graph,
     this.nodeTitles = const {},
+    this.officialModule,
     this.licenseAcceptedAt,
     this.publishedAt,
     this.createdAt,
@@ -81,6 +82,14 @@ class CampaignDraft {
       ? nodeTitles[id]!
       : id;
 
+  /// `null` for an ordinary community novel (published, it only ever shows
+  /// up in "Explorar"). When set, this is an admin-authored official
+  /// campaign that belongs in the real "Historias completas"/"Historias
+  /// pre-armadas" catalog modules instead — only an admin
+  /// ([isAdminEmail]) may ever set this, enforced by both the editor UI and
+  /// `campaign_drafts`' RLS (`20260730_campaign_drafts_admin_official.sql`).
+  final CampaignOfficialModule? officialModule;
+
   /// When the author accepted the publish-rights notice (§10c) — set once,
   /// on first publish, and never cleared by a later unpublish (the
   /// acceptance itself doesn't need to be re-shown for the same campaign).
@@ -105,6 +114,8 @@ class CampaignDraft {
     bool? aiRuntimeRequired,
     StoryGraph? graph,
     Map<String, String>? nodeTitles,
+    CampaignOfficialModule? officialModule,
+    bool clearOfficialModule = false,
     DateTime? licenseAcceptedAt,
     DateTime? publishedAt,
     DateTime? updatedAt,
@@ -125,6 +136,8 @@ class CampaignDraft {
       aiRuntimeRequired: aiRuntimeRequired ?? this.aiRuntimeRequired,
       graph: graph ?? this.graph,
       nodeTitles: nodeTitles ?? this.nodeTitles,
+      officialModule:
+          clearOfficialModule ? null : (officialModule ?? this.officialModule),
       licenseAcceptedAt: licenseAcceptedAt ?? this.licenseAcceptedAt,
       publishedAt: publishedAt ?? this.publishedAt,
       createdAt: createdAt,
@@ -149,6 +162,29 @@ enum CampaignDraftStatus {
       };
 }
 
+/// Which official catalog module an admin-authored [CampaignDraft] belongs
+/// to (project decision 2026-07-30) — mirrors exactly the two non-freeform
+/// branches `WorldSelectScreen.moduleFor` already classifies a [World] into
+/// via `aiRuntimeRequired` (`false` -> [complete], `true` -> [hybrid]).
+/// `null` on [CampaignDraft.officialModule] means an ordinary community
+/// novel instead, visible only in "Explorar".
+enum CampaignOfficialModule {
+  complete,
+  hybrid;
+
+  static CampaignOfficialModule? fromString(String? raw) => switch (raw) {
+        'complete' => CampaignOfficialModule.complete,
+        'hybrid' => CampaignOfficialModule.hybrid,
+        _ => null,
+      };
+
+  @override
+  String toString() => switch (this) {
+        CampaignOfficialModule.complete => 'complete',
+        CampaignOfficialModule.hybrid => 'hybrid',
+      };
+}
+
 /// A lightweight summary of one [CampaignDraft] — everything
 /// `EditorLibraryScreen` needs to render a card, without loading the full
 /// `graph` jsonb column (same "summary vs. full load" split as
@@ -165,6 +201,7 @@ class CampaignDraftSummary {
     this.coverImageUrl,
     required this.nodeCount,
     required this.updatedAt,
+    this.officialModule,
   });
 
   final String id;
@@ -173,6 +210,7 @@ class CampaignDraftSummary {
   final String baseWorldSlug;
   final CampaignDraftStatus status;
   final String? coverImageUrl;
+  final CampaignOfficialModule? officialModule;
 
   /// How many nodes the graph has so far — enough for a card's "N escenas"
   /// without loading the whole graph.

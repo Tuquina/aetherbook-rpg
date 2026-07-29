@@ -73,6 +73,33 @@ void main() {
       expect(restored.licenseAcceptedAt, draft.licenseAcceptedAt);
       expect(restored.publishedAt, draft.publishedAt);
     });
+
+    test('round-trips an official module flag', () {
+      final draft = _draft(id: 'draft-5')
+          .copyWith(officialModule: CampaignOfficialModule.hybrid);
+      final row = campaignDraftToRow(draft);
+      expect(row['official_module'], 'hybrid');
+
+      final restored = campaignDraftFromRow(row.cast<String, dynamic>());
+      expect(restored.officialModule, CampaignOfficialModule.hybrid);
+    });
+
+    test('officialModule stays null for an ordinary community novel', () {
+      final draft = _draft(id: 'draft-6');
+      final row = campaignDraftToRow(draft);
+      expect(row['official_module'], isNull);
+
+      final restored = campaignDraftFromRow(row.cast<String, dynamic>());
+      expect(restored.officialModule, isNull);
+    });
+
+    test('copyWith(clearOfficialModule: true) demotes an official campaign back to null', () {
+      final draft =
+          _draft(id: 'draft-7').copyWith(officialModule: CampaignOfficialModule.complete);
+      expect(draft.officialModule, CampaignOfficialModule.complete);
+      final demoted = draft.copyWith(clearOfficialModule: true);
+      expect(demoted.officialModule, isNull);
+    });
   });
 
   group('campaignDraftSummaryFromRow', () {
@@ -99,6 +126,21 @@ void main() {
       };
       final summary = campaignDraftSummaryFromRow(row);
       expect(summary.nodeCount, 0);
+    });
+
+    test('reads officialModule when present on the row', () {
+      final row = {
+        'id': 'draft-8',
+        'slug': 'historia-oficial',
+        'title': '',
+        'base_world_slug': 'xianxia',
+        'status': 'published',
+        'graph': {'start_node': '', 'nodes': <String, dynamic>{}},
+        'updated_at': '2026-07-30T10:00:00Z',
+        'official_module': 'complete',
+      };
+      final summary = campaignDraftSummaryFromRow(row);
+      expect(summary.officialModule, CampaignOfficialModule.complete);
     });
   });
 
