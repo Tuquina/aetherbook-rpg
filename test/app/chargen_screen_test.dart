@@ -134,6 +134,15 @@ Future<GameController> _pumpChargenMobile(WidgetTester tester, World world) asyn
 /// Fills step 1 (name + the only origin) and advances to step 2.
 Future<void> _completeStepOne(WidgetTester tester, {String name = 'Yuki'}) async {
   await tester.enterText(find.byType(TextField).first, name);
+  // `enterText` leaves the field focused with an active selection; its
+  // selection-handle overlay entry can otherwise linger in the Overlay and,
+  // once step 1 grows taller (origin cards now show attribute pills),
+  // intercept a later tap meant for step 2 content at the exact same
+  // coordinate. A real tap on another widget triggers this same unfocus via
+  // the framework's tap-outside handling — this just makes it explicit so
+  // the synthetic test tap behaves the same way.
+  FocusManager.instance.primaryFocus?.unfocus();
+  await tester.pump();
   await tester.tap(find.text('Convocado'));
   await tester.pump();
   await tester.tap(find.text('Siguiente'));
@@ -208,7 +217,11 @@ void main() {
       expect(find.textContaining('Paso 1 de 3'), findsOneWidget,
           reason: 'free point not chosen yet');
 
-      await tester.tap(find.text('ingenio'));
+      // Two "ingenio" texts now render on step 1: the origin card's own
+      // attribute pill (from its `baseAttributes`) and the free-point
+      // stepper row's label below it — `.last` targets the stepper, which
+      // renders after the origin section in the tree.
+      await tester.tap(find.text('ingenio').last);
       await tester.pump();
       await tester.tap(find.text('Siguiente'));
       await tester.pump(const Duration(milliseconds: 300));
@@ -373,8 +386,11 @@ void main() {
       await tester.tap(find.text('Convocado'));
       await tester.pump();
 
-      final icon = tester.widget<Icon>(find.byIcon(Icons.radio_button_checked));
-      expect(icon.color, AetherColors.gold);
+      // The origin card's radio icon was replaced by a circular
+      // initial-avatar (V2 §2c) — the avatar's own initial letter ("C" for
+      // "Convocado") is the thing that tints on selection now.
+      final avatarInitial = tester.widget<Text>(find.text('C'));
+      expect(avatarInitial.style?.color, AetherColors.gold);
     });
 
     testWidgets('a themed world tints the selected origin card with its own accent, not gold',
@@ -384,20 +400,21 @@ void main() {
       await tester.tap(find.text('Convocado'));
       await tester.pump();
 
-      final icon = tester.widget<Icon>(find.byIcon(Icons.radio_button_checked));
-      expect(icon.color, const Color(0xFFF0564A));
-      expect(icon.color, isNot(AetherColors.gold));
+      final avatarInitial = tester.widget<Text>(find.text('C'));
+      expect(avatarInitial.style?.color, const Color(0xFFF0564A));
+      expect(avatarInitial.style?.color, isNot(AetherColors.gold));
     });
 
-    testWidgets('a themed world tints the selected free-attribute-point chip', (tester) async {
+    testWidgets('a themed world tints the selected free-attribute-point row', (tester) async {
       await _pumpChargenMobile(
           tester, _worldWith(hasFreeAttributePoint: true, themeAccentHex: '#F0564A'));
 
-      await tester.tap(find.text('ingenio'));
+      // `.last`: the origin card's own attribute pill also reads "ingenio".
+      await tester.tap(find.text('ingenio').last);
       await tester.pump();
 
-      final chipText = tester.widget<Text>(find.text('ingenio'));
-      expect(chipText.style?.color, const Color(0xFFF0564A));
+      final rowLabel = tester.widget<Text>(find.text('ingenio').last);
+      expect(rowLabel.style?.color, const Color(0xFFF0564A));
     });
 
     testWidgets('a themed world tints the step CTA button, not the fixed gold gradient',

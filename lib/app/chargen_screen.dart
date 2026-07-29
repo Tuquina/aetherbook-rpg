@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/engine/create_character.dart';
 import '../core/state/character.dart';
 import '../core/world/world.dart';
+import 'codex_screen.dart';
 import 'design/breakpoints.dart';
 import 'design/tokens.dart';
 import 'design/typography.dart';
@@ -213,7 +214,8 @@ class _ChargenScreenState extends State<ChargenScreen> {
               originId: _originId,
               freeAttributePoint: _freeAttributePoint,
               onOriginTap: (id) => setState(() => _originId = id),
-              onFreePointTap: (attr) => setState(() => _freeAttributePoint = attr),
+              onFreePointTap: (attr) => setState(
+                  () => _freeAttributePoint = _freeAttributePoint == attr ? null : attr),
               onFieldChanged: () => setState(() {}),
             ),
           1 => _StepTwo(
@@ -279,7 +281,7 @@ class _ChargenScreenState extends State<ChargenScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  _StepHeader(step: _step, onBack: _goBack),
+                                  _StepHeader(step: _step, onBack: _goBack, world: widget.world),
                                   Expanded(child: _stepContent(context, wide: true)),
                                   _cta(),
                                 ],
@@ -290,7 +292,7 @@ class _ChargenScreenState extends State<ChargenScreen> {
                       : Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            _StepHeader(step: _step, onBack: _goBack),
+                            _StepHeader(step: _step, onBack: _goBack, world: widget.world),
                             Expanded(child: _stepContent(context, wide: false)),
                             _cta(),
                           ],
@@ -374,12 +376,17 @@ class _SidePanel extends StatelessWidget {
 
 /// Back arrow + step title + progress pips — the only chrome shared by every
 /// step (V2 prototype §2c's `cgBack`/`cgStepLabel`/pip row). The back arrow
-/// steps backward, or leaves chargen entirely from step 0.
+/// steps backward, or leaves chargen entirely from step 0. Also carries the
+/// entry point into this world's Códice (V2 §2d) — reuses [CodexScreen] as
+/// it already stands: with no `character` yet, it shows "Formas de jugar" +
+/// "Reglas" only, no Glosario tab (that fills in once a session — and a
+/// character — actually exist, from `GameScreen`'s own status-bar icon).
 class _StepHeader extends StatelessWidget {
-  const _StepHeader({required this.step, required this.onBack});
+  const _StepHeader({required this.step, required this.onBack, required this.world});
 
   final int step;
   final VoidCallback onBack;
+  final World world;
 
   @override
   Widget build(BuildContext context) {
@@ -402,6 +409,11 @@ class _StepHeader extends StatelessWidget {
             ),
           ),
           StepDots(count: _stepCount, current: step),
+          IconButton(
+            onPressed: () => Navigator.of(context).push(CodexScreen.route(world: world)),
+            tooltip: 'Códice',
+            icon: const Icon(Icons.menu_book_rounded, color: AetherColors.goldSoft, size: 20),
+          ),
         ],
       ),
     );
@@ -434,6 +446,7 @@ class _StepOne extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = WorldTheme.forWorld(world).accent;
+    final selectedOrigin = originId != null ? world.originById(originId!) : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -473,25 +486,22 @@ class _StepOne extends StatelessWidget {
             subtitle: origin.narrativeConnection,
             selected: originId == origin.id,
             accent: accent,
+            avatarLabel: origin.displayName,
+            attributePills: origin.baseAttributes,
             onTap: () => onOriginTap(origin.id),
           ),
         if (world.hasFreeAttributePoint) ...[
           const SizedBox(height: AetherSpace.xl),
-          Text('Punto libre (+1 a un atributo)', style: AetherType.overline),
+          Text('Reparte tu punto libre', style: AetherType.overline),
           const SizedBox(height: AetherSpace.sm),
-          Wrap(
-            spacing: AetherSpace.sm,
-            runSpacing: AetherSpace.sm,
-            children: [
-              for (final attribute in world.attributeKeys)
-                _AttributeChip(
-                  label: attribute,
-                  selected: freeAttributePoint == attribute,
-                  accent: accent,
-                  onTap: () => onFreePointTap(attribute),
-                ),
-            ],
-          ),
+          for (final attribute in world.attributeKeys)
+            _AttributeStepperRow(
+              label: attribute,
+              baseValue: selectedOrigin?.baseAttributes[attribute] ?? 1,
+              boosted: freeAttributePoint == attribute,
+              accent: accent,
+              onTap: () => onFreePointTap(attribute),
+            ),
         ],
       ],
     );
@@ -554,6 +564,7 @@ class _StepTwo extends StatelessWidget {
             title: '"${vow.text}"',
             selected: vowId == vow.id,
             accent: accent,
+            avatarLabel: vow.text,
             onTap: () => onVowTap(vow.id),
           ),
       ],
@@ -747,6 +758,8 @@ class _SelectableCard extends StatelessWidget {
     required this.accent,
     required this.onTap,
     this.subtitle,
+    this.avatarLabel,
+    this.attributePills,
   });
 
   final String title;
@@ -754,6 +767,17 @@ class _SelectableCard extends StatelessWidget {
   final bool selected;
   final Color accent;
   final VoidCallback onTap;
+
+  /// When set, renders a circular initial-avatar in place of the radio icon
+  /// (V2 §2c's origin/vow card language) — the content has no per-origin
+  /// icon, so the card's own initial stands in for one instead of inventing
+  /// an icon↔origin mapping.
+  final String? avatarLabel;
+
+  /// Attribute → value pills shown under the description (origin cards only)
+  /// — reads straight off `CharacterOrigin.baseAttributes`, already real
+  /// per-world content, no new data.
+  final Map<String, int>? attributePills;
 
   @override
   Widget build(BuildContext context) {
@@ -775,11 +799,14 @@ class _SelectableCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                size: 18,
-                color: selected ? accent : AetherColors.parchmentFaint,
-              ),
+              if (avatarLabel != null)
+                _InitialAvatar(label: avatarLabel!, selected: selected, accent: accent)
+              else
+                Icon(
+                  selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                  size: 18,
+                  color: selected ? accent : AetherColors.parchmentFaint,
+                ),
               const SizedBox(width: AetherSpace.md),
               Expanded(
                 child: Column(
@@ -789,6 +816,17 @@ class _SelectableCard extends StatelessWidget {
                     if (parts.description.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(parts.description, style: AetherType.caption),
+                    ],
+                    if (attributePills != null && attributePills!.isNotEmpty) ...[
+                      const SizedBox(height: AetherSpace.sm),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          for (final entry in attributePills!.entries)
+                            _StatPill(label: entry.key, value: entry.value),
+                        ],
+                      ),
                     ],
                     if (parts.passive != null) ...[
                       const SizedBox(height: AetherSpace.sm),
@@ -824,41 +862,132 @@ class _SelectableCard extends StatelessWidget {
   }
 }
 
-class _AttributeChip extends StatelessWidget {
-  const _AttributeChip({
+/// A circular initial-avatar substituting the plain radio icon on an origin
+/// or vow [_SelectableCard] (V2 §2c) — no per-origin icon exists in content,
+/// so the card's own first letter stands in for one.
+class _InitialAvatar extends StatelessWidget {
+  const _InitialAvatar({required this.label, required this.selected, required this.accent});
+
+  final String label;
+  final bool selected;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final trimmed = label.trim();
+    final initial = trimmed.isEmpty ? '?' : trimmed[0].toUpperCase();
+    return Container(
+      width: 34,
+      height: 34,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: selected ? 0.22 : 0.12),
+        shape: BoxShape.circle,
+        border: Border.all(color: accent.withValues(alpha: selected ? 0.75 : 0.4)),
+      ),
+      child: Text(
+        initial,
+        style: TextStyle(
+          color: selected ? accent : AetherColors.parchmentDim,
+          fontWeight: FontWeight.w700,
+          fontSize: 14,
+        ),
+      ),
+    );
+  }
+}
+
+/// One attribute's row in "Reparte tu punto libre" (V2 §2c's stepper
+/// language) — a 5-pip meter plus +/- indicators, reskinning the same
+/// single-point mechanic the old chip row used. The whole row is one tap
+/// target (not two nested ones) calling `ChargenScreen`'s toggle callback —
+/// the +/- icons are decorative, showing which direction a tap would move
+/// the point (only `-` lit when this attribute already holds it, only `+`
+/// lit otherwise), same underlying toggle either way.
+class _AttributeStepperRow extends StatelessWidget {
+  const _AttributeStepperRow({
     required this.label,
-    required this.selected,
+    required this.baseValue,
+    required this.boosted,
     required this.accent,
     required this.onTap,
   });
 
   final String label;
-  final bool selected;
+  final int baseValue;
+  final bool boosted;
   final Color accent;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final value = baseValue + (boosted ? 1 : 0);
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: AetherMotion.fast,
-        padding: const EdgeInsets.symmetric(horizontal: AetherSpace.lg, vertical: AetherSpace.sm),
-        decoration: BoxDecoration(
-          color: selected ? accent.withValues(alpha: 0.16) : AetherColors.surface,
-          borderRadius: AetherRadius.allPill,
-          border: Border.all(
-            color: selected ? accent : AetherColors.hairlineStrong,
-          ),
-        ),
-        child: Text(
-          label,
-          style: AetherType.label.copyWith(
-            fontSize: 14,
-            color: selected ? accent : AetherColors.parchment,
-          ),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: AetherSpace.sm),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: AetherType.label.copyWith(
+                      fontSize: 13.5,
+                      color: boosted ? accent : AetherColors.parchment,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      for (var i = 0; i < 5; i++)
+                        Container(
+                          margin: const EdgeInsets.only(right: 4),
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: i < value ? accent : accent.withValues(alpha: 0.16),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            _StepperIcon(icon: Icons.remove_rounded, active: boosted, accent: accent),
+            const SizedBox(width: AetherSpace.sm),
+            _StepperIcon(icon: Icons.add_rounded, active: !boosted, accent: accent),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _StepperIcon extends StatelessWidget {
+  const _StepperIcon({required this.icon, required this.active, required this.accent});
+
+  final IconData icon;
+  final bool active;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 30,
+      height: 30,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: active ? accent.withValues(alpha: 0.16) : Colors.transparent,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: active ? accent.withValues(alpha: 0.5) : AetherColors.hairline,
+        ),
+      ),
+      child: Icon(icon, size: 16, color: active ? accent : AetherColors.parchmentFaint),
     );
   }
 }
