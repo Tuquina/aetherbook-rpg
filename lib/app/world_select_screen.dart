@@ -472,7 +472,11 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
                       if (active.isEmpty)
                         _StartHero(onTap: startNew)
                       else ...[
-                        _ContinueHero(row: active.first, onResume: () => _openRow(active.first)),
+                        _ContinueHero(
+                          row: active.first,
+                          onResume: () => _openRow(active.first),
+                          height: _continueHeroHeight(context),
+                        ),
                         const SizedBox(height: AetherSpace.sm),
                         _HeroButton(
                           label: 'Empezar una historia nueva',
@@ -631,7 +635,18 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (hero != null) ...[
-              _ContinueHero(row: hero, onResume: () => _openRow(hero)),
+              _ContinueHero(
+                row: hero,
+                onResume: () => _openRow(hero),
+                // Desktop's own 3-column grid already carries plenty of
+                // content below the hero (tablet's stays closer to
+                // mobile's single-column feel with more headroom to
+                // spare) — a fixed, more modest height instead of
+                // mobile's viewport-relative one, since a wide desktop
+                // monitor's window height has nothing to do with how
+                // tall a "book cover" should read.
+                height: crossAxisCount >= 3 ? 300 : 360,
+              ),
               const SizedBox(height: AetherSpace.sm),
               _HeroButton(
                 label: 'Empezar una historia nueva',
@@ -729,11 +744,29 @@ class _WorldSelectScreenState extends State<WorldSelectScreen> {
 /// the card (both callers do this identically), so the tome and "start
 /// something else" read as two separate, equally-weighted actions instead of
 /// one crowded footer.
+///
+/// [height] makes this a real poster rather than a compact info card — the
+/// image (or its accent-wash fallback) now fills that whole height, with the
+/// text block pinned to the bottom edge via [Positioned] instead of sizing
+/// the card to its own content, so the photo actually has room to read as a
+/// cover rather than a sliver peeking around the text.
+///
+/// Mobile's own height ([_continueHeroHeight]) is relative to the device's
+/// viewport — "ocupa casi toda la pantalla" only means something as a
+/// fraction of an actual phone screen, unlike tablet/desktop's fixed values
+/// (set at their own call site) where the window height is arbitrary and
+/// unrelated to how tall a book cover should read.
+double _continueHeroHeight(BuildContext context) {
+  final viewportHeight = MediaQuery.sizeOf(context).height;
+  return (viewportHeight * 0.5).clamp(340.0, 480.0);
+}
+
 class _ContinueHero extends StatelessWidget {
-  const _ContinueHero({required this.row, required this.onResume});
+  const _ContinueHero({required this.row, required this.onResume, required this.height});
 
   final LibraryRow row;
   final VoidCallback onResume;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
@@ -752,63 +785,71 @@ class _ContinueHero extends StatelessWidget {
       borderRadius: AetherRadius.allLg,
       child: DecoratedBox(
         decoration: BoxDecoration(border: Border.all(color: theme.accent.withValues(alpha: 0.5))),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: imageUrl != null
-                  ? Image.network(
-                      imageUrl,
-                      key: ValueKey(imageUrl),
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _HeroFallback(accent: theme.accent),
-                    )
-                  : _HeroFallback(accent: theme.accent),
-            ),
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, tintedDark.withValues(alpha: 0.94)],
-                    stops: const [0.0, 0.75],
+        child: SizedBox(
+          height: height,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: imageUrl != null
+                    ? Image.network(
+                        imageUrl,
+                        key: ValueKey(imageUrl),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => _HeroFallback(accent: theme.accent),
+                      )
+                    : _HeroFallback(accent: theme.accent),
+              ),
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, tintedDark.withValues(alpha: 0.94)],
+                      stops: const [0.35, 0.85],
+                    ),
                   ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(AetherSpace.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Dejaste el tomo abierto'.toUpperCase(),
-                      style: AetherType.overline.copyWith(color: theme.accent)),
-                  const SizedBox(height: AetherSpace.sm),
-                  Text(title, style: AetherType.display.copyWith(fontSize: 26)),
-                  if (quote != null && quote.isNotEmpty) ...[
-                    const SizedBox(height: AetherSpace.sm),
-                    Text('«$quote»',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AetherType.body.copyWith(
-                            fontStyle: FontStyle.italic, color: AetherColors.parchmentDim)),
-                  ],
-                  const SizedBox(height: AetherSpace.lg),
-                  _HeroButton(
-                    label: 'Retomar el turno ${entry.turnCount}',
-                    icon: Icons.play_arrow_rounded,
-                    filled: true,
-                    accent: theme.accent,
-                    onTap: onResume,
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Padding(
+                  padding: const EdgeInsets.all(AetherSpace.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Dejaste el tomo abierto'.toUpperCase(),
+                          style: AetherType.overline.copyWith(color: theme.accent)),
+                      const SizedBox(height: AetherSpace.sm),
+                      Text(title, style: AetherType.display.copyWith(fontSize: 26)),
+                      if (quote != null && quote.isNotEmpty) ...[
+                        const SizedBox(height: AetherSpace.sm),
+                        Text('«$quote»',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AetherType.body.copyWith(
+                                fontStyle: FontStyle.italic, color: AetherColors.parchmentDim)),
+                      ],
+                      const SizedBox(height: AetherSpace.lg),
+                      _HeroButton(
+                        label: 'Retomar el turno ${entry.turnCount}',
+                        icon: Icons.play_arrow_rounded,
+                        filled: true,
+                        accent: theme.accent,
+                        onTap: onResume,
+                      ),
+                      const SizedBox(height: AetherSpace.sm),
+                      Text('${world.name} · ${relativeTimeLabel(entry.updatedAt)}',
+                          style: AetherType.caption),
+                    ],
                   ),
-                  const SizedBox(height: AetherSpace.sm),
-                  Text('${world.name} · ${relativeTimeLabel(entry.updatedAt)}',
-                      style: AetherType.caption),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
